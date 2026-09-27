@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m!l^y66f#vr_w9ojru31othmtlu9&(sz#=^byz#4l$8tnik6(p'
+# Antes estaba hardcodeada en el repo; ahora sale de una variable de entorno,
+# con el valor viejo como fallback SOLO para no romper el entorno de desarrollo
+# local. Para producción, definí DJANGO_SECRET_KEY y rotá este valor: al haber
+# estado en texto plano en el código ya debe considerarse comprometido.
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-m!l^y66f#vr_w9ojru31othmtlu9&(sz#=^byz#4l$8tnik6(p',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h]
 
 
 # Application definition
@@ -116,6 +124,30 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# El proyecto guarda su JS/CSS propio en <BASE_DIR>/static/ (fuera de la app),
+# igual que templates/. Sin esto, runserver/collectstatic no lo encuentran.
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Carpeta destino de `collectstatic` para producción (servida por Nginx/WhiteNoise/CDN).
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
+# Cache
+# https://docs.djangoproject.com/en/6.1/topics/cache/
+#
+# Usado para cachear las respuestas de /api/quote/<symbol>/ (ver
+# trackeado/views.py) y evitar pegarle a yfinance en cada request. LocMemCache
+# alcanza para un solo proceso; si en producción corrés varios workers/
+# procesos o varias instancias, cambiá esto por un backend compartido
+# (ej. django-redis) para que el caché sea realmente compartido entre todos
+# y no cada worker termine haciendo su propio scraping igual.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'trackeado-cache',
+    }
+}
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
@@ -126,7 +158,17 @@ MAILERS = {
     },
 }
 
-# settings.py
 # Credenciales de Alpaca Markets (https://app.alpaca.markets -> Paper Trading -> API Keys)
-ALPACA_API_KEY_ID = "PKCORYPU727TDLUMHOD4ECZ7ZG"
-ALPACA_SECRET_KEY = "53DSAFYBLpXMjNn6HZ6tNdjhQLXqLq3TSYoTRuFB4vqf"
+# Antes había claves reales comentadas acá mismo (quedaban en el repo igual).
+# Si esas keys llegaron a usarse, hay que darlas de baja/rotar en Alpaca.
+ALPACA_API_KEY_ID = os.environ.get('ALPACA_API_KEY_ID', '')
+ALPACA_SECRET_KEY = os.environ.get('ALPACA_SECRET_KEY', '')
+
+# Igual que arriba: esta key vivía hardcodeada en texto plano. Se movió a una
+# variable de entorno; el fallback es solo para que el proyecto siga
+# arrancando en desarrollo. Rotala en Finnhub si este código se compartió o
+# subió a algún repo público/privado con la key original.
+FINNHUB_API_KEY = os.environ.get(
+    'FINNHUB_API_KEY',
+    'dao9fg9r01qqjqh5j6hgdao9fg9r01qqjqh5j6i0',
+)
