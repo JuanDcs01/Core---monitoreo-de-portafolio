@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tracker de Acciones en Tiempo Real</title>
+    <!-- Bootstrap para estilos rápidos -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="mb-4">Panel Financiero en Tiempo Real (Alpaca Markets)</h2>
+
+        <!-- Buscador para agregar nuevos símbolos -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <input type="text" id="symbol-input" class="form-control" placeholder="Agregar símbolo (ej. TSLA, MSFT)">
+                    <button class="btn btn-primary" id="add-symbol-btn" type="button">Agregar</button>
+                </div>
+                <div id="symbol-error" class="text-danger small mt-1"></div>
+            </div>
+        </div>
+
+        <div class="row" id="stock-container">
+            <!-- Las tarjetas de símbolos se generan dinámicamente aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Inyectamos las credenciales de Alpaca de forma segura desde Django
+        const apcaKeyId = "{{ alpaca_key_id }}";
+        const apcaSecret = "{{ alpaca_secret_key }}";
+
+        // Feed gratuito: IEX. Con plan pago se puede usar /v2/sip (consolidado).
+        const socket = new WebSocket("wss://stream.data.alpaca.markets/v2/iex");
+
+        let isAuthenticated = false;
+        const subscribedSymbols = new Set();
+        const pendingSymbols = [];
+
+        function createCard(symbol) {
+            const col = document.createElement('div');
+            col.className = 'col-md-4 mb-3';
+            col.id = `card-${symbol}`;
+            col.innerHTML = `
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">${symbol}</h5>
+                        <h3 class="text-success" id="price-${symbol}">Cargando...</h3>
+                    </div>
+                </div>
+            `;
+            document.getElementById('stock-container').appendChild(col);
+        }
+
+        function sendSubscribe(symbols) {
+            socket.send(JSON.stringify({
+                action: 'subscribe',
+                trades: symbols
+            }));
+        }
+
+        function subscribeSymbol(symbol) {
+            symbol = symbol.trim().toUpperCase();
+            if (!symbol) return;
+
+            if (subscribedSymbols.has(symbol)) {
+                showError(`${symbol} ya está en la lista.`);
+                return;
+            }
+
+            clearError();
+            subscribedSymbols.add(symbol);
+            createCard(symbol);
+
+            if (isAuthenticated) {
+                sendSubscribe([symbol]);
+            } else {
+                // Se suscribe apenas termine la autenticación
+                pendingSymbols.push(symbol);
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('symbol-error').innerText = msg;
+        }
+
+        function clearError() {
+            document.getElementById('symbol-error').innerText = '';
+        }
+
+        // Listeners del buscador
+        document.getElementById('add-symbol-btn').addEventListener('click', function () {
+            const input = document.getElementById('symbol-input');
+            subscribeSymbol(input.value);
+            input.value = '';
+        });
+
+        document.getElementById('symbol-input').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('add-symbol-btn').click();
+            }
+        });
+
+        socket.addEventListener('open', function () {
+            console.log('Conectado al WebSocket de Alpaca. Esperando confirmación...');
+        });
+
+        socket.addEventListener('message', function (event) {
+            const messages = JSON.parse(event.data);
+
+            messages.forEach(msg => {
+                // Mensaje de bienvenida al conectar
+                if (msg.T === 'success' && msg.msg === 'connected') {
+                    console.log('Conexión establecida, autenticando...');
+                    socket.send(JSON.stringify({
+                        action: 'auth',
+                        key: apcaKeyId,
+                        secret: apcaSecret
+                    }));
+                }
+
+                // Confirmación de autenticación
+                if (msg.T === 'success' && msg.msg === 'authenticated') {
+                    console.log('Autenticado correctamente en Alpaca.');
+                    isAuthenticated = true;
+                    // Símbolos iniciales + cualquiera agregado antes de autenticar
+                    subscribeSymbol('AAPL');
+                    subscribeSymbol('NVDA');
+                    if (pendingSymbols.length > 0) {
+                        sendSubscribe(pendingSymbols.splice(0));
+                    }
+                }
+
+                // Error de autenticación u otro error del servidor
+                if (msg.T === 'error') {
+                    console.error('Error de Alpaca:', msg.code, msg.msg);
+                    showError(`Error de Alpaca: ${msg.msg}`);
+                }
+
+                // Trade en tiempo real
+                if (msg.T === 't') {
+                    const symbol = msg.S;   // Símbolo
+                    const price = msg.p;    // Precio del trade
+
+                    const priceElement = document.getElementById(`price-${symbol}`);
+                    if (priceElement && typeof price === 'number') {
+                        priceElement.innerText = `$${price.toFixed(2)}`;
+                    }
+                }
+            });
+        });
+
+        socket.addEventListener('error', function (error) {
+            console.error('Error en el WebSocket:', error);
+        });
+
+        socket.addEventListener('close', function () {
+            console.log('Conexión WebSocket cerrada.');
+        });
+    </script>
+</body>
+</html>
