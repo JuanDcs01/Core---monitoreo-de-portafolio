@@ -1,9 +1,9 @@
 # urls.py
 from django.urls import path
-from .views import stock_dashboard
 from . import views
 
 urlpatterns = [
-    path('dashboard/', stock_dashboard, name='stock_dashboard'),
-    path('api/quote/<str:symbol>/', views.stock_quote, name='stock_quote')
+    path('dashboard/', views.index, name='index'),
+    path('add_symbol/', views.add_holding, name='add_symbol'),
+    path('delete_holding/', views.delete_holding, name='delete_holding'),
 ]
