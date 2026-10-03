@@ -1,0 +1,49 @@
+{% extends "layouts/base.html" %} {% load custom_filters %}
+{% block content %}
+
+    {% if messages %}
+        {% for message in messages %}
+           {{ message }}
+        {% endfor %}
+    {% endif %}
+
+    <form action="{% url 'add_symbol' %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="symbol" placeholder="buscar Símbolo">
+        <button>Agregar</button>
+    </form>
+
+    {% if holdings %}
+    <table>
+        <thead>
+            <tr>
+                <th>Símbolo</th>
+                <th>Tipo</th>
+                <th>Nombre</th>
+                <th>Precio</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+                {% for h in holdings %}
+                    <tr>
+                        <td>{{ h.symbol }}</td>
+                        <td>{{ h.type | holding_type }}</td>
+                        <td>{{ h.name }}</td>
+                        <td>{{ h.price }}</td>
+                        <td>
+                            <form action="{% url 'delete_holding' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="id" value="{{ h.id }}">
+                                <button type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+        </tbody>
+    </table>
+                {% else %}
+                    <p>No hay datos</p>
+            {% endif %}
+
+{% endblock content %}

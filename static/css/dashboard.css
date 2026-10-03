@@ -1,12 +1,1 @@
-/* dashboard.css
-   El HTML original no tenía CSS propio (solo clases de Bootstrap vía CDN).
-   Este archivo queda como el lugar para estilos propios del dashboard,
-   servido como estático cacheable en vez de vivir inline en el HTML. */
 
-.card {
-    transition: box-shadow 0.15s ease-in-out;
-}
-
-.card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-}

@@ -4,18 +4,27 @@ import yfinance as yf
 from .models import Holdings
 from pprint import pprint
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def index(request):
 
     holdings = Holdings.objects.all()
 
+    print(holdings)
+
+    if not holdings:
+        return render(request, 'dashboard.html', {'holdings':holdings})
+
     symbols = [holding.symbol for holding in holdings]
 
-    data = yf.download(symbols, period="5d", group_by="ticker")
+    data = yf.download(symbols, period="1d", group_by="ticker")
+
+    print(data)
 
     for holding in holdings:
         
-        holding.price = round(data.get(holding.symbol).get('Close').iloc[-1], 2)
+        holding.price = round(data.get(holding.symbol).get('Open').dropna().iloc[-1], 2)
 
     context = {
         'holdings': holdings
