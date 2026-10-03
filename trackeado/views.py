@@ -72,7 +72,7 @@ def add_holding(request):
 
 def delete_holding(request):
 
-    holding = get_object_or_404(Holding, id=request.POST.get('id'))
+    holding = get_object_or_404(UserHolding, id=request.POST.get('id'))
 
     holding.delete()
     messages.success(request, 'Símbolo Eliminado.')
