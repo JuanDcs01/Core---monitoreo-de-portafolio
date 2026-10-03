@@ -1,7 +1,7 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
 import yfinance as yf
-from .models import Holdings
+from .models import Holding, UserHolding
 from pprint import pprint
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,22 +9,24 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def index(request):
 
-    holdings = Holdings.objects.all()
+    user = request.user
+
+    holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
     print(holdings)
 
     if not holdings:
         return render(request, 'dashboard.html', {'holdings':holdings})
 
-    symbols = [holding.symbol for holding in holdings]
+    symbols = [h.holding.symbol for h in holdings]
 
     data = yf.download(symbols, period="1d", group_by="ticker")
 
     print(data)
 
-    for holding in holdings:
+    for h in holdings:
         
-        holding.price = round(data.get(holding.symbol).get('Open').dropna().iloc[-1], 2)
+        h.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
 
     context = {
         'holdings': holdings
@@ -34,29 +36,43 @@ def index(request):
 
 def add_holding(request):
 
+    user = request.user
+
     if request.method == 'POST':
 
         symbol = request.POST.get('symbol').upper()
 
-        ticker = yf.Ticker(symbol)     
+        try:
+            holding = Holding.objects.get(symbol=symbol)
+        except:
+            holding = None
 
-        info = ticker.info
+        if holding:
 
-        if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
-            messages.success(request, 'Símbolo no encontrado.')
-            return redirect('index')
+            UserHolding.objects.create(user=user, holding=holding)
 
-        name = ticker.info.get('longName')
-        type = ticker.info.get('quoteType')
+        else: 
 
-        Holdings.objects.create(symbol=symbol, name=name, type=type)
+            ticker = yf.Ticker(symbol)     
+
+            info = ticker.info
+
+            if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
+                messages.success(request, 'Símbolo no encontrado.')
+                return redirect('index')
+
+            name = ticker.info.get('longName')
+            type = ticker.info.get('quoteType')
+
+            holding = Holding.objects.create(symbol=symbol, name=name, type=type)
+            UserHolding.objects.create(user=user, holding=holding)
 
         messages.success(request, 'Símbolo agregado.')
         return redirect('index')
 
 def delete_holding(request):
 
-    holding = get_object_or_404(Holdings, id=request.POST.get('id'))
+    holding = get_object_or_404(Holding, id=request.POST.get('id'))
 
     holding.delete()
     messages.success(request, 'Símbolo Eliminado.')

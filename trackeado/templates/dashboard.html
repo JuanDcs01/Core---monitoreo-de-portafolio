@@ -27,9 +27,9 @@
         <tbody>
                 {% for h in holdings %}
                     <tr>
-                        <td>{{ h.symbol }}</td>
-                        <td>{{ h.type | holding_type }}</td>
-                        <td>{{ h.name }}</td>
+                        <td>{{ h.holding.symbol }}</td>
+                        <td>{{ h.holding.type | holding_type }}</td>
+                        <td>{{ h.holding.name }}</td>
                         <td>{{ h.price }}</td>
                         <td>
                             <form action="{% url 'delete_holding' %}" method="POST">
