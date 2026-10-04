@@ -17,6 +17,12 @@
         </form>
     {% endif %}
 
+    {% if messages %}
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    {% endif %}
+
     {% block content %}
     {% endblock content %}
 

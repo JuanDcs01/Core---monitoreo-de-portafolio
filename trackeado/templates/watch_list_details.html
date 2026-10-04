@@ -1,0 +1,23 @@
+{% extends "layouts/base.html" %} 
+{% block content %}
+    <form action="{% url 'add_holding_list' %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="symbol" placeholder="buscar Símbolo">
+        <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">  
+        <button>Agregar</button>
+    </form>
+    {% if holdings_list %}{% endif %}
+    {% for h in holdings_list %}
+        <div>
+            {{ h.holding.name }}
+            {{ h.holding.symbol }}
+            {{ h.holding.price }}
+            <form action="{% url 'delete_holding_list' %}" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="holding_list_id" value="{{ h.id }}">
+                <input type="hidden" name="watch_list" value="{{ watch_list.name }}">
+                <button type="submit">Eliminar</button>
+            </form>
+        </div>
+    {% endfor %}
+{% endblock content %}

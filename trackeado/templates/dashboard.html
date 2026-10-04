@@ -1,12 +1,6 @@
 {% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
 
-    {% if messages %}
-        {% for message in messages %}
-           {{ message }}
-        {% endfor %}
-    {% endif %}
-
     <form action="{% url 'add_symbol' %}" method="POST">
         {% csrf_token %}
         <input type="text" name="symbol" placeholder="buscar Símbolo">

@@ -6,7 +6,7 @@ from users.models import User
 class Holding(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
-    symbol = models.CharField(max_length=10, unique=True)
+    symbol = models.CharField(max_length=10, unique=True, db_index=True)
     type = models.CharField(max_length=20)
 
     def __str__(self):
@@ -17,3 +17,30 @@ class UserHolding(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
 
+class WatchList(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=30)
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'name'],
+                name='unique_user_name'
+            )
+        ]
+
+class HoldingList(models.Model):
+
+    watch_list = models.ForeignKey(WatchList, on_delete=models.CASCADE)
+    holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
+
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['watch_list', 'holding'],
+                name='unique_watch_list_holding'
+            )
+        ]

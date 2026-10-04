@@ -1,0 +1,15 @@
+{% extends "layouts/base.html" %} 
+{% block content %}
+    {% include "components/form.html" %}
+
+    {% for w in watch_lists %}
+        <div>
+            <a href="{% url 'watch_list_details' w.name %}">{{ w.name }}</a>
+        </div>
+        <form action="{% url 'delete_watch_lists' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="watch_list_id" value="{{ w.id }}">
+            <button type="submit">Eliminar</button>
+        </form>
+    {% endfor %}
+{% endblock content %}  
