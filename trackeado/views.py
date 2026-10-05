@@ -221,7 +221,7 @@ def holding(request, symbol):
 
         df = holding.history(period="max")
         df_5d = holding.history(period="5d", interval="1h")
-        df_1d = holding.history(period="1d", interval="30m")
+        df_1d = holding.history(period="1d", interval="5m", prepost=True)
 
         # 1. Reseteamos el índice para que la fecha pase a ser una columna normal
         df.reset_index(inplace=True)
