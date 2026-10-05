@@ -6,7 +6,7 @@
         <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">  
         <button>Agregar</button>
     </form>
-    {% if holdings_list %}{% endif %}
+    {% if holdings_list %}
     {% for h in holdings_list %}
         <div>
             {{ h.holding.name }}
@@ -20,4 +20,7 @@
             </form>
         </div>
     {% endfor %}
+    {% else %}
+    <p>La lista esta vacía</p>
+    {% endif %}
 {% endblock content %}
