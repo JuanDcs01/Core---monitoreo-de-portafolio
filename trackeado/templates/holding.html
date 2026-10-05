@@ -22,7 +22,8 @@
             <button id="months1">1 m</button>
             <button id="months3">3 m</button>
             <button id="months6">6 m</button>
-            <button id="months12">12 m</button>
+            <button id="year1">1 a</button>
+            <button id="YTD">YTD</button>
             <button id="max">MAX</button>
             <canvas id="history"></canvas>
         </div>
@@ -108,7 +109,7 @@
 
     function ejes(history, period=null, tension=0.1) {
 
-        if (period) {
+        if (period && period != 'YTD') {
             history = history.slice(period);
         }
 
@@ -125,8 +126,15 @@
         console.log(history.length);
         
         for (let i = 0; i < history.length; i++){
-            labels.push(history[i][key])
-            prices.push(history[i]['Close'])
+            if (period == 'YTD') {
+                if (history[i]['Date'].slice(0, 4) == history.at(-1)['Date'].slice(0, 4)) {
+                    labels.push(history[i][key])
+                    prices.push(history[i]['Close'])
+                }
+            } else {
+                labels.push(history[i][key])
+                prices.push(history[i]['Close'])
+            }
         }  
 
         chartline("history", labels, prices, tension=tension)
@@ -145,7 +153,7 @@
         chartExistente.destroy();
         }
 
-        if (id == 'months12'){
+        if (id == 'year1'){
             ejes(history, -365)
         } else if (id  == 'months6') {
             ejes(history, -180)
@@ -159,16 +167,19 @@
             ejes(history5d, null, 0.2)
         } else if (id == 'days1') {
             ejes(history1d, null, 0.2)
+        }   else if (id == 'YTD') {
+            ejes(history, 'YTD')
         }
     })
     }
-    const button1 = document.querySelector('#months12');
+    const button1 = document.querySelector('#year1');
     const button2 = document.querySelector('#months6');
     const button3 = document.querySelector('#months3');
     const button4 = document.querySelector('#months1');
     const button5 = document.querySelector('#days5');
     const button6 = document.querySelector('#days1');
     const button7 = document.querySelector('#max');
+    const button8 = document.querySelector('#YTD');
 
 
     changePeriod(button1)
@@ -178,6 +189,7 @@
     changePeriod(button5)
     changePeriod(button6)
     changePeriod(button7)
+    changePeriod(button8)
 
 
 </script>
