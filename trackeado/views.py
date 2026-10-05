@@ -237,11 +237,18 @@ def holding(request, symbol):
         history_list_5d = df_5d[['Datetime', 'Close']].to_dict(orient='records')
         history_list_1d = df_1d[['Datetime', 'Close']].to_dict(orient='records')
 
+        for h in history_list_5d:
+            h['Datetime'] = h['Datetime'][0:19]
+
+        for h in history_list_1d:
+            h['Datetime'] = h['Datetime'][0:19]
+
         context = {
             'symbol': symbol.upper(),
             'longName': info.get('longName'),
             'quoteType': info.get('quoteType'),
             'currentPrice': humanize.intcomma(info.get('currentPrice')) if info.get('currentPrice') else humanize.intcomma(info.get('regularMarketPrice')),
+            'postMarketPrice': humanize.intcomma(round(info.get('postMarketPrice'))) if info.get('postMarketPrice') else None,
             'dayHigh':  humanize.intcomma(round(info.get('dayHigh'))) if info.get('dayHigh') else 0,
             'dayLow':  humanize.intcomma(round(info.get('dayLow'))) if info.get('dayLow') else 0,
             'dividendYield':  humanize.intcomma(info.get('dividendYield')),
@@ -249,6 +256,8 @@ def holding(request, symbol):
             'fulldayChangeNumber': info.get('fulldayChange'),
             'fulldayChange': humanize.intcomma(round(info.get('fulldayChange'),2)) if info.get('fulldayChange') else 0,
             'fulldayChangePercent': humanize.intcomma(round(info.get('fulldayChangePercent'), 2)) if info.get('fulldayChangePercent') else 0,
+            'postMarketChange': humanize.intcomma(round(info.get('postMarketChange'), 2)) if info.get('postMarketChange') else None,
+            'postMarketChangePercent': humanize.intcomma(round(info.get('postMarketChangePercent'), 2)) if info.get('postMarketChangePercent') else None,
             'industry': info.get('industry'),
             'marketCap': humanize.metric(info.get('marketCap')) if info.get('marketCap') else 0,
             'sector': info.get('sector'),
