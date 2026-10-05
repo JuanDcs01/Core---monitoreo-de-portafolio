@@ -1,23 +1,31 @@
 {% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
 <div>
-    <div>
-    {{ symbol }}:{{ fullExchangeName }}
-    </div>
-    <div>
-    {{ longName }}
-    </div>
-    {{ currentPrice }}
-    <strong>Hoy: </strong>
-    {{ fulldayChangePercent }}%
-    {% if fulldayChangeNumber > 0 %}
-        (+{{ fulldayChange }})
-    {% else %}
-        ({{ fulldayChange }})
-    {% endif %}
-    <div>
-    <div style="width: 50%; margin: auto; margin-top: 50px;">
-        <canvas id="history"></canvas>
+    <div style="width: 60%; margin: auto; margin-top: 50px;">
+        <div>
+            {{ symbol }}:{{ fullExchangeName }}
+        </div>
+        <div>
+            {{ longName }}
+        </div>
+            {{ currentPrice }}
+        <strong>Hoy: </strong>
+        {{ fulldayChangePercent }}%
+        {% if fulldayChangeNumber > 0 %}
+            (+{{ fulldayChange }})
+        {% else %}
+            ({{ fulldayChange }})
+        {% endif %}
+        <div style="height: 350px; margin: 30px;">
+            <button id="days1">1 d</button>
+            <button id="days5">5 d</button>
+            <button id="months1">1 m</button>
+            <button id="months3">3 m</button>
+            <button id="months6">6 m</button>
+            <button id="months12">12 m</button>
+            <button id="max">MAX</button>
+            <canvas id="history"></canvas>
+        </div>
     </div>
     <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
     <strong>Dividendo:</strong> {{ dividendYield }}%
@@ -39,38 +47,50 @@
 
 <script>
 
-    function chartline(canvasId, labels, data) {
+    function chartline(canvasId, labels, data, tension) {
         const ctx = document.getElementById(canvasId);
 
-        const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)'
+        console.log(tension);
+
+        // Definir el color de acuerdo a si es positivo (verde) o negativo (rojo)
+        const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)' 
 
         const miGrafico = new Chart(ctx, {
-        type: 'line', // Especificamos que es un Line Chart
+        type: 'line', // Line Chart
         data: {
-            labels: labels,// Lo que va en el eje X
+            labels: labels,// eje X
             datasets: [{
                 fill: true,
-                data: data, // Los valores numéricos del eje Y
+                data: data, // eje Y
                 borderColor: lineColor, // Color de la línea
-                tension: 0.1, // Curvatura de la línea (0 = recta, más de 0 = curva suave)
-                pointRadius: 0
+                tension: tension, // Curvatura de la línea (0 = recta, más de 0 = curva suave)
+                pointRadius: 0, // ocultar puntos
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: 'white', // Color opcional al hacer hover
+                pointHoverBorderColor: lineColor,
+                pointHoverBorderWidth: 2
             }]
         },
         options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
                     legend: {
-                        display: false // Esto oculta la leyenda por completo
+                        display: false // ocultar la leyenda
                     }
                 },
                 scales: {
                     x: {
                         grid: {
-                            display: false,
+                            display: false, // ocultar lineas del eje x hacia arriba
                         },
                         ticks: {
                             autoSkip: true,      // Deja que Chart.js salte automáticamente las etiquetas que no caben
-                            maxTicksLimit: 10    // Fuerza un máximo de 10 fechas visibles en todo el eje X
+                            maxTicksLimit: 10    // Fuerza un máximo de 10 puntos visibles en el eje X
                     },
                     maxTicksLimit: 12 // Limita el número máximo de etiquetas mostradas en pantalla
                 }
@@ -78,37 +98,88 @@
                     }
             })};
 
+
+
+
+
     let history = {{ history_list | safe }};
+    let history5d = {{ history_list_5d | safe }};
+    let history1d = {{ history_list_1d | safe }};
 
-    history = history.slice(-365);
+    function ejes(history, period=null, tension=0.1) {
 
-    labels = []
-    prices = []
+        if (period) {
+            history = history.slice(period);
+        }
 
-    console.log(history[0]['Date']);
-    console.log(history.length);
-    
-    for (let i = 0; i < history.length; i++){
-        labels.push(history[i]['Date'])
-        prices.push(history[i]['Close'])
-    }  
+        key = 'Date'
 
-    chartline("history", labels, prices)
+        if (history[0]['Datetime']) {
+            key = 'Datetime'
+        }
 
-    // const button = document.querySelector('#prueba');
+        labels = []
+        prices = []
 
-    // button.addEventListener('click', function(){
+        console.log(history[0][key]);
+        console.log(history.length);
+        
+        for (let i = 0; i < history.length; i++){
+            labels.push(history[i][key])
+            prices.push(history[i]['Close'])
+        }  
 
-    //     const chartExistente = Chart.getChart("historical"); // Le pasas el ID del HTML sin el '#'
+        chartline("history", labels, prices, tension=tension)
+    }
 
-    //     if (chartExistente) {
-    //     chartExistente.destroy();
-    //     }
+    ejes(history1d, null)
 
-    //     months = months.slice(0, 3)
-    //     console.log('hola');
-    //     chartline("historical", months, [1161617.76, 1174255.51, 1182234.42, 1183083.96])
-    // })
+    function changePeriod(button) {
+
+        button.addEventListener('click', function(){
+
+        const id = button.id;
+        const chartExistente = Chart.getChart("history"); // Le pasas el ID del HTML sin el '#'
+
+        if (chartExistente) {
+        chartExistente.destroy();
+        }
+
+        if (id == 'months12'){
+            ejes(history, -365)
+        } else if (id  == 'months6') {
+            ejes(history, -180)
+        } else if (id  == 'months3') {
+            ejes(history, -90, 0.2)
+        } else if (id == 'max') {
+            ejes(history)
+        } else if (id == 'months1') {
+            ejes(history, -30, 0.2)
+        } else if (id == 'days5') {
+            ejes(history5d, null, 0.2)
+        } else if (id == 'days1') {
+            ejes(history1d, null, 0.2)
+        }
+    })
+    }
+    const button1 = document.querySelector('#months12');
+    const button2 = document.querySelector('#months6');
+    const button3 = document.querySelector('#months3');
+    const button4 = document.querySelector('#months1');
+    const button5 = document.querySelector('#days5');
+    const button6 = document.querySelector('#days1');
+    const button7 = document.querySelector('#max');
+
+
+    changePeriod(button1)
+    changePeriod(button2)
+    changePeriod(button3)
+    changePeriod(button4)
+    changePeriod(button5)
+    changePeriod(button6)
+    changePeriod(button7)
+
+
 </script>
 
 {% endblock content %}

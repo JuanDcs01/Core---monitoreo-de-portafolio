@@ -220,19 +220,22 @@ def holding(request, symbol):
     if info.get('longName'):
 
         df = holding.history(period="max")
+        df_5d = holding.history(period="5d", interval="1h")
+        df_1d = holding.history(period="1d", interval="30m")
 
         # 1. Reseteamos el índice para que la fecha pase a ser una columna normal
         df.reset_index(inplace=True)
+        df_5d.reset_index(inplace=True)
+        df_1d.reset_index(inplace=True)
         
         # 2. Formateamos la fecha a un string limpio ("YYYY-MM-DD")
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+        df_5d["Datetime"] = df_5d["Datetime"].astype(str)
+        df_1d["Datetime"] = df_1d["Datetime"].astype(str)
 
         history_list = df[['Date', 'Close']].to_dict(orient='records')
-
-        pprint(history_list)
-
-        # pprint(info)
-        
+        history_list_5d = df_5d[['Datetime', 'Close']].to_dict(orient='records')
+        history_list_1d = df_1d[['Datetime', 'Close']].to_dict(orient='records')
 
         context = {
             'symbol': symbol.upper(),
@@ -261,6 +264,8 @@ def holding(request, symbol):
             'fiftyTwoWeekLow': humanize.intcomma(info.get('fiftyTwoWeekLow')),
             'recommendationKey': info.get('recommendationKey'),
             'history_list': history_list,
+            'history_list_5d': history_list_5d,
+            'history_list_1d': history_list_1d,
             '': info.get(''),
         }
     else:
