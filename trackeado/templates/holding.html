@@ -1,0 +1,114 @@
+{% extends "layouts/base.html" %} {% load custom_filters %}
+{% block content %}
+<div>
+    <div>
+    {{ symbol }}:{{ fullExchangeName }}
+    </div>
+    <div>
+    {{ longName }}
+    </div>
+    {{ currentPrice }}
+    <strong>Hoy: </strong>
+    {{ fulldayChangePercent }}%
+    {% if fulldayChangeNumber > 0 %}
+        (+{{ fulldayChange }})
+    {% else %}
+        ({{ fulldayChange }})
+    {% endif %}
+    <div>
+    <div style="width: 50%; margin: auto; margin-top: 50px;">
+        <canvas id="history"></canvas>
+    </div>
+    <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
+    <strong>Dividendo:</strong> {{ dividendYield }}%
+    <strong>Industria:</strong> {{ industry }}
+    <strong>Cap. burs:</strong> {{ marketCap }}
+    <strong>Sector:</strong> {{ sector }}
+    <strong>PE ratio:</strong> {{ trailingPE }}
+    <strong>PE proyectado:</strong> {{ forwardPE }}
+    <strong>Beta:</strong> {{ beta }}
+    <strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}
+    <strong>Otros</strong>
+    <strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}
+    <strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}
+    <strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}
+    <strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}
+    {{ marketState }}
+    </div>
+</div>
+
+<script>
+
+    function chartline(canvasId, labels, data) {
+        const ctx = document.getElementById(canvasId);
+
+        const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)'
+
+        const miGrafico = new Chart(ctx, {
+        type: 'line', // Especificamos que es un Line Chart
+        data: {
+            labels: labels,// Lo que va en el eje X
+            datasets: [{
+                fill: true,
+                data: data, // Los valores numéricos del eje Y
+                borderColor: lineColor, // Color de la línea
+                tension: 0.1, // Curvatura de la línea (0 = recta, más de 0 = curva suave)
+                pointRadius: 0
+            }]
+        },
+        options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false // Esto oculta la leyenda por completo
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            autoSkip: true,      // Deja que Chart.js salte automáticamente las etiquetas que no caben
+                            maxTicksLimit: 10    // Fuerza un máximo de 10 fechas visibles en todo el eje X
+                    },
+                    maxTicksLimit: 12 // Limita el número máximo de etiquetas mostradas en pantalla
+                }
+                    }
+                    }
+            })};
+
+    let history = {{ history_list | safe }};
+
+    history = history.slice(-365);
+
+    labels = []
+    prices = []
+
+    console.log(history[0]['Date']);
+    console.log(history.length);
+    
+    for (let i = 0; i < history.length; i++){
+        labels.push(history[i]['Date'])
+        prices.push(history[i]['Close'])
+    }  
+
+    chartline("history", labels, prices)
+
+    // const button = document.querySelector('#prueba');
+
+    // button.addEventListener('click', function(){
+
+    //     const chartExistente = Chart.getChart("historical"); // Le pasas el ID del HTML sin el '#'
+
+    //     if (chartExistente) {
+    //     chartExistente.destroy();
+    //     }
+
+    //     months = months.slice(0, 3)
+    //     console.log('hola');
+    //     chartline("historical", months, [1161617.76, 1174255.51, 1182234.42, 1183083.96])
+    // })
+</script>
+
+{% endblock content %}

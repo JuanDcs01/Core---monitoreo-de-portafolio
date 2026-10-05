@@ -6,6 +6,7 @@ from .forms import WatchListForm
 from pprint import pprint
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+import humanize
 
 @login_required
 def index(request):
@@ -21,7 +22,9 @@ def index(request):
 
     symbols = [h.holding.symbol for h in holdings]
 
-    data = yf.download(symbols, period="1d", group_by="ticker")
+    data = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+
+    pprint(data.__dict__)
 
     for h in holdings:
         
@@ -123,12 +126,14 @@ def watch_list_details(request, watch_list):
 
         holdings_list = HoldingList.objects.select_related('holding').filter(watch_list=watch_list)
 
-        symbols = [h.holding.symbol for h in holdings_list]
+        if holdings_list:
 
-        data = yf.download(symbols, period="1d", group_by="ticker")
+            symbols = [h.holding.symbol for h in holdings_list]
 
-        for h in holdings_list:
-            h.holding.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
+            data = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+
+            for h in holdings_list:
+                h.holding.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
         
         return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list })
 
@@ -204,3 +209,61 @@ def delete_watch_lists(request):
 
         messages.success(request, 'Lista eliminada.')
         return redirect('watch_lists')
+
+@login_required
+def holding(request, symbol):
+
+    holding = yf.Ticker(symbol)
+
+    info = holding.info
+
+    if info.get('longName'):
+
+        df = holding.history(period="max")
+
+        # 1. Reseteamos el índice para que la fecha pase a ser una columna normal
+        df.reset_index(inplace=True)
+        
+        # 2. Formateamos la fecha a un string limpio ("YYYY-MM-DD")
+        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+
+        history_list = df[['Date', 'Close']].to_dict(orient='records')
+
+        pprint(history_list)
+
+        # pprint(info)
+        
+
+        context = {
+            'symbol': symbol.upper(),
+            'longName': info.get('longName'),
+            'quoteType': info.get('quoteType'),
+            'currentPrice': humanize.intcomma(info.get('currentPrice')) if info.get('currentPrice') else humanize.intcomma(info.get('regularMarketPrice')),
+            'dayHigh':  humanize.intcomma(round(info.get('dayHigh'))) if info.get('dayHigh') else 0,
+            'dayLow':  humanize.intcomma(round(info.get('dayLow'))) if info.get('dayLow') else 0,
+            'dividendYield':  humanize.intcomma(info.get('dividendYield')),
+            'fullExchangeName': info.get('fullExchangeName'),
+            'fulldayChangeNumber': info.get('fulldayChange'),
+            'fulldayChange': humanize.intcomma(round(info.get('fulldayChange'),2)) if info.get('fulldayChange') else 0,
+            'fulldayChangePercent': humanize.intcomma(round(info.get('fulldayChangePercent'), 2)) if info.get('fulldayChangePercent') else 0,
+            'industry': info.get('industry'),
+            'marketCap': humanize.metric(info.get('marketCap')) if info.get('marketCap') else 0,
+            'sector': info.get('sector'),
+            'targetHighPrice': info.get('targetHighPrice'),
+            'targetLowPrice': info.get('targetLowPrice'),
+            'targetMeanPrice': info.get('targetMeanPrice'),
+            'targetMedianPrice': info.get('targetMedianPrice'),
+            'trailingPE': humanize.intcomma(round(info.get('trailingPE'), 2)) if info.get('trailingPE') else 0,
+            'forwardPE': humanize.intcomma(round(info.get('forwardPE'), 2)) if info.get('forwardPE') else 0,
+            'beta': humanize.intcomma(round(info.get('beta'), 2)) if info.get('beta') else 0,
+            'marketState': info.get('marketState'),
+            'fiftyTwoWeekHigh': humanize.intcomma(info.get('fiftyTwoWeekHigh')),
+            'fiftyTwoWeekLow': humanize.intcomma(info.get('fiftyTwoWeekLow')),
+            'recommendationKey': info.get('recommendationKey'),
+            'history_list': history_list,
+            '': info.get(''),
+        }
+    else:
+        context = {}
+    
+    return render(request, 'holding.html', context)
