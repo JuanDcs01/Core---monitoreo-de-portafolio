@@ -15,30 +15,24 @@
         <div>
             {{ longName }}
         </div>
-            {{ currentPrice }}
-        <strong>Hoy: </strong>
-        {{ fulldayChangePercent }}%
-        {% if fulldayChangeNumber > 0 %}
-            (+{{ fulldayChange }})
-        {% else %}
-            ({{ fulldayChange }})
-        {% endif %}
-        {% if postMarketPrice %}
-            <strong>Post:</strong> {{ postMarketPrice }}
-            {{ postMarketChangePercent }}%
-            ({{ postMarketChange }})
-        {% endif %}
-        <div style="height: 350px; margin: 30px;">
-            <button class="period active-period" id="days1">1 d</button>
-            <button class="period" id="days5">5 d</button>
-            <button class="period" id="months1">1 m</button>
-            <button class="period" id="months3">3 m</button>
-            <button class="period" id="months6">6 m</button>
-            <button class="period" id="YTD">YTD</button>
-            <button class="period" id="year1">1 a</button>
-            <button class="period" id="year5">5 a</button>
-            <button class="period" id="max">MAX</button>
+        <h2 id="currentPrice">{{ currentPrice }}</h2>
+        <span id="percentChange">%</span>
+        <span id="numberChange">
+            ()
+        </span>
+        <div style="height: 350px; margin: 20px; display: flex; flex-direction: column; align-items: center;">
             <canvas id="history"></canvas>
+            <div style="display: flex;">
+                <button class="period" id="days1">1 d</button>
+                <button class="period" id="days5">5 d</button>
+                <button class="period" id="months1">1 m</button>
+                <button class="period" id="months3">3 m</button>
+                <button class="period" id="months6">6 m</button>
+                <button class="period" id="YTD">YTD</button>
+                <button class="period" id="year1">1 a</button>
+                <button class="period" id="year5">5 a</button>
+                <button class="period" id="max">MAX</button>
+            </div>
         </div>
     </div>
     <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
@@ -60,143 +54,193 @@
 </div>
 
 <script>
+    const historyDataMax = {{ history_list | safe }};
+    const historyData5d = {{ history_list_5d | safe }};
+    const historyData1d = {{ history_list_1d | safe }};
 
-let myChart = null; // Variable global para guardar la instancia
+    let miGrafico = null;
+    let currentRawData = []; 
+    // NUEVAS VARIABLES GLOBALES PARA CONTROLAR EL COLOR EN LOS CALLBACKS
+    let isLinePositive = true; 
+    let currentLineColor = 'rgb(0, 128, 0)';
 
-function initChart(canvasId, labels, data, maxTicksLimit, tension) {
-    const ctx = document.getElementById(canvasId);
-    const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
+    // Función para actualizar los valores de texto en la pantalla
+    function actualizarTextos(primerPrecio, ultimoPrecio, isPositive, colorHex) {
+        const diferencia = ultimoPrecio - primerPrecio;
+        const porcentaje = (diferencia / primerPrecio) * 100;
+        
+        const numberSpan = document.getElementById('numberChange');
+        const percentSpan = document.getElementById('percentChange');
+        
+        if (numberSpan && percentSpan) {
+            numberSpan.innerText = isPositive ? `(+${diferencia.toFixed(2)})` : `(${diferencia.toFixed(2)})`;
+            percentSpan.innerText = `${porcentaje.toFixed(2)}%`;
+            numberSpan.style.color = colorHex;
+            percentSpan.style.color = colorHex;
+        }
+    }
 
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                fill: true,
-                data: data,
-                borderColor: lineColor,
-                tension: tension,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: 'white',
-                pointHoverBorderColor: lineColor,
-                pointHoverBorderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-                duration: data.length > 500 ? 0 : 1000 // Sin animación si son muchos datos
-            },
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false } },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: {
-                        autoSkip: true,
-                        maxTicksLimit: maxTicksLimit,
-                        callback: function(value, index) {
-                            const date = this.getLabelForValue(value);
-                            if (!date) return '';
-                            if (date.length > 11) {
-                                return date.slice(11, 16);
-                            } else {
-                                return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
+    // Inicializador del gráfico
+    function initChart(canvasId, dataset, maxTicksLimit, tension) {
+        const ctx = document.getElementById(canvasId);
+        currentRawData = dataset;
+
+        const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
+        const labels = dataset.map(item => item[key]);
+        const prices = dataset.map(item => item['Close']);
+        
+        const primerPrecio = prices[0];
+        const ultimoPrecio = prices[prices.length - 1];
+        
+        // ACTUALIZAMOS LAS VARIABLES GLOBALES
+        isLinePositive = (ultimoPrecio - primerPrecio) >= 0;
+        currentLineColor = isLinePositive ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
+
+        miGrafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    fill: true,
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const { ctx, chartArea } = chart;
+                        if (!chartArea) return null;
+                        
+                        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                        
+                        // USA LA VARIABLE GLOBAL isLinePositive
+                        if (isLinePositive) {
+                            gradient.addColorStop(0, 'rgba(0, 128, 0, 0.4)');
+                            gradient.addColorStop(1, 'rgba(0, 128, 0, 0.0)');
+                        } else {
+                            gradient.addColorStop(0, 'rgba(210, 4, 45, 0.4)');
+                            gradient.addColorStop(1, 'rgba(210, 4, 45, 0.0)');
+                        }
+                        return gradient;
+                    },
+                    data: prices,
+                    borderColor: currentLineColor,
+                    tension: tension,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: 'white',
+                    pointHoverBorderColor: currentLineColor,
+                    pointHoverBorderWidth: 2,
+                    
+                    segment: {
+                        borderDash: ctx => {
+                            const rawItem = currentRawData[ctx.p0DataIndex]; 
+                            if (rawItem && rawItem.Phase && rawItem.Phase !== 'regular') {
+                                return [5, 5]; 
                             }
+                            return undefined; 
+                        },
+                        borderColor: ctx => {
+                            const rawItem = currentRawData[ctx.p0DataIndex]; 
+                            if (rawItem && rawItem.Phase && rawItem.Phase !== 'regular') {
+                                // USA LA VARIABLE GLOBAL currentLineColor
+                                return currentLineColor.replace('rgb', 'rgba').replace(')', ', 0.4)');
+                            }
+                            return currentLineColor; 
                         }
                     }
-                },
-                y: {
-                    beginAtZero: false, // <-- Cambiar a false
-                    ticks: {
-                        // Opcional: puedes agregar esto para que no pegue el gráfico exactamente al borde inferior
-                        padding: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: prices.length > 500 ? 0 : 1000 },
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: maxTicksLimit,
+                            callback: function(value) {
+                                const date = this.getLabelForValue(value);
+                                if (!date) return '';
+                                if (date.length > 11) return date.slice(11, 16); 
+                                else return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: false, 
+                        ticks: { padding: 10 }
                     }
                 }
             }
+        });
+        
+        actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
+    }
+
+    // Actualizador eficiente (sin destruir el gráfico)
+    function actualizarGrafico(historyData, maxTicksLimit, period = null, tension = 0.1) {
+        let dataset = historyData;
+
+        if (period && period !== 'YTD') {
+            dataset = dataset.slice(period);
         }
-    });
-}
 
-function updateChart(historyData, maxTicksLimit, period = null, tension = 0.1) {
-    let dataset = historyData;
+        if (period === 'YTD') {
+            const currentYear = historyData.at(-1)['Date'].slice(0, 4);
+            dataset = historyData.filter(item => item['Date'].slice(0, 4) === currentYear);
+        }
 
-    if (period && period != 'YTD') {
-        dataset = dataset.slice(period);
+        currentRawData = dataset; 
+
+        const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
+        const labels = dataset.map(item => item[key]);
+        const prices = dataset.map(item => item['Close']);
+        
+        const primerPrecio = prices[0];
+        const ultimoPrecio = prices[prices.length - 1];
+        
+        // ACTUALIZAMOS LAS VARIABLES GLOBALES PARA QUE EL CHART.JS LAS LEA
+        isLinePositive = (ultimoPrecio - primerPrecio) >= 0;
+        currentLineColor = isLinePositive ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
+
+        // Inyectar nuevos datos
+        miGrafico.data.labels = labels;
+        miGrafico.data.datasets[0].data = prices;
+        miGrafico.data.datasets[0].borderColor = currentLineColor;
+        miGrafico.data.datasets[0].pointHoverBorderColor = currentLineColor;
+        miGrafico.data.datasets[0].tension = tension;
+        miGrafico.options.animation.duration = prices.length > 500 ? 0 : 1000;
+        
+        // Al ejecutar update(), el degradado y el segment usarán el nuevo color automáticamente
+        miGrafico.update();
+        actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
     }
 
-    if (period == 'YTD') {
-        const currentYear = historyData.at(-1)['Date'].slice(0, 4);
-        dataset = historyData.filter(item => item['Date'].slice(0, 4) === currentYear);
-    }
+    // Ejecutar inicialización 
+    initChart("history", historyData1d, 8, 0.2);
 
-    const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
-    const labels = dataset.map(item => item[key]);
-    const prices = dataset.map(item => item['Close']);
-    
-    const lineColor = (prices[prices.length - 1] - prices[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
-
-    // Actualizar los datos del gráfico existente
-    myChart.data.labels = labels;
-    myChart.data.datasets[0].data = prices;
-    myChart.data.datasets[0].borderColor = lineColor;
-    myChart.data.datasets[0].pointHoverBorderColor = lineColor;
-    myChart.data.datasets[0].tension = tension;
-    
-    // Opcional: ajustar animación según la cantidad de datos
-    myChart.options.animation.duration = prices.length > 500 ? 0 : 1000;
-
-    // Redibujar el gráfico suavemente sin destruirlo
-    myChart.update();
-}
-
-let history = {{ history_list | safe }};
-let history5d = {{ history_list_5d | safe }};
-let history1d = {{ history_list_1d | safe }};
-
-// 1. Inicializar la gráfica al cargar la página con 1 día por defecto
-const initialLabels = history1d.map(item => item['Datetime'] || item['Date']);
-const initialPrices = history1d.map(item => item['Close']);
-initChart("history", initialLabels, initialPrices, 8, 0.2);
-
-// 2. Configurar los botones de periodos
-function setupPeriodButtons() {
+    // Event Listeners 
     const botones = document.querySelectorAll('.period');
-
     botones.forEach(button => {
         button.addEventListener('click', function() {
             botones.forEach(b => b.classList.remove('active-period'));
-            button.classList.add('active-period');
+            this.classList.add('active-period');
 
-            const id = button.id;
-
-            if (id == 'year1') {
-                updateChart(history, 7, -365);
-            } else if (id == 'year5') {
-                updateChart(history, 7, -1825);
-            } else if (id == 'months6') {
-                updateChart(history, 7, -180);
-            } else if (id == 'months3') {
-                updateChart(history, 7, -90, 0.2);
-            } else if (id == 'months1') {
-                updateChart(history, 7, -30, 0.2);
-            } else if (id == 'days5') {
-                updateChart(history5d, 8, null, 0.2);
-            } else if (id == 'days1') {
-                updateChart(history1d, 8, null, 0.2);
-            } else if (id == 'YTD') {
-                updateChart(history, 7, 'YTD');
-            } else if (id == 'max') {
-                updateChart(history, 7, null);
-            }
+            const id = this.id;
+            if (id === 'year1') actualizarGrafico(historyDataMax, 7, -365);
+            else if (id === 'year5') actualizarGrafico(historyDataMax, 7, -1825);
+            else if (id === 'months6') actualizarGrafico(historyDataMax, 7, -180);
+            else if (id === 'months3') actualizarGrafico(historyDataMax, 7, -90, 0.2);
+            else if (id === 'months1') actualizarGrafico(historyDataMax, 7, -30, 0.2);
+            else if (id === 'days5') actualizarGrafico(historyData5d, 8, null, 0.2);
+            else if (id === 'days1') actualizarGrafico(historyData1d, 8, null, 0.2);
+            else if (id === 'YTD') actualizarGrafico(historyDataMax, 7, 'YTD');
+            else if (id === 'max') actualizarGrafico(historyDataMax, 7, null);
         });
     });
-}
 
-setupPeriodButtons();
-
+    document.getElementById('days1').click();
 </script>
 
 {% endblock content %}

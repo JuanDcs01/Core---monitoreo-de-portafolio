@@ -7,6 +7,8 @@ from pprint import pprint
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import humanize
+import pandas as pd
+import datetime
 
 @login_required
 def index(request):
@@ -212,36 +214,60 @@ def delete_watch_lists(request):
 
 @login_required
 def holding(request, symbol):
-
     holding = yf.Ticker(symbol)
-
     info = holding.info
 
     if info.get('longName'):
-
-        df = holding.history(period="max")
-        df_5d = holding.history(period="5d", interval="1h")
+        df = holding.history(period="max", prepost=True)
+        df_5d = holding.history(period="5d", interval="30m", prepost=True)
         df_1d = holding.history(period="1d", interval="5m", prepost=True)
 
-        # 1. Reseteamos el índice para que la fecha pase a ser una columna normal
+        # 1. Asegurar la zona horaria correcta (Nueva York) antes de extraer la hora
+        # Prevenimos errores en caso de que yfinance devuelva fechas sin timezone (naive)
+        for d in [df_5d, df_1d]:
+            if d.index.tz is None:
+                d.index = d.index.tz_localize('UTC').tz_convert('America/New_York')
+            else:
+                d.index = d.index.tz_convert('America/New_York')
+
+        # 2. Función para clasificar la fase del mercado
+        def get_market_phase(dt):
+            t = dt.time()
+            if t < datetime.time(9, 30):
+                return 'pre'
+            elif t >= datetime.time(16, 0):
+                return 'post'
+            else:
+                return 'regular'
+
+        # 3. Aplicar la función al índice de los dataframes intradía
+        df_5d['Phase'] = df_5d.index.map(get_market_phase)
+        df_1d['Phase'] = df_1d.index.map(get_market_phase)
+
+        # 4. Reseteamos el índice
         df.reset_index(inplace=True)
         df_5d.reset_index(inplace=True)
         df_1d.reset_index(inplace=True)
         
-        # 2. Formateamos la fecha a un string limpio ("YYYY-MM-DD")
+        # 5. Formateamos las fechas a string
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         df_5d["Datetime"] = df_5d["Datetime"].astype(str)
         df_1d["Datetime"] = df_1d["Datetime"].astype(str)
 
+        # 6. Convertimos a diccionarios, incluyendo 'Phase' en los de corto plazo
         history_list = df[['Date', 'Close']].to_dict(orient='records')
-        history_list_5d = df_5d[['Datetime', 'Close']].to_dict(orient='records')
-        history_list_1d = df_1d[['Datetime', 'Close']].to_dict(orient='records')
+        history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
+        history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
+
+        for h in history_list:
+            h['Close'] = round(h['Close'], 2)
 
         for h in history_list_5d:
             h['Datetime'] = h['Datetime'][0:19]
-
+            h['Close'] = round(h['Close'], 2)
         for h in history_list_1d:
             h['Datetime'] = h['Datetime'][0:19]
+            h['Close'] = round(h['Close'], 2)
 
         context = {
             'symbol': symbol.upper(),
@@ -275,7 +301,6 @@ def holding(request, symbol):
             'history_list': history_list,
             'history_list_5d': history_list_5d,
             'history_list_1d': history_list_1d,
-            '': info.get(''),
         }
     else:
         context = {}
