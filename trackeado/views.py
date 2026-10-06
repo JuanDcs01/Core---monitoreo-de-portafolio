@@ -281,3 +281,13 @@ def holding(request, symbol):
         context = {}
     
     return render(request, 'holding.html', context)
+
+@login_required
+def search_holding(request):
+
+    symbol = request.POST.get('symbol').upper()
+
+    if not symbol:
+        redirect('dashboard')    
+
+    return redirect('holding', symbol)  

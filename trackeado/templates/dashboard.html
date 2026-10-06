@@ -1,9 +1,15 @@
 {% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
 
+    <form action="{% url 'search_holding' %}" method="POST">
+        {% csrf_token %}
+        <input type="text" name="symbol" placeholder="Consultar Símbolo">
+        <button type="submit">Buscar</button>
+    </form>
+
     <form action="{% url 'add_symbol' %}" method="POST">
         {% csrf_token %}
-        <input type="text" name="symbol" placeholder="buscar Símbolo">
+        <input type="text" name="symbol" placeholder="Agregar Símbolo">
         <button>Agregar</button>
     </form>
 
