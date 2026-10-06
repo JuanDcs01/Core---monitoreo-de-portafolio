@@ -29,7 +29,7 @@
             ({{ postMarketChange }})
         {% endif %}
         <div style="height: 350px; margin: 30px;">
-            <button class="period" id="days1">1 d</button>
+            <button class="period active-period" id="days1">1 d</button>
             <button class="period" id="days5">5 d</button>
             <button class="period" id="months1">1 m</button>
             <button class="period" id="months3">3 m</button>
@@ -61,24 +61,24 @@
 
 <script>
 
-    function chartline(canvasId, labels, data, maxTicksLimit, tension) {
-        const ctx = document.getElementById(canvasId);
+let miGrafico = null; // Variable global para guardar la instancia
 
-        // Definir el color de acuerdo a si es positivo (verde) o negativo (rojo)
-        const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)' 
+function initChart(canvasId, labels, data, maxTicksLimit, tension) {
+    const ctx = document.getElementById(canvasId);
+    const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
 
-        const miGrafico = new Chart(ctx, {
-        type: 'line', // Line Chart
+    miGrafico = new Chart(ctx, {
+        type: 'line',
         data: {
-            labels: labels,// eje X
+            labels: labels,
             datasets: [{
                 fill: true,
-                data: data, // eje Y
-                borderColor: lineColor, // Color de la línea
-                tension: tension, // Curvatura de la línea (0 = recta, más de 0 = curva suave)
-                pointRadius: 0, // ocultar puntos
+                data: data,
+                borderColor: lineColor,
+                tension: tension,
+                pointRadius: 0,
                 pointHoverRadius: 5,
-                pointHoverBackgroundColor: 'white', // Color opcional al hacer hover
+                pointHoverBackgroundColor: 'white',
                 pointHoverBorderColor: lineColor,
                 pointHoverBorderWidth: 2
             }]
@@ -86,143 +86,116 @@
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false
+            animation: {
+                duration: data.length > 500 ? 0 : 1000 // Sin animación si son muchos datos
             },
-            plugins: {
-                legend: {
-                    display: false // ocultar la leyenda
-                }
-            },
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { display: false } },
             scales: {
                 x: {
-                    grid: {
-                        display: false, // ocultar lineas del eje x hacia arriba
-                    },
+                    grid: { display: false },
                     ticks: {
-                        autoSkip: true,      // Deja que Chart.js salte automáticamente las etiquetas que no caben
-                        maxTicksLimit: maxTicksLimit,  // Fuerza un máximo de 10 puntos visibles en el eje X
+                        autoSkip: true,
+                        maxTicksLimit: maxTicksLimit,
                         callback: function(value, index) {
-                        const date = this.getLabelForValue(value);
-
-                        if (date.length > 11) {
-                            return date.slice(11, 16);
-                        } else {
-                            return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short'});
+                            const date = this.getLabelForValue(value);
+                            if (!date) return '';
+                            if (date.length > 11) {
+                                return date.slice(11, 16);
+                            } else {
+                                return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
+                            }
                         }
-                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false, // <-- Cambiar a false
+                    ticks: {
+                        // Opcional: puedes agregar esto para que no pegue el gráfico exactamente al borde inferior
+                        padding: 10
                     }
                 }
             }
         }
-    }
-)
-    };
+    });
+}
 
+function actualizarGrafico(historyData, maxTicksLimit, period = null, tension = 0.1) {
+    let dataset = historyData;
 
-
-
-
-    let history = {{ history_list | safe }};
-    let history5d = {{ history_list_5d | safe }};
-    let history1d = {{ history_list_1d | safe }};
-
-    function ejes(history, maxTicksLimit, period=null, tension=0.1) {
-
-        if (period && period != 'YTD') {
-            history = history.slice(period);
-        }
-
-        key = 'Date'
-
-        if (history[0]['Datetime']) {
-            key = 'Datetime'
-        }
-
-        labels = []
-        prices = []
-
-        
-        for (let i = 0; i < history.length; i++){
-            if (period == 'YTD') {
-                if (history[i]['Date'].slice(0, 4) == history.at(-1)['Date'].slice(0, 4)) {
-                    labels.push(history[i][key])
-                    prices.push(history[i]['Close'])
-                }
-            } else {
-                labels.push(history[i][key])
-                prices.push(history[i]['Close'])
-            }
-        }  
-
-        chartline("history", labels, prices, maxTicksLimit=maxTicksLimit, tension=tension)
+    if (period && period != 'YTD') {
+        dataset = dataset.slice(period);
     }
 
-    ejes(history1d, 8, null, 0.2)
+    if (period == 'YTD') {
+        const currentYear = historyData.at(-1)['Date'].slice(0, 4);
+        dataset = historyData.filter(item => item['Date'].slice(0, 4) === currentYear);
+    }
 
-    function changePeriod(button) {
+    const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
+    const labels = dataset.map(item => item[key]);
+    const prices = dataset.map(item => item['Close']);
+    
+    const lineColor = (prices[prices.length - 1] - prices[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
 
-        const botones = document.querySelectorAll('.period');
+    // Actualizar los datos del gráfico existente
+    miGrafico.data.labels = labels;
+    miGrafico.data.datasets[0].data = prices;
+    miGrafico.data.datasets[0].borderColor = lineColor;
+    miGrafico.data.datasets[0].pointHoverBorderColor = lineColor;
+    miGrafico.data.datasets[0].tension = tension;
+    
+    // Opcional: ajustar animación según la cantidad de datos
+    miGrafico.options.animation.duration = prices.length > 500 ? 0 : 1000;
 
-        botones.forEach(boton => {
+    // Redibujar el gráfico suavemente sin destruirlo
+    miGrafico.update();
+}
 
-        button.addEventListener('click', function(){                    
-            botones.forEach(b => {
-                b.classList.remove('active-period');
-            });
+let history = {{ history_list | safe }};
+let history5d = {{ history_list_5d | safe }};
+let history1d = {{ history_list_1d | safe }};
+
+// 1. Inicializar la gráfica al cargar la página con 1 día por defecto
+const initialLabels = history1d.map(item => item['Datetime'] || item['Date']);
+const initialPrices = history1d.map(item => item['Close']);
+initChart("history", initialLabels, initialPrices, 8, 0.2);
+
+// 2. Configurar los botones de periodos
+function setupPeriodButtons() {
+    const botones = document.querySelectorAll('.period');
+
+    botones.forEach(button => {
+        button.addEventListener('click', function() {
+            botones.forEach(b => b.classList.remove('active-period'));
             button.classList.add('active-period');
 
             const id = button.id;
-            const chartExistente = Chart.getChart("history"); // Le pasas el ID del HTML sin el '#'
 
-            if (chartExistente) {
-            chartExistente.destroy();
-            }
-
-            if (id == 'year1'){
-                ejes(history, 7, -365)
-            } else if (id  == 'year5') {
-                ejes(history, 7, -1825)
-            } else if (id  == 'months6') {
-                ejes(history, 7, -180)
-            } else if (id  == 'months3') {
-                ejes(history, 7, -90, 0.2)
-            } else if (id == 'max') {
-                ejes(history, 7, null)
+            if (id == 'year1') {
+                actualizarGrafico(history, 7, -365);
+            } else if (id == 'year5') {
+                actualizarGrafico(history, 7, -1825);
+            } else if (id == 'months6') {
+                actualizarGrafico(history, 7, -180);
+            } else if (id == 'months3') {
+                actualizarGrafico(history, 7, -90, 0.2);
             } else if (id == 'months1') {
-                ejes(history, 7, -30, 0.2)
+                actualizarGrafico(history, 7, -30, 0.2);
             } else if (id == 'days5') {
-                ejes(history5d, 8, null, 0.2)
+                actualizarGrafico(history5d, 8, null, 0.2);
             } else if (id == 'days1') {
-                ejes(history1d, 8, null, 0.2)
-            }   else if (id == 'YTD') {
-                ejes(history, 7 ,'YTD')
+                actualizarGrafico(history1d, 8, null, 0.2);
+            } else if (id == 'YTD') {
+                actualizarGrafico(history, 7, 'YTD');
+            } else if (id == 'max') {
+                actualizarGrafico(history, 7, null);
             }
-        })
-    }
-    )};
+        });
+    });
+}
 
-    const button1 = document.querySelector('#year1');
-    const button9 = document.querySelector('#year5');
-    const button2 = document.querySelector('#months6');
-    const button3 = document.querySelector('#months3');
-    const button4 = document.querySelector('#months1');
-    const button5 = document.querySelector('#days5');
-    const button6 = document.querySelector('#days1');
-    const button7 = document.querySelector('#max');
-    const button8 = document.querySelector('#YTD');
-
-
-    changePeriod(button1)
-    changePeriod(button2)
-    changePeriod(button3)
-    changePeriod(button4)
-    changePeriod(button5)
-    changePeriod(button6)
-    changePeriod(button7)
-    changePeriod(button8)
-    changePeriod(button9)
+setupPeriodButtons();
 
 </script>
 
