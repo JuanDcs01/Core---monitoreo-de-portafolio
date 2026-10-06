@@ -16,10 +16,8 @@
             {{ longName }}
         </div>
         <h2 id="currentPrice">{{ currentPrice }}</h2>
-        <span id="percentChange">%</span>
-        <span id="numberChange">
-            ()
-        </span>
+        <span id="percentChange"></span>
+        <span id="numberChange"></span>
         <div style="height: 350px; margin: 20px; display: flex; flex-direction: column; align-items: center;">
             <canvas id="history"></canvas>
             <div style="display: flex;">
@@ -73,8 +71,8 @@
         const percentSpan = document.getElementById('percentChange');
         
         if (numberSpan && percentSpan) {
-            numberSpan.innerText = isPositive ? `(+${diferencia.toFixed(2)})` : `(${diferencia.toFixed(2)})`;
-            percentSpan.innerText = `${porcentaje.toFixed(2)}%`;
+            numberSpan.innerText = isPositive ? `(+${precioFormateado(diferencia)})` : `(${precioFormateado(diferencia)})`;
+            percentSpan.innerText = `${precioFormateado(porcentaje)}%`;
             numberSpan.style.color = colorHex;
             percentSpan.style.color = colorHex;
         }
@@ -150,9 +148,31 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                animation: { duration: prices.length > 500 ? 0 : 1000 },
+                animation: 2000,
                 interaction: { mode: 'index', intersect: false },
-                plugins: { legend: { display: false } },
+                plugins: { legend: { 
+                    display: false 
+                    },tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let valor = context.parsed.y;
+                                return `Precio: $${precioFormateado(valor)}`;
+                            }, title: function(tooltipItems) {
+                                let item = tooltipItems[0]['label'];
+                                date = new Date(item.replace(' ', 'T'))
+
+                                return date.toLocaleString('es-ES', {
+                                            weekday: 'short',
+                                            year: 'numeric',
+                                            month: 'short',
+                                            day: '2-digit',
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true // o false para 24h
+                                        });
+                            }
+                        }
+                    } },
                 scales: {
                     x: {
                         grid: { display: false },
@@ -162,7 +182,7 @@
                             callback: function(value) {
                                 const date = this.getLabelForValue(value);
                                 if (!date) return '';
-                                if (date.length > 11) return date.slice(11, 16); 
+                                if (date.length > 11) return new Date(date).toLocaleDateString('es-DO', { hour: 'numeric', minute: '2-digit', hour12: true }).slice(10); 
                                 else return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
                             }
                         }
@@ -210,7 +230,7 @@
         miGrafico.data.datasets[0].borderColor = currentLineColor;
         miGrafico.data.datasets[0].pointHoverBorderColor = currentLineColor;
         miGrafico.data.datasets[0].tension = tension;
-        miGrafico.options.animation.duration = prices.length > 500 ? 0 : 1000;
+        miGrafico.options.animation.duration = 2000;
         
         // Al ejecutar update(), el degradado y el segment usarán el nuevo color automáticamente
         miGrafico.update();
@@ -239,6 +259,14 @@
             else if (id === 'max') actualizarGrafico(historyDataMax, 7, null);
         });
     });
+
+    function precioFormateado(number) {
+
+        return number.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+        })
+    };
 
     document.getElementById('days1').click();
 </script>
