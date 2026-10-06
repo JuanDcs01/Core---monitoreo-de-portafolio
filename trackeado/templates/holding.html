@@ -1,6 +1,13 @@
 {% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
 <div>
+
+    <style>
+        .active-period {
+            background-color: cadetblue;
+        }
+
+    </style>
     <div style="width: 60%; margin: auto; margin-top: 50px;">
         <div>
             {{ symbol }}:{{ fullExchangeName }}
@@ -22,14 +29,15 @@
             ({{ postMarketChange }})
         {% endif %}
         <div style="height: 350px; margin: 30px;">
-            <button id="days1">1 d</button>
-            <button id="days5">5 d</button>
-            <button id="months1">1 m</button>
-            <button id="months3">3 m</button>
-            <button id="months6">6 m</button>
-            <button id="YTD">YTD</button>
-            <button id="year1">1 a</button>
-            <button id="max">MAX</button>
+            <button class="period" id="days1">1 d</button>
+            <button class="period" id="days5">5 d</button>
+            <button class="period" id="months1">1 m</button>
+            <button class="period" id="months3">3 m</button>
+            <button class="period" id="months6">6 m</button>
+            <button class="period" id="YTD">YTD</button>
+            <button class="period" id="year1">1 a</button>
+            <button class="period" id="year5">5 a</button>
+            <button class="period" id="max">MAX</button>
             <canvas id="history"></canvas>
         </div>
     </div>
@@ -155,35 +163,48 @@
 
     function changePeriod(button) {
 
-        button.addEventListener('click', function(){
+        const botones = document.querySelectorAll('.period');
 
-        const id = button.id;
-        const chartExistente = Chart.getChart("history"); // Le pasas el ID del HTML sin el '#'
+        botones.forEach(boton => {
 
-        if (chartExistente) {
-        chartExistente.destroy();
-        }
+        button.addEventListener('click', function(){                    
+            botones.forEach(b => {
+                b.classList.remove('active-period');
+            });
+            button.classList.add('active-period');
 
-        if (id == 'year1'){
-            ejes(history, 7, -365)
-        } else if (id  == 'months6') {
-            ejes(history, 7, -180)
-        } else if (id  == 'months3') {
-            ejes(history, 7, -90, 0.2)
-        } else if (id == 'max') {
-            ejes(history, 7, null)
-        } else if (id == 'months1') {
-            ejes(history, 7, -30, 0.2)
-        } else if (id == 'days5') {
-            ejes(history5d, 8, null, 0.2)
-        } else if (id == 'days1') {
-            ejes(history1d, 8, null, 0.2)
-        }   else if (id == 'YTD') {
-            ejes(history, 7 ,'YTD')
-        }
-    })
+            const id = button.id;
+            const chartExistente = Chart.getChart("history"); // Le pasas el ID del HTML sin el '#'
+
+            if (chartExistente) {
+            chartExistente.destroy();
+            }
+
+            if (id == 'year1'){
+                ejes(history, 7, -365)
+            } else if (id  == 'year5') {
+                ejes(history, 7, -1825)
+            } else if (id  == 'months6') {
+                ejes(history, 7, -180)
+            } else if (id  == 'months3') {
+                ejes(history, 7, -90, 0.2)
+            } else if (id == 'max') {
+                ejes(history, 7, null)
+            } else if (id == 'months1') {
+                ejes(history, 7, -30, 0.2)
+            } else if (id == 'days5') {
+                ejes(history5d, 8, null, 0.2)
+            } else if (id == 'days1') {
+                ejes(history1d, 8, null, 0.2)
+            }   else if (id == 'YTD') {
+                ejes(history, 7 ,'YTD')
+            }
+        })
     }
+    )};
+
     const button1 = document.querySelector('#year1');
+    const button9 = document.querySelector('#year5');
     const button2 = document.querySelector('#months6');
     const button3 = document.querySelector('#months3');
     const button4 = document.querySelector('#months1');
@@ -201,7 +222,7 @@
     changePeriod(button6)
     changePeriod(button7)
     changePeriod(button8)
-
+    changePeriod(button9)
 
 </script>
 
