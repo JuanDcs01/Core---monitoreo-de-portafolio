@@ -61,13 +61,13 @@
 
 <script>
 
-let miGrafico = null; // Variable global para guardar la instancia
+let myChart = null; // Variable global para guardar la instancia
 
 function initChart(canvasId, labels, data, maxTicksLimit, tension) {
     const ctx = document.getElementById(canvasId);
     const lineColor = (data[data.length - 1] - data[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
 
-    miGrafico = new Chart(ctx, {
+    myChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -120,7 +120,7 @@ function initChart(canvasId, labels, data, maxTicksLimit, tension) {
     });
 }
 
-function actualizarGrafico(historyData, maxTicksLimit, period = null, tension = 0.1) {
+function updateChart(historyData, maxTicksLimit, period = null, tension = 0.1) {
     let dataset = historyData;
 
     if (period && period != 'YTD') {
@@ -139,17 +139,17 @@ function actualizarGrafico(historyData, maxTicksLimit, period = null, tension = 
     const lineColor = (prices[prices.length - 1] - prices[0]) > 0 ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
 
     // Actualizar los datos del gráfico existente
-    miGrafico.data.labels = labels;
-    miGrafico.data.datasets[0].data = prices;
-    miGrafico.data.datasets[0].borderColor = lineColor;
-    miGrafico.data.datasets[0].pointHoverBorderColor = lineColor;
-    miGrafico.data.datasets[0].tension = tension;
+    myChart.data.labels = labels;
+    myChart.data.datasets[0].data = prices;
+    myChart.data.datasets[0].borderColor = lineColor;
+    myChart.data.datasets[0].pointHoverBorderColor = lineColor;
+    myChart.data.datasets[0].tension = tension;
     
     // Opcional: ajustar animación según la cantidad de datos
-    miGrafico.options.animation.duration = prices.length > 500 ? 0 : 1000;
+    myChart.options.animation.duration = prices.length > 500 ? 0 : 1000;
 
     // Redibujar el gráfico suavemente sin destruirlo
-    miGrafico.update();
+    myChart.update();
 }
 
 let history = {{ history_list | safe }};
@@ -173,23 +173,23 @@ function setupPeriodButtons() {
             const id = button.id;
 
             if (id == 'year1') {
-                actualizarGrafico(history, 7, -365);
+                updateChart(history, 7, -365);
             } else if (id == 'year5') {
-                actualizarGrafico(history, 7, -1825);
+                updateChart(history, 7, -1825);
             } else if (id == 'months6') {
-                actualizarGrafico(history, 7, -180);
+                updateChart(history, 7, -180);
             } else if (id == 'months3') {
-                actualizarGrafico(history, 7, -90, 0.2);
+                updateChart(history, 7, -90, 0.2);
             } else if (id == 'months1') {
-                actualizarGrafico(history, 7, -30, 0.2);
+                updateChart(history, 7, -30, 0.2);
             } else if (id == 'days5') {
-                actualizarGrafico(history5d, 8, null, 0.2);
+                updateChart(history5d, 8, null, 0.2);
             } else if (id == 'days1') {
-                actualizarGrafico(history1d, 8, null, 0.2);
+                updateChart(history1d, 8, null, 0.2);
             } else if (id == 'YTD') {
-                actualizarGrafico(history, 7, 'YTD');
+                updateChart(history, 7, 'YTD');
             } else if (id == 'max') {
-                actualizarGrafico(history, 7, null);
+                updateChart(history, 7, null);
             }
         });
     });
