@@ -17,6 +17,12 @@ class UserHolding(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
 
+    class Meta:
+
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'holding'], name='unique_user_holding')
+        ]
+
 class WatchList(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)

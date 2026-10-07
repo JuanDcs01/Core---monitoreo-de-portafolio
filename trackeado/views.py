@@ -3,13 +3,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 import yfinance as yf
 from .models import Holding, UserHolding, WatchList, HoldingList
 from .forms import WatchListForm
-from pprint import pprint
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import humanize
-import pandas as pd
 import datetime
 from django.conf import settings
+from django.db import IntegrityError
+from pprint import pprint
 
 @login_required
 def index(request):
@@ -55,27 +55,32 @@ def add_holding(request):
         except:
             holding = None
 
-        if holding:
+        try:
+            if holding:
 
-            UserHolding.objects.create(user=user, holding=holding)
+                UserHolding.objects.create(user=user, holding=holding)
+                messages.success(request, 'Símbolo agregado.')
 
-        else: 
+            else: 
 
-            ticker = yf.Ticker(symbol)     
+                ticker = yf.Ticker(symbol)     
 
-            info = ticker.info
+                info = ticker.info
 
-            if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
-                messages.success(request, 'Símbolo no encontrado.')
-                return redirect('index')
+                if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
+                    messages.success(request, 'Símbolo no encontrado.')
+                    return redirect('index')
 
-            name = ticker.info.get('longName')
-            type = ticker.info.get('quoteType')
+                name = ticker.info.get('longName')
+                type = ticker.info.get('quoteType')
 
-            holding = Holding.objects.create(symbol=symbol, name=name, type=type)
-            UserHolding.objects.create(user=user, holding=holding)
+                holding = Holding.objects.create(symbol=symbol, name=name, type=type)
+                UserHolding.objects.create(user=user, holding=holding)
+                messages.success(request, 'Símbolo agregado.')
+            
+        except IntegrityError:
+            messages.error(request, 'El símbolo ya existe.')    
 
-        messages.success(request, 'Símbolo agregado.')
         return redirect('index')
 
 
@@ -162,27 +167,32 @@ def add_holding_list(request):
         except:
             holding = None
 
-        if holding:
+        try:
+            if holding:
 
-            HoldingList.objects.create(watch_list=watch_list, holding=holding)
+                HoldingList.objects.create(watch_list=watch_list, holding=holding)
 
-        else: 
+            else: 
 
-            ticker = yf.Ticker(symbol)     
+                ticker = yf.Ticker(symbol)     
 
-            info = ticker.info
+                info = ticker.info
 
-            if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
-                messages.success(request, 'Símbolo no encontrado.')
-                return redirect('index')
+                if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
+                    messages.success(request, 'Símbolo no encontrado.')
+                    return redirect('index')
 
-            name = ticker.info.get('longName')
-            type = ticker.info.get('quoteType')
+                name = ticker.info.get('longName')
+                type = ticker.info.get('quoteType')
 
-            holding = Holding.objects.create(symbol=symbol, name=name, type=type)
-            HoldingList.objects.create(watch_list=watch_list, holding=holding)
+                holding = Holding.objects.create(symbol=symbol, name=name, type=type)
+                HoldingList.objects.create(watch_list=watch_list, holding=holding)
 
-        messages.success(request, 'Símbolo agregado.')
+                messages.success(request, 'Símbolo agregado.')
+
+        except IntegrityError:
+                messages.error(request, 'El símbolo ya existe.')
+
         return redirect('watch_list_details', watch_list.name)
 
     return render(request, 'watch_list_details.html', {})
