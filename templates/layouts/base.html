@@ -6,18 +6,33 @@
     <title>Tracker de Acciones en Tiempo Real</title>
     <!-- Bootstrap para estilos rápidos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'css/dashboard.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
 
-    {% if user.is_authenticated  %}
-        <form action="{% url 'logout' %}" method="POST">
+    <header>
+
+        <div>
+            <form action="{% url 'search_holding' %}" method="POST">
             {% csrf_token %}
-            <button type="submit">Cerrar sesión</button>
-        </form>
-    {% endif %}
+            <input type="text" name="symbol" placeholder="Consultar Símbolo">
+            <button type="submit">Buscar</button>
+            </form>
+        </div>
+
+        <nav>
+            {% if user.is_authenticated  %}
+                <form action="{% url 'logout' %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            {% endif %}
+        </nav>
+    </header>
+
+
 
     {% if messages %}
         {% for message in messages %}
