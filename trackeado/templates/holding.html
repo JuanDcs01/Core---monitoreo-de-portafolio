@@ -36,7 +36,7 @@
                 <button class="period" id="YTD">YTD</button>
                 <button class="period" id="year1">1 a</button>
                 <button class="period" id="year5">5 a</button>
-                <button class="period" id="max">MAX</button>
+                <button class="period" id="max">Todo</button>
             </div>
         </div>
     </div>
@@ -219,65 +219,91 @@
 
     // Actualizador eficiente (sin destruir el gráfico)
     function actualizarGrafico(historyData, maxTicksLimit, period = null, tension = 0.1) {
-        let dataset = historyData;
+    let dataset = historyData;
+    const ultimoElemento = historyData.at(-1);
+    const fechaUltimoStr = ultimoElemento['Date'] || ultimoElemento['Datetime'];
+    const fechaUltima = new Date(fechaUltimoStr.replace(' ', 'T'));
 
-        if (period && period !== 'YTD') {
-            dataset = dataset.slice(period);
+    if (period && period !== 'Yyd') {
+        let fechaInicio = new Date(fechaUltima);
+
+        // Dependiendo del período, restamos el tiempo correspondiente
+        if (period === '1D') {
+            fechaInicio.setDate(fechaUltima.getDate() - 1);
+        } else if (period === '5D') {
+            fechaInicio.setDate(fechaUltima.getDate() - 5);
+        } else if (period === '1M') {
+            fechaInicio.setMonth(fechaUltima.getMonth() - 1);
+        } else if (period === '3M') {
+            fechaInicio.setMonth(fechaUltima.getMonth() - 3);
+        } else if (period === '6M') {
+            fechaInicio.setMonth(fechaUltima.getMonth() - 6);
+        } else if (period === '1Y') {
+            fechaInicio.setFullYear(fechaUltima.getFullYear() - 1);
+        } else if (period === '5Y') {
+            fechaInicio.setFullYear(fechaUltima.getFullYear() - 5);
         }
 
-        if (period === 'YTD') {
-            const currentYear = historyData.at(-1)['Date'].slice(0, 4);
-            dataset = historyData.filter(item => item['Date'].slice(0, 4) === currentYear);
-        }
-
-        currentRawData = dataset; 
-
-        const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
-        const labels = dataset.map(item => item[key]);
-        const prices = dataset.map(item => item['Close']);
-        
-        const primerPrecio = prices[0];
-        const ultimoPrecio = prices[prices.length - 1];
-        
-        // ACTUALIZAMOS LAS VARIABLES GLOBALES PARA QUE EL CHART.JS LAS LEA
-        isLinePositive = (ultimoPrecio - primerPrecio) >= 0;
-        currentLineColor = isLinePositive ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
-
-        // Inyectar nuevos datos
-        miGrafico.data.labels = labels;
-        miGrafico.data.datasets[0].data = prices;
-        miGrafico.data.datasets[0].borderColor = currentLineColor;
-        miGrafico.data.datasets[0].pointHoverBorderColor = currentLineColor;
-        miGrafico.data.datasets[0].tension = tension;
-        miGrafico.options.animation.duration = 2000;
-        
-        // Al ejecutar update(), el degradado y el segment usarán el nuevo color automáticamente
-        miGrafico.update();
-        actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
+        // Filtramos los datos que sean mayores o iguales a la fecha de inicio calculada
+        dataset = historyData.filter(item => {
+            const itemDateStr = item['Date'] || item['Datetime'];
+            return new Date(itemDateStr.replace(' ', 'T')) >= fechaInicio;
+        });
     }
+
+    if (period === 'YTD') {
+        const currentYear = fechaUltimoStr.slice(0, 4);
+        dataset = historyData.filter(item => {
+            const itemDateStr = item['Date'] || item['Datetime'];
+            return itemDateStr.slice(0, 4) === currentYear;
+        });
+    }
+
+    currentRawData = dataset; 
+
+    const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
+    const labels = dataset.map(item => item[key]);
+    const prices = dataset.map(item => item['Close']);
+    
+    const primerPrecio = prices[0];
+    const ultimoPrecio = prices[prices.length - 1];
+    
+    isLinePositive = (ultimoPrecio - primerPrecio) >= 0;
+    currentLineColor = isLinePositive ? 'rgb(0, 128, 0)' : 'rgb(210, 4, 45)';
+
+    miGrafico.data.labels = labels;
+    miGrafico.data.datasets[0].data = prices;
+    miGrafico.data.datasets[0].borderColor = currentLineColor;
+    miGrafico.data.datasets[0].pointHoverBorderColor = currentLineColor;
+    miGrafico.data.datasets[0].tension = tension;
+    miGrafico.options.animation.duration = 2000;
+    
+    miGrafico.update();
+    actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
+}
 
     // Ejecutar inicialización 
     initChart("history", historyData1d, 8, 0.2);
 
     // Event Listeners 
-    const botones = document.querySelectorAll('.period');
-    botones.forEach(button => {
-        button.addEventListener('click', function() {
-            botones.forEach(b => b.classList.remove('active-period'));
-            this.classList.add('active-period');
+const botones = document.querySelectorAll('.period');
+botones.forEach(button => {
+    button.addEventListener('click', function() {
+        botones.forEach(b => b.classList.remove('active-period'));
+        this.classList.add('active-period');
 
-            const id = this.id;
-            if (id === 'year1') actualizarGrafico(historyDataMax, 7, -365);
-            else if (id === 'year5') actualizarGrafico(historyDataMax, 7, -1825);
-            else if (id === 'months6') actualizarGrafico(historyDataMax, 7, -180);
-            else if (id === 'months3') actualizarGrafico(historyDataMax, 7, -90, 0.2);
-            else if (id === 'months1') actualizarGrafico(historyDataMax, 7, -30, 0.2);
-            else if (id === 'days5') actualizarGrafico(historyData5d, 8, null, 0.2);
-            else if (id === 'days1') actualizarGrafico(historyData1d, 8, null, 0.2);
-            else if (id === 'YTD') actualizarGrafico(historyDataMax, 7, 'YTD');
-            else if (id === 'max') actualizarGrafico(historyDataMax, 7, null);
-        });
+        const id = this.id;
+        if (id === 'year1') actualizarGrafico(historyDataMax, 7, '1Y');
+        else if (id === 'year5') actualizarGrafico(historyDataMax, 7, '5Y');
+        else if (id === 'months6') actualizarGrafico(historyDataMax, 7, '6M');
+        else if (id === 'months3') actualizarGrafico(historyDataMax, 7, '3M', 0.2);
+        else if (id === 'months1') actualizarGrafico(historyDataMax, 7, '1M', 0.2);
+        else if (id === 'days5') actualizarGrafico(historyData5d, 8, '5D', 0.2);
+        else if (id === 'days1') actualizarGrafico(historyData1d, 8, '1D', 0.2);
+        else if (id === 'YTD') actualizarGrafico(historyDataMax, 7, 'YTD');
+        else if (id === 'max') actualizarGrafico(historyDataMax, 7, null);
     });
+});
 
     function precioFormateado(number) {
 
