@@ -11,6 +11,7 @@
     <table>
         <thead>
             <tr>
+                <th></th>
                 <th>Símbolo</th>
                 <th>Tipo</th>
                 <th>Nombre</th>
@@ -20,8 +21,11 @@
             </tr>
         </thead>
         <tbody>
-            {% for h in holdings %}                        
+            {% for h in holdings %}   
                 <tr>
+                    <td>
+                        <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
+                    </td>
                     <td>{{ h.holding.symbol }}</td>
                     <td>{{ h.holding.type | holding_type }}</td>
                     <td>{{ h.holding.name }}</td>

@@ -182,3 +182,6 @@ FINNHUB_API_KEY = os.environ.get(
 
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# logo.dev
+LOGODEV_TOKEN = 'pk_JT8lFssUTjqsgt2QCZIMRA'

@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 import humanize
 import pandas as pd
 import datetime
+from django.conf import settings
 
 @login_required
 def index(request):
@@ -17,7 +18,7 @@ def index(request):
 
     holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
-    print(holdings)
+    # print(holdings)
 
     if not holdings:
         return render(request, 'dashboard.html', {'holdings':holdings})
@@ -26,11 +27,12 @@ def index(request):
 
     data = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
 
-    pprint(data.__dict__)
-
     for h in holdings:
         
         h.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
+        logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
+        h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
+        print(h.logo_url)
 
     context = {
         'holdings': holdings
@@ -136,6 +138,8 @@ def watch_list_details(request, watch_list):
 
             for h in holdings_list:
                 h.holding.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
+                logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
+                h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
         
         return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list })
 
@@ -216,10 +220,13 @@ def delete_watch_lists(request):
 def holding(request, symbol):
     holding = yf.Ticker(symbol)
     info = holding.info
+    ernings = holding.financials
+
+    print(ernings.__dict__)
 
     if info.get('longName'):
-        df = holding.history(period="max", prepost=True)
-        df_5d = holding.history(period="5d", interval="30m", prepost=True)
+        df = holding.history(period="max")
+        df_5d = holding.history(period="5d", interval="15m", prepost=True)
         df_1d = holding.history(period="1d", interval="5m", prepost=True)
 
         # 1. Asegurar la zona horaria correcta (Nueva York) antes de extraer la hora
@@ -248,7 +255,6 @@ def holding(request, symbol):
         df.reset_index(inplace=True)
         df_5d.reset_index(inplace=True)
         df_1d.reset_index(inplace=True)
-        
         # 5. Formateamos las fechas a string
         df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
         df_5d["Datetime"] = df_5d["Datetime"].astype(str)
@@ -268,6 +274,8 @@ def holding(request, symbol):
         for h in history_list_1d:
             h['Datetime'] = h['Datetime'][0:19]
             h['Close'] = round(h['Close'], 2)
+
+        logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
         context = {
             'symbol': symbol.upper(),
@@ -301,6 +309,7 @@ def holding(request, symbol):
             'history_list': history_list,
             'history_list_5d': history_list_5d,
             'history_list_1d': history_list_1d,
+            'logo_url': f"https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40"
         }
     else:
         context = {}
