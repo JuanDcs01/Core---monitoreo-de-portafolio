@@ -15,7 +15,13 @@
         <div>
             {{ longName }}
         </div>
-        <h2 id="currentPrice">{{ currentPrice }}</h2>
+        <h2 id="currentPrice">
+            {% if postMarketPrice %}
+                {{ postMarketPrice }}
+            {% else%}
+                {{ currentPrice }}
+            {% endif %}
+            </h2>
         <span id="percentChange"></span>
         <span id="numberChange"></span>
         <div style="height: 350px; margin: 20px; display: flex; flex-direction: column; align-items: center;">
@@ -33,21 +39,31 @@
             </div>
         </div>
     </div>
-    <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
-    <strong>Dividendo:</strong> {{ dividendYield }}%
-    <strong>Industria:</strong> {{ industry }}
-    <strong>Cap. burs:</strong> {{ marketCap }}
-    <strong>Sector:</strong> {{ sector }}
-    <strong>PE ratio:</strong> {{ trailingPE }}
-    <strong>PE proyectado:</strong> {{ forwardPE }}
-    <strong>Beta:</strong> {{ beta }}
-    <strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}
-    <strong>Otros</strong>
-    <strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}
-    <strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}
-    <strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}
-    <strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}
-    {{ marketState }}
+    <div>
+        <h4>Perfil Corporativo</h4>
+        <strong>Sector:</strong> {{ sector }}
+        <strong>Industria:</strong> {{ industry }}
+        <strong>Cap. burs:</strong> {{ marketCap }}
+    </div>
+    <div>
+        <h4>Desempeño del Precio</h4>
+        <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
+        <strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}
+    </div>
+    <div>
+        <h4>Valuación y Riesgo</h4>
+        <strong>PE ratio:</strong> {{ trailingPE }}
+        <strong>PE proyectado:</strong> {{ forwardPE }}
+        <strong>Beta:</strong> {{ beta }}
+        <strong>Dividendo:</strong> {{ dividendYield }}%
+    </div>
+    <div>
+        <h4>Proyecciones y Consenso de Analistas</h4>
+        <strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}
+        <strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}
+        <strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}
+        <strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}
+        {{ marketState }}
     </div>
 </div>
 
@@ -69,10 +85,12 @@
         
         const numberSpan = document.getElementById('numberChange');
         const percentSpan = document.getElementById('percentChange');
+        const priceSpan = document.getElementById('currentPrice');
         
-        if (numberSpan && percentSpan) {
+        if (numberSpan && percentSpan && priceSpan) {
             numberSpan.innerText = isPositive ? `(+${precioFormateado(diferencia)})` : `(${precioFormateado(diferencia)})`;
             percentSpan.innerText = `${precioFormateado(porcentaje)}%`;
+            priceSpan.innerText = ultimoPrecio;
             numberSpan.style.color = colorHex;
             percentSpan.style.color = colorHex;
         }
