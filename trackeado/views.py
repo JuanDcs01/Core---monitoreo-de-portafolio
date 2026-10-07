@@ -10,6 +10,7 @@ import datetime
 from django.conf import settings
 from django.db import IntegrityError
 from pprint import pprint
+from decimal import Decimal
 
 @login_required
 def index(request):
@@ -18,21 +19,24 @@ def index(request):
 
     holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
-    # print(holdings)
-
     if not holdings:
         return render(request, 'dashboard.html', {'holdings':holdings})
 
     symbols = [h.holding.symbol for h in holdings]
 
-    data = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+    data = yf.download(tickers=symbols, period="max", interval="1d", prepost=True, group_by='ticker', threads=True)
 
     for h in holdings:
-        
-        h.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
+
+        last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
+        current_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-1]
+        h.day_change = round(current_price - last_day_price, 2)
+        h.day_change_percent = round(h.day_change / current_price * 100, 2)
+
+        h.price = round(data.get(h.holding.symbol).get('Close').dropna().iloc[-1], 2)
+
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
-        print(h.logo_url)
 
     context = {
         'holdings': holdings
