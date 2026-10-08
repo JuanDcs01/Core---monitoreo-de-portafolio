@@ -13,7 +13,7 @@ from pprint import pprint
 from decimal import Decimal
 
 @login_required
-def index(request):
+def dashboard(request):
 
     user = request.user
 
@@ -73,7 +73,7 @@ def add_holding(request):
 
                 if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
                     messages.success(request, 'Símbolo no encontrado.')
-                    return redirect('index')
+                    return redirect('dashboard')
 
                 name = ticker.info.get('longName')
                 type = ticker.info.get('quoteType')
@@ -85,7 +85,7 @@ def add_holding(request):
         except IntegrityError:
             messages.error(request, 'El símbolo ya existe.')    
 
-        return redirect('index')
+        return redirect('dashboard')
 
 
 @login_required
@@ -96,7 +96,7 @@ def delete_holding(request):
     holding.delete()
     messages.success(request, 'Símbolo Eliminado.')
 
-    return redirect('index')
+    return redirect('dashboard')
 
 
 @login_required
@@ -184,7 +184,7 @@ def add_holding_list(request):
 
                 if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
                     messages.success(request, 'Símbolo no encontrado.')
-                    return redirect('index')
+                    return redirect('dashboard')
 
                 name = ticker.info.get('longName')
                 type = ticker.info.get('quoteType')
