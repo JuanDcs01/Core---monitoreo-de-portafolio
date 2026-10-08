@@ -111,7 +111,6 @@
                                 date = new Date(item.replace(' ', 'T'))
 
                                 return date.toLocaleString('es-ES', {
-                                    timeZone: 'UTC',
                                     weekday: 'short',
                                     year: 'numeric',
                                     month: 'short',
