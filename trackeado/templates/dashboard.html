@@ -50,4 +50,11 @@
                     <p>No hay datos</p>
             {% endif %}
 
+<aside>
+    <div style="display: flex; flex-direction: column;">
+    {% for list in watch_list %}
+        <a href="{% url 'watch_list_details' list.name %}">{{ list.name }}</a>
+    {% endfor %}
+    </div>
+</aside>
 {% endblock content %}

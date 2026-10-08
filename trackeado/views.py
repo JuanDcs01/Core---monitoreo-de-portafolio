@@ -5,7 +5,6 @@ from .models import Holding, UserHolding, WatchList, HoldingList
 from .forms import WatchListForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-import humanize
 import datetime
 from django.conf import settings
 from django.db import IntegrityError
@@ -19,12 +18,20 @@ def dashboard(request):
 
     holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
+    watch_list = WatchList.objects.filter(user=user)
+
     if not holdings:
         return render(request, 'dashboard.html', {'holdings':holdings})
 
     symbols = [h.holding.symbol for h in holdings]
 
-    data = yf.download(tickers=symbols, period="max", interval="1d", prepost=True, group_by='ticker', threads=True)
+    holding = yf.Ticker('VOO')
+
+    info = holding.info
+
+    market_state = info.get('marketState')
+
+    data = yf.download(tickers=symbols, start='2025-11-24', interval="1d", prepost=True, group_by='ticker', threads=True)
 
     for h in holdings:
 
@@ -39,7 +46,9 @@ def dashboard(request):
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
     context = {
-        'holdings': holdings
+        'holdings': holdings,
+        'market_state': market_state,
+        'watch_list': watch_list
     }
 
     return render(request, 'dashboard.html', {**context})
@@ -277,7 +286,7 @@ def holding(request, symbol):
         # 6. Convertimos a diccionarios, incluyendo 'Phase' en los de corto plazo
         history_list = df[['Date', 'Close']].to_dict(orient='records')
         history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
-        history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
+        history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records') 
 
         for h in history_list_5d:
             h['Close'] = round(h['Close'], 2)
