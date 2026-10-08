@@ -44,25 +44,25 @@
         <h4>Perfil Corporativo</h4>
         <strong>Sector:</strong> {{ sector }}
         <strong>Industria:</strong> {{ industry }}
-        <strong>Cap. burs:</strong> {{ marketCap }}
+        <strong>Cap. burs:</strong> {{ marketCap | metric }}
     </div>
     <div>
         <h4>Desempeño del Precio</h4>
-        <strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}
-        <strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}
+        <strong>Rango hoy:</strong> {{ dayLow | intcomma:False }} - {{ dayHigh | intcomma:False }}
+        <strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow | intcomma:False }} - {{ fiftyTwoWeekHigh | intcomma:False }}
     </div>
     <div>
         <h4>Valuación y Riesgo</h4>
-        <strong>PE ratio:</strong> {{ trailingPE }}
-        <strong>PE proyectado:</strong> {{ forwardPE }}
-        <strong>Beta:</strong> {{ beta }}
-        <strong>Dividendo:</strong> {{ dividendYield }}%
+        <strong>PE ratio:</strong> {{ trailingPE | intcomma:False }}
+        <strong>PE proyectado:</strong> {{ forwardPE | intcomma:False }}
+        <strong>Beta:</strong> {{ beta| intcomma:False }}
+        <strong>Dividendo:</strong> {{ dividendYield | intcomma:False }}%
     </div>
     <div>
         <h4>Proyecciones y Consenso de Analistas</h4>
-        <strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}
-        <strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}
-        <strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}
+        <strong>Precio objetivo más bajo:</strong> {{ targetLowPrice | intcomma:False }}
+        <strong>Precio objetivo más alto:</strong> {{ targetHighPrice | intcomma:False }}
+        <strong>Precio objetivo medio:</strong> {{ targetMedianPrice | intcomma:False }}
         <strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}
         {{ marketState }}
     </div>

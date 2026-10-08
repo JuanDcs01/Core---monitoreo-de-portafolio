@@ -1,4 +1,5 @@
 from django import template
+import humanize
 
 register = template.Library()
 
@@ -24,3 +25,8 @@ def recommendation(value):
         return 'Vender'
     elif value == 'strong_sell':
         return 'Venta fuerte'
+
+@register.filter
+def metric(data):
+
+    return humanize.metric(data)
