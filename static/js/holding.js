@@ -9,7 +9,7 @@
     let currentLineColor = 'rgb(0, 128, 0)';
 
     // Función para actualizar los valores de texto en la pantalla
-    function actualizarTextos(primerPrecio, ultimoPrecio, isPositive, colorHex) {
+    function actualizarTextos(primerPrecio, ultimoPrecio, isPositive, colorHex, marketSate) {
         const diferencia = ultimoPrecio - primerPrecio;
         const porcentaje = (diferencia / primerPrecio) * 100;
         
@@ -20,7 +20,16 @@
         if (numberSpan && percentSpan && priceSpan) {
             numberSpan.innerText = isPositive ? `(+${precioFormateado(diferencia)})` : `(${precioFormateado(diferencia)})`;
             percentSpan.innerText = `${precioFormateado(porcentaje)}%`;
-            priceSpan.innerText = ultimoPrecio;
+            console.log(marketSate);
+            if ( marketSate) {
+                if ( marketSate.trim() == 'regular') {
+                    priceSpan.innerText = precioFormateado(ultimoPrecio)
+                } else if ( marketSate.trim() == 'PRE') {
+                    priceSpan.innerText = `${precioFormateado(ultimoPrecio)} PRE`
+                } else {
+                    priceSpan.innerText = `${precioFormateado(ultimoPrecio)} POST`
+                }
+            }
             numberSpan.style.color = colorHex;
             percentSpan.style.color = colorHex;
         }
@@ -34,7 +43,7 @@
         const key = dataset[0] && dataset[0]['Datetime'] ? 'Datetime' : 'Date';
         const labels = dataset.map(item => item[key]);
         const prices = dataset.map(item => item['Close']);
-        
+        const marketSate = dataset.at(-1)['Phase']
         const primerPrecio = prices[0];
         const ultimoPrecio = prices[prices.length - 1];
         
@@ -154,7 +163,7 @@
             }
         });
         
-        actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
+        actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor, marketSate);
     }
 
     // Actualizador eficiente (sin destruir el gráfico)
@@ -162,6 +171,7 @@
     let dataset = historyData;
     const ultimoElemento = historyData.at(-1);
     const fechaUltimoStr = ultimoElemento['Date'] || ultimoElemento['Datetime'];
+    const marketSate = dataset.at(-1)['Phase']
     if (fechaUltimoStr.length > 10) {
         var fechaUltima = new Date(fechaUltimoStr.replace(' ', 'T'));
     } else {
@@ -229,7 +239,7 @@
     miGrafico.options.animation.duration = 2000;
     
     miGrafico.update();
-    actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor);
+    actualizarTextos(primerPrecio, ultimoPrecio, isLinePositive, currentLineColor, marketSate);
 }
 
     // Ejecutar inicialización 
