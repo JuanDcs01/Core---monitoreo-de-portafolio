@@ -107,17 +107,29 @@
                                 return `Precio: $${precioFormateado(valor)}`;
                             }, title: function(tooltipItems) {
                                 let item = tooltipItems[0]['label'];
+                                if ( item.length > 10 ) {
                                 date = new Date(item.replace(' ', 'T'))
 
                                 return date.toLocaleString('es-ES', {
-                                            weekday: 'short',
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: '2-digit',
-                                            hour: 'numeric',
-                                            minute: '2-digit',
-                                            hour12: true // o false para 24h
-                                        });
+                                    timeZone: 'UTC',
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: '2-digit',
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true // o false para 24h
+                                });
+                                } else {
+                                    date = new Date(item.replace(' ', 'T'))
+                                    return date.toLocaleString('es-ES', {
+                                        timeZone: 'UTC',
+                                        weekday: 'short',
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: '2-digit',
+                                    });
+                                }
                             }
                         }
                     } },
@@ -131,7 +143,7 @@
                                 const date = this.getLabelForValue(value);
                                 if (!date) return '';
                                 if (date.length > 11) return new Date(date).toLocaleDateString('es-DO', { hour: 'numeric', minute: '2-digit', hour12: true }).slice(10); 
-                                else return new Date(date).toLocaleDateString('es-DO', { day: '2-digit', month: 'short' });
+                                else return new Date(date).toLocaleDateString('es-DO', { timeZone: 'UTC', day: '2-digit', month: 'short' });
                             }
                         }
                     },
@@ -151,7 +163,12 @@
     let dataset = historyData;
     const ultimoElemento = historyData.at(-1);
     const fechaUltimoStr = ultimoElemento['Date'] || ultimoElemento['Datetime'];
-    const fechaUltima = new Date(fechaUltimoStr.replace(' ', 'T'));
+    if (fechaUltimoStr.length > 10) {
+        var fechaUltima = new Date(fechaUltimoStr.replace(' ', 'T'));
+    } else {
+        var fechaUltima = new Date(fechaUltimoStr + 'T00:00:00');
+    }
+
 
     if (period && period !== 'Yyd') {
         let fechaInicio = new Date(fechaUltima);
@@ -161,7 +178,7 @@
             fechaInicio.setDate(fechaUltima.getDate() - 1);
         } else if (period === '5D') {
             fechaInicio.setDate(fechaUltima.getDate() - 5);
-        } else if (period === '1M') {
+        }else if (period === '1M') {
             fechaInicio.setMonth(fechaUltima.getMonth() - 1);
         } else if (period === '3M') {
             fechaInicio.setMonth(fechaUltima.getMonth() - 3);
@@ -176,7 +193,12 @@
         // Filtramos los datos que sean mayores o iguales a la fecha de inicio calculada
         dataset = historyData.filter(item => {
             const itemDateStr = item['Date'] || item['Datetime'];
-            return new Date(itemDateStr.replace(' ', 'T')) >= fechaInicio;
+            if (fechaUltimoStr.length > 10) {
+                return new Date(itemDateStr.replace(' ', 'T')) >= fechaInicio;            
+            } else {
+                return new Date(itemDateStr + 'T00:00:00') >= fechaInicio;
+            }
+            
         });
     }
 
