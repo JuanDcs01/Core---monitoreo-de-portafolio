@@ -286,7 +286,7 @@ def holding(request, symbol):
         # 6. Convertimos a diccionarios, incluyendo 'Phase' en los de corto plazo
         history_list = df[['Date', 'Close']].to_dict(orient='records')
         history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
-        history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records') 
+        history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
 
         for h in history_list_5d:
             h['Close'] = round(h['Close'], 2)

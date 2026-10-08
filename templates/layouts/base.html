@@ -24,7 +24,10 @@
 
         <nav>
             {% if user.is_authenticated  %}
-                <form action="{% url 'logout' %}" method="POST">
+                <a href="{% url 'dashboard' %}">Inicio</a>
+                <a href="{% url 'watch_lists' %}">Listas</a>
+
+                <form action="{% url 'logout' %}" method="POST">    
                     {% csrf_token %}
                     <button type="submit">Cerrar sesión</button>
                 </form>
@@ -32,16 +35,22 @@
         </nav>
     </header>
 
-
-
+    <div>
     {% if messages %}
         {% for message in messages %}
             {{ message }}
         {% endfor %}
     {% endif %}
+    </div>
 
+    <main>
     {% block content %}
     {% endblock content %}
+    </main>
+
+    <footer>
+        <p>Derechos reservados</p>
+    </footer>
 
 </body>
 </html>

@@ -1,6 +1,10 @@
 {% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %}
 {% block content %}
 
+<div style="display: flex; width: 100%;">
+
+    <div>
+
     <form action="{% url 'add_symbol' %}" method="POST">
         {% csrf_token %}
         <input type="text" name="symbol" placeholder="Agregar Símbolo">
@@ -8,15 +12,14 @@
     </form>
 
     {% if holdings %}
-    <table>
+    <table style="min-width: 1001px;">
         <thead>
             <tr>
                 <th></th>
                 <th>Símbolo</th>
                 <th>Tipo</th>
-                <th>Nombre</th>
                 <th>Precio</th>
-                <th>Cambio</th>
+                <th>Cambio {% if market_state != 'REGULAR' %}(al cierre){% endif %}</th>
                 <th></th>
                 <th></th>
             </tr>
@@ -27,9 +30,8 @@
                     <td>
                         <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
                     </td>
-                    <td>{{ h.holding.symbol }}</td>
+                    <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                     <td>{{ h.holding.type | holding_type }}</td>
-                    <td>{{ h.holding.name }}</td>
                     <td>{{ h.price | intcomma:False }}</td>
                     <td><div style="{% if h.day_change > 0 %} color: green; {% elif h.day_change < 0 %} color: red; {% endif %} ">
                         ({{ h.day_change | intcomma:False }}) {{ h.day_change_percent | intcomma:False }}%
@@ -50,6 +52,8 @@
                     <p>No hay datos</p>
             {% endif %}
 
+    </div>
+
 <aside>
     <div style="display: flex; flex-direction: column;">
     {% for list in watch_list %}
@@ -57,4 +61,7 @@
     {% endfor %}
     </div>
 </aside>
+
+</div>
+
 {% endblock content %}
