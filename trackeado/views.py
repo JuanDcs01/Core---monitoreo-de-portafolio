@@ -279,15 +279,15 @@ def holding(request, symbol):
         history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
         history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
 
+        for h in history_list_5d:
+            h['Close'] = round(h['Close'], 2)
+        for h in history_list_1d:
+            h['Close'] = round(h['Close'], 2)
         for h in history_list:
             h['Close'] = round(h['Close'], 2)
 
-        for h in history_list_5d:
-            h['Datetime'] = h['Datetime'][0:19]
-            h['Close'] = round(h['Close'], 2)
-        for h in history_list_1d:
-            h['Datetime'] = h['Datetime'][0:19]
-            h['Close'] = round(h['Close'], 2)
+        if str(history_list[-1]['Close']) == 'nan':
+            history_list[-1]['Close'] = history_list_1d[-1]['Close']
 
         logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
