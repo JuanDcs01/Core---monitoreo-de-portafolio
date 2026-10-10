@@ -50,3 +50,17 @@ class HoldingList(models.Model):
                 name='unique_watch_list_holding'
             )
         ]
+
+class TransactionType(models.TextChoices):
+
+    DEPOSIT = 'D', 'Depósito'
+    WITHDRAW = 'W', 'Retiro'
+
+class WalletTransaction(models.Model):
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    type = models.CharField(max_length=1, choices=TransactionType.choices)
+    net_amount = models.DecimalField()
+    commission = models.DecimalField()
+    date = models.DateField()
+

@@ -13,4 +13,5 @@ urlpatterns = [
     path('watch_lists/delete/', views.delete_watch_lists, name='delete_watch_lists'),
     path('holding/search/', views.search_holding, name='search_holding'),
     path('holding/<str:symbol>/', views.holding, name='holding'),
+    path('transaction/create/', views.create_transaction, name='create_transaction'),
 ]

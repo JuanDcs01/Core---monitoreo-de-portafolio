@@ -1,0 +1,11 @@
+{% extends "layouts/base.html" %} 
+{% block content %}
+{% include "components/form.html" %}
+
+Balance: {{ balance }}
+total_commission: {{ total_commision }}
+
+{% for transaction in wallet_transactions %}
+    {{ transaction.id }}
+{% endfor %}
+{% endblock content %}

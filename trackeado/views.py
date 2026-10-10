@@ -1,8 +1,8 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
 import yfinance as yf
-from .models import Holding, UserHolding, WatchList, HoldingList
-from .forms import WatchListForm
+from .models import Holding, UserHolding, WatchList, HoldingList, WalletTransaction
+from .forms import WatchListForm, WalletTransactionForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import datetime
@@ -15,6 +15,10 @@ from decimal import Decimal
 def dashboard(request):
 
     user = request.user
+
+    wallet_transactions = WalletTransaction.objects.filter(user=user)
+
+    balance = wallet_resume(wallet_transactions)['balance']
 
     holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
@@ -48,7 +52,8 @@ def dashboard(request):
     context = {
         'holdings': holdings,
         'market_state': market_state,
-        'watch_list': watch_list
+        'watch_list': watch_list,
+        'balance': balance
     }
 
     return render(request, 'dashboard.html', {**context})
@@ -347,3 +352,51 @@ def search_holding(request):
         redirect('dashboard')    
 
     return redirect('holding', symbol)  
+
+@login_required
+def create_transaction(request):
+
+    user = request.user
+
+    wallet_transactions = WalletTransaction.objects.filter(user=user)
+
+    resume = wallet_resume(wallet_transactions)
+
+    if request.method == 'GET':
+
+        form = WalletTransactionForm()
+
+    if request.method == 'POST':
+
+        form = WalletTransactionForm(request.POST)
+
+        if not form.is_valid():
+            messages.error(request, 'No fue posible registrar la transación')
+            return render(request, 'create_transaction.html', {'form': form, 'title': 'Transación', 'button': 'Registrar'})
+
+        wallet_transaction = form.instance
+        wallet_transaction.user = user
+        wallet_transaction.save()
+        messages.success(request, 'Transación regsitrada')
+        redirect('create_transaction')
+
+    return render(request, 'create_transaction.html', {
+        'form': form, 
+        'title': 'Transación', 
+        'button': 'Registrar',
+        'wallet_transactions': wallet_transactions,
+        'balance': resume['balance'],
+        'total_commision': resume['total_commission']
+        })
+
+def wallet_resume(wallet_transactions):
+
+    balance = 0
+    total_commission = 0
+
+    if wallet_transactions:
+        for transaction in wallet_transactions:
+            balance = balance + transaction.net_amount if transaction.type == 'D' else balance - transaction.net_amount - transaction.commission
+            total_commission += transaction.commission
+
+    return { 'balance': balance, 'total_commision': total_commission }

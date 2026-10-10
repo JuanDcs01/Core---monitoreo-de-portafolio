@@ -2,7 +2,9 @@
 {% block content %}
 
 <div style="display: flex; width: 100%;">
-
+    <div>
+        Balance: {{ balance | intcomma:False }}
+    </div>
     <div>
 
     <form action="{% url 'add_symbol' %}" method="POST">
