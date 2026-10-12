@@ -1,17 +1,39 @@
-<div style="width: 30%">
-    {{ title }}
+<div class="center-container">
+    <div class="form">
+        <h2 class="form-title">{{ title }}</h2>
 
-    {% for error in form.errors.values %}
-        {{ error }}
-    {% endfor %}
-    <form action="" method="post">
-        {% csrf_token %}
-        {% for f in form %}
-            {{ f.label }}
-            {{ f }}
-            {{ f.errors }}
-            {{ f.help_text }}
-        {% endfor %}
-        <button type="submit">{{ button }}</button>
-    </form>
+        <div class="alert-message">
+            {% for error in form.non_field_errors%}
+                {{ error }}
+            {% endfor %}
+        </div>
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {% for f in form %}
+                <div class="form-field">
+                    <div>   
+                        {{ f }}
+                    </div>
+                    <div class="alert-message">
+                        {{ f.errors }}  
+                    </div>
+                    <div class="form-text text-muted">
+                        {{ f.help_text }}
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="center">
+                <button class="btn btn-dark w-100" type="submit">{{ button }}</button>
+            </div>
+            <div class="form-url">
+            {% if request.resolver_match.url_name == 'login' %}                
+                <a class=".btn-link" href="{% url 'register' %}">Registrarse</a>
+                <a class=".btn-link" href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
+            {% elif request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'password_reset' %}
+                <a class=".btn-link" href="{% url 'login' %}">Iniciar sesión</a>
+            {% endif %}
+            </div>
+        </form>
+    </div>
 </div>

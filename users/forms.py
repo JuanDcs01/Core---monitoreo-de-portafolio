@@ -23,6 +23,14 @@ class CustomRegisterForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.fields["username"].widget.attrs.update({
+            "class": "form-control",
+        })
+
+        self.fields["email"].widget.attrs.update({
+            "class": "form-control",
+        })
+
         self.fields["password1"].widget.attrs.update({
             "placeholder": "Contraseña",
             "class": "form-control",

@@ -52,3 +52,55 @@ nav {
   min-width: 250px;
   justify-content: space-between;
 }
+
+.center-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;  
+  align-items: center;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/*******************************
+form
+*******************************/
+
+.form {
+  width: 500px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 20px;
+}
+
+.form-title {
+ display: flex;
+ justify-content: center;
+ margin-bottom: 35px;
+}
+
+.form-button {
+  display: flex;
+}
+
+.form-field {
+  margin-bottom: 30px
+}
+
+.form-url {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0px;
+}
+
+.alert-message {
+  color: red;
+}
