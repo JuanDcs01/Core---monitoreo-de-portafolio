@@ -21,8 +21,9 @@
                 <th>Símbolo</th>
                 <th>Tipo</th>
                 <th>Precio</th>
-                <th>Cambio {% if market_state != 'REGULAR' %}(al cierre){% endif %}</th>
-                <th></th>
+                <th>Cambio {% if market_state == 'POST' or market_state == 'POSTPOST' %}(POST)
+                    {% elif market_state == 'PRE' or market_state == 'PREPRE' %}(PRE)
+                    {% endif %}</th>
                 <th></th>
             </tr>
         </thead>

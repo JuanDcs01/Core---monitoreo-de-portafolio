@@ -36,15 +36,16 @@ def dashboard(request):
     market_state = info.get('marketState')
 
     data = yf.download(tickers=symbols, start='2025-11-24', interval="1d", prepost=True, group_by='ticker', threads=True)
+    data2 = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
     for h in holdings:
 
         last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
-        current_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-1]
+        current_price = data2.get(h.holding.symbol).get('Close').dropna().iloc[-1]
         h.day_change = round(current_price - last_day_price, 2)
         h.day_change_percent = round(h.day_change / current_price * 100, 2)
 
-        h.price = round(data.get(h.holding.symbol).get('Close').dropna().iloc[-1], 2)
+        h.price = round(current_price, 2)
 
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
