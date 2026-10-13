@@ -7,43 +7,57 @@
     <!-- Bootstrap para estilos rápidos -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
 
-    <header>
-
-        <div>
-            <form action="{% url 'search_holding' %}" method="POST">
-            {% csrf_token %}
-            <input type="text" name="symbol" placeholder="Consultar Símbolo">
-            <button type="submit">Buscar</button>
-            </form>
-        </div>
-
-        <nav>
-            {% if user.is_authenticated  %}
-                <a href="{% url 'dashboard' %}">Inicio</a>
-                <a href="{% url 'watch_lists' %}">Listas</a>
-
-                <form action="{% url 'logout' %}" method="POST">    
-                    {% csrf_token %}
-                    <button type="submit">Cerrar sesión</button>
+    <header class="d-flex flex-wrap justify-content-center p-3 mb-4 border-bottom"> 
+        <a href="{% url 'dashboard' %}" class="d-flex align-items-center mb-3 mb-md-0 me-5 link-body-emphasis text-decoration-none 
+        {% if not user.is_authenticated  %}me-md-auto{% endif %}"> 
+            <img class="logo rounded float-start" src="{% static 'img/logo.png' %}" alt="">
+        </a> 
+        {% if user.is_authenticated  %}
+            <div class="me-md-auto">
+                <form action="{% url 'search_holding' %}" method="POST">
+                {% csrf_token %}
+                <div class="d-flex w-200 me-5">
+                <input class="form-control me-3" type="text" name="symbol" placeholder="Consultar Símbolo">
+                <button class="btn btn-dark d-flex" type="submit"><i class="bi bi-search me-1"></i> Buscar</button>
+                </div>  
                 </form>
-            {% endif %}
-        </nav>
+            </div>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page"><i class="bi bi-speedometer2"></i> Inicio</a>
+                </li> 
+                <li class="nav-item">
+                    <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
+                </li> 
+                <li class="nav-item"><a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person-fill"></i> Perfil</a>
+                </li> 
+                <li class="nav-item">
+                    <form action="{% url 'logout' %}" method="POST">    
+                        {% csrf_token %}
+                        <button class="nav-link" type="submit"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+                    </form>
+                </li> 
+            </ul>
+        {% endif %}  
     </header>
 
+    <main>
+
     <div>
-    {% if messages %}
-        {% for message in messages %}
-            {{ message }}
-        {% endfor %}
-    {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        {% endif %}
     </div>
 
-    <main>
     {% block content %}
     {% endblock content %}
     </main>

@@ -17,19 +17,10 @@ body {
   background: var(--bg);
 }
 
-header {    
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-}
-
 main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* max-width: 1240px; */
-  /* width: 100%; */
-  margin: 0 auto;
   /* padding: 24px 32px; */
 }
 
@@ -104,3 +95,8 @@ form
 .alert-message {
   color: red;
 }
+
+.logo {
+  height: 40px;
+}
+
