@@ -34,6 +34,9 @@
                     <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page"><i class="bi bi-speedometer2"></i> Inicio</a>
                 </li> 
                 <li class="nav-item">
+                    <a href="{% url 'wallet_transactions' %}" class="nav-link {% if request.resolver_match.url_name == 'wallet_transactions' %}active{% endif %}" aria-current="page"><i class="bi bi-wallet2"></i> Cartera</a>
+                </li> 
+                <li class="nav-item">
                     <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
                 </li> 
                 <li class="nav-item"><a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person-fill"></i> Perfil</a>

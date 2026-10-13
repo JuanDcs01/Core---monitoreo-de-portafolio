@@ -409,6 +409,29 @@ def create_transaction(request):
         'total_commision': resume['total_commission']
         })
 
+@login_required
+def wallet_transactions(request):
+
+    user = request.user
+
+    wallet_transactions = WalletTransaction.objects.filter(user=user)
+
+    balance = wallet_resume(wallet_transactions)
+
+    return render(request, 'wallet_transaction.html', {'wallet_transactions': wallet_transactions, 'balance': balance})
+
+@login_required
+def delete_wallet_transactions(request):
+
+    user = request.user
+
+    wallet_transaction = get_object_or_404(WalletTransaction, id=request.POST.get('id'), user=user)
+
+    wallet_transaction.delete()
+    messages.success(request, 'Transación eliminada.')
+
+    return redirect('wallet_transactions')
+
 def wallet_resume(wallet_transactions):
 
     balance = 0
@@ -419,4 +442,4 @@ def wallet_resume(wallet_transactions):
             balance = balance + transaction.net_amount if transaction.type == 'D' else balance - transaction.net_amount - transaction.commission
             total_commission += transaction.commission
 
-    return { 'balance': balance, 'total_commision': total_commission }
+    return { 'balance': balance, 'total_commission': total_commission }

@@ -64,3 +64,7 @@ class WalletTransaction(models.Model):
     commission = models.DecimalField()
     date = models.DateField()
 
+    @property
+    def total(self):
+        return self.net_amount + self.commission
+
