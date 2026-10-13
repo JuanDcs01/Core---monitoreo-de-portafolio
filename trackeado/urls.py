@@ -13,7 +13,6 @@ urlpatterns = [
     path('watch_lists/delete/', views.delete_watch_lists, name='delete_watch_lists'),
     path('holding/search/', views.search_holding, name='search_holding'),
     path('holding/<str:symbol>/', views.holding, name='holding'),
-    path('wallet/transaction/create/', views.create_transaction, name='create_transaction'),
     path('wallet/', views.wallet_transactions, name='wallet_transactions'),
     path('wallet/transaction/delete', views.delete_wallet_transactions, name='delete_wallet_transactions'),
 ]

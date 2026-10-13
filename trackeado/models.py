@@ -66,5 +66,4 @@ class WalletTransaction(models.Model):
 
     @property
     def total(self):
-        return self.net_amount + self.commission
-
+        return round(self.net_amount + self.commission, 2)

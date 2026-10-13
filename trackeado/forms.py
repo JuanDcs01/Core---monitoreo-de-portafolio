@@ -17,3 +17,29 @@ class WalletTransactionForm(forms.ModelForm):
 
         exclude = ['user']
 
+        widgets = {
+            'date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date',  # Clave para el selector nativo HTML5
+                },
+            ),
+            'commission': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'comisión'
+                }
+            ),
+            'net_amount': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'monto'
+                }
+            ),
+            'type': forms.Select(
+                attrs={
+                    'class': 'form-select'
+                }
+            )             
+            }

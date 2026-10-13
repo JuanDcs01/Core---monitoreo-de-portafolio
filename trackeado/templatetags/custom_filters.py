@@ -41,3 +41,9 @@ def market_state(value):
         return mark_safe('<i class="bi bi-brightness-alt-high-fill text-warning">')
 
     return ''
+
+@register.filter
+def round_number(value):
+
+    return round(value, 2)
+

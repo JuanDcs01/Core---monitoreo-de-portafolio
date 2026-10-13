@@ -374,17 +374,18 @@ def search_holding(request):
     return redirect('holding', symbol)  
 
 @login_required
-def create_transaction(request):
+def wallet_transactions(request):
 
     user = request.user
 
-    wallet_transactions = WalletTransaction.objects.filter(user=user)
+    wallet_transactions = WalletTransaction.objects.filter(user=user).order_by('date')
 
-    resume = wallet_resume(wallet_transactions)
+    balance = wallet_resume(wallet_transactions)
 
     if request.method == 'GET':
 
         form = WalletTransactionForm()
+
 
     if request.method == 'POST':
 
@@ -392,33 +393,19 @@ def create_transaction(request):
 
         if not form.is_valid():
             messages.error(request, 'No fue posible registrar la transación')
-            return render(request, 'create_transaction.html', {'form': form, 'title': 'Transación', 'button': 'Registrar'})
+            return render(request, 'wallet_transactions.html', {'wallet_transactions': wallet_transactions, 'balance': balance, 'form': form,
+                                                                'title': 'Registrar transación', 
+                                                                'button': 'Registrar',})
 
         wallet_transaction = form.instance
         wallet_transaction.user = user
         wallet_transaction.save()
         messages.success(request, 'Transación regsitrada')
-        redirect('create_transaction')
+        return redirect('wallet_transactions')
 
-    return render(request, 'create_transaction.html', {
-        'form': form, 
-        'title': 'Transación', 
-        'button': 'Registrar',
-        'wallet_transactions': wallet_transactions,
-        'balance': resume['balance'],
-        'total_commision': resume['total_commission']
-        })
-
-@login_required
-def wallet_transactions(request):
-
-    user = request.user
-
-    wallet_transactions = WalletTransaction.objects.filter(user=user)
-
-    balance = wallet_resume(wallet_transactions)
-
-    return render(request, 'wallet_transaction.html', {'wallet_transactions': wallet_transactions, 'balance': balance})
+    return render(request, 'wallet_transactions.html', {'wallet_transactions': wallet_transactions, 'balance': balance, 'form': form,
+                                                        'title': 'Registrar transación', 
+                                                        'button': 'Registrar',})
 
 @login_required
 def delete_wallet_transactions(request):
