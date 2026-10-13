@@ -10,7 +10,7 @@
     
     <div style="width: 80%; margin: auto; margin-top: 50px;">
         <img src="{{ logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
-    <div>
+        <div>
             {{ symbol }}:{{ fullExchangeName }}
         </div>
         <div>
@@ -38,6 +38,11 @@
             </div>
         </div>
     </div>
+        <form action="{% url 'delete_holding' %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{ exist.id }}">
+            <button class="btn btn-danger" type="submit" {% if not exist %}disabled{% endif %}><i class="bi bi-trash"></i></button>
+        </form>
     <div>
         <h4>Perfil Corporativo</h4>
         <strong>Sector:</strong> {{ sector }}

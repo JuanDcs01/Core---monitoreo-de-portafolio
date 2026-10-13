@@ -106,12 +106,16 @@ def add_holding(request):
 @login_required
 def delete_holding(request):
 
-    holding = get_object_or_404(UserHolding, id=request.POST.get('id'))
+    user_holding = get_object_or_404(UserHolding, id=request.POST.get('id'))
 
-    holding.delete()
-    messages.success(request, 'Símbolo Eliminado.')
+    if not user_holding:
+        messages.error(request, 'Símbolo no encontrado')
+        return redirect('dashboard')
 
-    return redirect('dashboard')
+    user_holding.delete()
+    messages.success(request, 'Símbolo Eliminado de la cartera.')
+
+    return redirect('holding', symbol=user_holding.holding.symbol)
 
 
 @login_required
@@ -247,6 +251,9 @@ def delete_watch_lists(request):
 
 @login_required
 def holding(request, symbol):
+
+    user = request.user
+
     holding = yf.Ticker(symbol)
 
     info = holding.info
@@ -254,6 +261,10 @@ def holding(request, symbol):
     if not info.get('symbol'):
         messages.error(request, 'Símbolo no encontrado')
         return redirect('dashboard')
+
+    h = Holding.objects.filter(symbol=symbol).first()
+
+    exist = UserHolding.objects.filter(user=user, holding=h).first()
 
     ernings = holding.financials
 
@@ -343,7 +354,8 @@ def holding(request, symbol):
             'history_list': history_list,
             'history_list_5d': history_list_5d,
             'history_list_1d': history_list_1d,
-            'logo_url': f"https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40"
+            'logo_url': f"https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40",
+            'exist': exist
         }
     else:
         context = {}
