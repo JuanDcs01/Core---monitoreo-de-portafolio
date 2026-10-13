@@ -150,7 +150,7 @@
                             callback: function(value) {
                                 const date = this.getLabelForValue(value);
                                 if (!date) return '';
-                                if (date.length > 11) return new Date(date).toLocaleDateString('es-DO', { hour: 'numeric', minute: '2-digit', hour12: true }).slice(10); 
+                                if (date.length > 11) return new Date(date).toLocaleDateString('es-DO', { hour: 'numeric', minute: '2-digit', hour12: true }).slice(11); 
                                 else return new Date(date).toLocaleDateString('es-DO', { timeZone: 'UTC', day: '2-digit', month: 'short' });
                             }
                         }
