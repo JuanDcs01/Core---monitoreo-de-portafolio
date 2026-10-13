@@ -100,3 +100,7 @@ form
   height: 40px;
 }
 
+.table-hover-row tbody tr:hover {
+    background-color: gainsboro;
+}
+
