@@ -105,18 +105,35 @@ table
 *******************************/
 
 table {
-  border-collapse: separate;
+  border-collapse: collapse;
   border: 1px solid var(--bs-border-color-translucent);
   border-radius: 5px;
+  margin: 0 !important;
 }
 
-.table-hover-row tbody tr:hover {
+/* .table-hover-row tbody tr:hover {
   background-color: gainsboro;
-}
+} */
 
 table th {
-  background-color: rgb(248, 249, 250);
-  color: rgb(108, 117, 125);
-  padding: 10px;
+  background-color: rgb(248, 249, 250) !important;
 }
 
+.table-hf {
+  background-color: rgb(248, 249, 250) !important;
+  width: 100%;
+  border: 1px solid var(--bs-border-color-translucent);
+  padding: 5px;
+}
+
+.table-header { 
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 5px 5px 0 0 !important;
+  display: flex;
+  justify-content: end;
+}
+
+.table-footer {
+  border-radius: 0 0 5px 5px !important;
+  height: 40px;
+}

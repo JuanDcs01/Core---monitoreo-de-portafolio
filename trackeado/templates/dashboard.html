@@ -4,25 +4,23 @@
 <div class=".center-container">
     <div class="card mb-4">
         <div class="d-flex align-items-center">
-        <div class="card-body d-flex">
-        Balance: {{ balance | intcomma:False }}
-        </div>
-    
-
-        <form action="{% url 'add_symbol' %}" method="POST">
-            {% csrf_token %}
-            <div class="d-flex">
-                <input class="form-control me-3 w-50" type="text" name="symbol" placeholder="Agregar Símbolo">
-                <button type="submit" class="btn btn-dark"><i class="bi bi-plus-lg"></i> Agregar</button>
+            <div class="card-body d-flex">
+                Balance: {{ balance | intcomma:False }}
             </div>
-        </form>
         </div>
     </div>
-
     <div>
-
     {% if holdings %}
-        <table class="table-hover-row w-100" style="min-width: 1001px;">
+        <div class="table-hf table-header">
+            <form action="{% url 'add_symbol' %}" method="POST">
+                {% csrf_token %}
+                <div class="d-flex">
+                    <input class="form-control me-3 w-50" type="text" name="symbol" placeholder="Agregar Símbolo">
+                    <button type="submit" class="btn btn-dark"><i class="bi bi-plus-lg"></i> Agregar</button>
+                </div>
+            </form>
+        </div>
+        <table class="table w-100 table-striped table-hover">
             <thead>
                 <tr>
                     <th>Logo</th>
@@ -36,8 +34,8 @@
             <tbody>
                 {% for h in holdings %}   
                     <tr onclick="window.location='{% url 'holding' h.holding.symbol %}'" style="cursor: pointer;">
-                            <td class="d-flex justify-content-center">
-                                <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
+                            <td>
+                                <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" class="rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
                             </td>
                             <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                             <td>{{ h.holding.type | holding_type }}</td>
@@ -51,6 +49,7 @@
                     {% endfor %}
             </tbody>
         </table>
+        <div class="table-hf table-footer"></div>
         {% else %}
             <p>No hay datos</p>
         {% endif %}
