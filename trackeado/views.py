@@ -247,7 +247,13 @@ def delete_watch_lists(request):
 @login_required
 def holding(request, symbol):
     holding = yf.Ticker(symbol)
+
     info = holding.info
+
+    if not info.get('symbol'):
+        messages.error(request, 'Símbolo no encontrado')
+        return redirect('dashboard')
+
     ernings = holding.financials
 
     print(ernings.__dict__)
@@ -349,7 +355,8 @@ def search_holding(request):
     symbol = request.POST.get('symbol').upper()
 
     if not symbol:
-        redirect('dashboard')    
+        messages.error(request, 'Símbolo no encontrado')
+        return redirect('dashboard')    
 
     return redirect('holding', symbol)  
 
