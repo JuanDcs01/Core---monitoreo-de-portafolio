@@ -1,5 +1,6 @@
 from django import template
 import humanize
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -30,3 +31,13 @@ def recommendation(value):
 def metric(data):
 
     return humanize.metric(data)
+
+@register.filter
+def market_state(value):
+
+    if value in ['POST', 'POSTPOST', 'PREPRE']:
+        return mark_safe('<i class="b bi-moon-stars-fill text-primary"></i>')
+    if value == 'PRE':
+        return mark_safe('<i class="bi bi-brightness-alt-high-fill text-warning">')
+
+    return ''

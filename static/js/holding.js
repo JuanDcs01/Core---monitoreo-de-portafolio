@@ -20,16 +20,7 @@
         if (numberSpan && percentSpan && priceSpan) {
             numberSpan.innerText = isPositive ? `(+${precioFormateado(diferencia)})` : `(${precioFormateado(diferencia)})`;
             percentSpan.innerText = `${precioFormateado(porcentaje)}%`;
-            console.log(marketSate);
-            if ( marketSate) {
-                if ( marketSate.trim() == 'regular') {
-                    priceSpan.innerText = precioFormateado(ultimoPrecio)
-                } else if ( marketSate.trim() == 'PRE') {
-                    priceSpan.innerText = `${precioFormateado(ultimoPrecio)} PRE`
-                } else {
-                    priceSpan.innerText = `${precioFormateado(ultimoPrecio)} POST`
-                }
-            }
+            priceSpan.innerText = precioFormateado(ultimoPrecio)
             numberSpan.style.color = colorHex;
             percentSpan.style.color = colorHex;
         }

@@ -16,9 +16,12 @@
         <div>
             {{ longName }}
         </div>
-        <div>
+        <div class="d-flex align-items-center">
             <h2 id="currentPrice">
             </h2>
+            <h5 class="ms-1">
+                {{ marketState | market_state }}
+            </h5>
         </div>
 
         <span id="percentChange"></span>
