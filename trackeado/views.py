@@ -335,8 +335,8 @@ def holding(request, symbol):
         for h in history_list:
             h['Close'] = round(h['Close'], 2)
 
-        if str(history_list[-1]['Close']) == 'nan':
-            history_list[-1]['Close'] = history_list_1d[-1]['Close']
+        history_list[-1]['Close'] = history_list_1d[-1]['Close']
+        history_list_5d[-1]['Close'] = history_list_1d[-1]['Close']
 
         logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
