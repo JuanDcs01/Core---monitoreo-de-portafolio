@@ -12,6 +12,7 @@
     <div>
     {% if holdings %}
         <div class="table-hf table-header">
+            <h3 class="m-0">Portafolio</h3>
             <form action="{% url 'add_symbol' %}" method="POST">
                 {% csrf_token %}
                 <div class="d-flex">

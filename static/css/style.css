@@ -130,7 +130,8 @@ table th {
   border: 1px solid var(--bs-border-color-translucent);
   border-radius: 5px 5px 0 0 !important;
   display: flex;
-  justify-content: end;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .table-footer {
