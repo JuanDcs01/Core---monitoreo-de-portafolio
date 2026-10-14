@@ -9,6 +9,15 @@ class WatchListForm(forms.ModelForm):
 
         fields = ['name']
 
+        widgets = {
+            'name': forms.TextInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Nombre de la lista'
+                }
+            )
+        }
+
 class WalletTransactionForm(forms.ModelForm):
 
     class Meta:
