@@ -24,7 +24,7 @@ class WalletTransactionForm(forms.ModelForm):
 
         model = WalletTransaction
 
-        exclude = ['user']
+        exclude = ['wallet']
 
         widgets = {
             'date': forms.DateInput(

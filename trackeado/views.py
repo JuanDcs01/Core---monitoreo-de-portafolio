@@ -1,13 +1,13 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
 import yfinance as yf
-from .models import Holding, UserHolding, WatchList, HoldingList, WalletTransaction
+from .models import Holding, UserHolding, WatchList, HoldingList, WalletTransaction, Wallet
 from .forms import WatchListForm, WalletTransactionForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import datetime
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from pprint import pprint
 from decimal import Decimal
 
@@ -16,9 +16,9 @@ def dashboard(request):
 
     user = request.user
 
-    wallet_transactions = WalletTransaction.objects.filter(user=user)
+    wallet = get_object_or_404(Wallet, user=user)
 
-    balance = wallet_resume(wallet_transactions)['balance']
+    balance = wallet.balance
 
     holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
@@ -395,9 +395,11 @@ def wallet_transactions(request):
 
     user = request.user
 
-    wallet_transactions = WalletTransaction.objects.filter(user=user).order_by('date')
+    wallet = get_object_or_404(Wallet, user=user)
 
-    balance = wallet_resume(wallet_transactions)
+    wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('date')
+
+    balance = wallet.balance
 
     if request.method == 'GET':
 
@@ -414,9 +416,15 @@ def wallet_transactions(request):
                                                                 'title': 'Registrar transación', 
                                                                 'button': 'Registrar',})
 
-        wallet_transaction = form.instance
-        wallet_transaction.user = user
-        wallet_transaction.save()
+        with transaction.atomic():
+            wallet_transaction = form.instance
+            wallet_transaction.wallet = wallet
+            wallet_transaction.save()
+
+            wallet.balance = wallet.balance + wallet_transaction.net_amount if wallet_transaction.type == 'D' else  wallet.balance - wallet_transaction.total
+            wallet.commission_paid += wallet_transaction.commission
+            wallet.save()
+
         messages.success(request, 'Transación regsitrada')
         return redirect('wallet_transactions')
 
@@ -429,21 +437,17 @@ def delete_wallet_transactions(request):
 
     user = request.user
 
-    wallet_transaction = get_object_or_404(WalletTransaction, id=request.POST.get('id'), user=user)
+    wallet = get_object_or_404(Wallet, user=user)
 
-    wallet_transaction.delete()
+    wallet_transaction = get_object_or_404(WalletTransaction, id=request.POST.get('id'), wallet=wallet)
+
+    with transaction.atomic():
+
+        wallet_transaction.delete()
+        wallet.balance = wallet.balance - wallet_transaction.net_amount if wallet_transaction.type == 'D' else  wallet.balance + wallet_transaction.total
+        wallet.commission_paid -= wallet_transaction.commission
+        wallet.save()
+
     messages.success(request, 'Transación eliminada.')
 
     return redirect('wallet_transactions')
-
-def wallet_resume(wallet_transactions):
-
-    balance = 0
-    total_commission = 0
-
-    if wallet_transactions:
-        for transaction in wallet_transactions:
-            balance = balance + transaction.net_amount if transaction.type == 'D' else balance - transaction.net_amount - transaction.commission
-            total_commission += transaction.commission
-
-    return { 'balance': balance, 'total_commission': total_commission }

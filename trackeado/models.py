@@ -51,14 +51,20 @@ class HoldingList(models.Model):
             )
         ]
 
-class TransactionType(models.TextChoices):
+class Wallet(models.Model):
 
-    DEPOSIT = 'D', 'Depósito'
-    WITHDRAW = 'W', 'Retiro'
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    balance = models.DecimalField(default=0)
+    commission_paid = models. DecimalField(default=0)
 
 class WalletTransaction(models.Model):
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    class TransactionType(models.TextChoices):
+
+        DEPOSIT = 'D', 'Depósito'
+        WITHDRAW = 'W', 'Retiro'
+
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
     type = models.CharField(max_length=1, choices=TransactionType.choices)
     net_amount = models.DecimalField()
     commission = models.DecimalField()

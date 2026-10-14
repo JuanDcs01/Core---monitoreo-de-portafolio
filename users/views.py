@@ -15,6 +15,7 @@ from django.contrib.auth.views import (
     PasswordResetCompleteView,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
+from trackeado.models import Wallet
 
 class RedirectAuthenticatedUserMixin:
     """Si el usuario ya está logueado, lo saca de esta vista."""
@@ -51,7 +52,7 @@ class CustomRegisterView(RedirectAuthenticatedUserMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
 
-        # Cart.objects.create(user=self.object)
+        Wallet.objects.create(user=self.object)
 
         return response
 
