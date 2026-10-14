@@ -1,15 +1,27 @@
 {% extends "layouts/base.html" %} 
 {% block content %}
-    {% include "components/form.html" %}
-
-    {% for w in watch_lists %}
+    <div class="d-flex">
         <div>
-            <a href="{% url 'watch_list_details' w.name %}">{{ w.name }}</a>
+        {% include "components/form.html" %}
         </div>
-        <form action="{% url 'delete_watch_lists' %}" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="watch_list_id" value="{{ w.id }}">
-            <button type="submit">Eliminar</button>
-        </form>
-    {% endfor %}
+
+        <div class="w-100">
+            {% if watch_lists %}
+            <div class="list-group">
+                {% for w in watch_lists %}
+                    <div class="d-flex align-items-center">
+                            <a class="list-group-item list-group-item-action me-5" href="{% url 'watch_list_details' w.name %}">{{ w.name }}</a>
+                        <form action="{% url 'delete_watch_lists' %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="watch_list_id" value="{{ w.id }}">
+                            <button class="btn btn-danger" type="submit"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                {% endfor %}    
+            </div>
+            {% else %}
+            <p>No hay listas registrada</p>
+            {% endif %}
+        </div>      
+    </div>
 {% endblock content %}  
