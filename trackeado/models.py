@@ -73,3 +73,22 @@ class WalletTransaction(models.Model):
     @property
     def total(self):
         return round(self.net_amount + self.commission, 2)
+
+class Trade(models.Model):
+
+    class TradeType(models.TextChoices):
+
+        BUY = 'B', 'Compra'
+        SELL = 'S', 'Venta'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
+    type = models.CharField(max_length=1, choices=TradeType.choices)
+    shares = models.DecimalField()
+    price = models.DecimalField()
+    commission = models.DecimalField()
+    date = models.DateField()
+
+    @property
+    def total(self):
+        return (self.price * self.shares) + self.commission if self.type == 'B' else (self.price * self.shares) - self.commission

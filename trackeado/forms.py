@@ -1,4 +1,4 @@
-from .models import WatchList, WalletTransaction
+from .models import WatchList, WalletTransaction, Trade
 from django import forms
 
 class WatchListForm(forms.ModelForm):
@@ -31,7 +31,7 @@ class WalletTransactionForm(forms.ModelForm):
                 format='%Y-%m-%d',
                 attrs={
                     'class': 'form-control',
-                    'type': 'date',  # Clave para el selector nativo HTML5
+                    'type': 'date',
                 },
             ),
             'commission': forms.NumberInput(
@@ -52,3 +52,44 @@ class WalletTransactionForm(forms.ModelForm):
                 }
             )             
             }
+
+class TradeForm(forms.ModelForm):
+
+    class Meta:
+
+        model = Trade
+
+        exclude = ['user', 'holding']
+
+        widgets = {
+            'type': forms.Select(
+                attrs={
+                    'class': 'form-control'
+                }
+            ),
+            'shares': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Cantidad de acciones'
+                }
+            ),
+            'price': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Precio'
+                }
+            ),
+            'commission': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'placeholder': 'Comisiones'
+                }
+            ),
+            'date': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date',
+                },
+            )
+        }
