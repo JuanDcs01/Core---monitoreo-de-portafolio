@@ -67,6 +67,10 @@ def add_holding(request):
 
     if request.method == 'POST':
 
+        if not request.POST.get('symbol').upper():
+            messages.error(request, 'Símbolo no encontrado')
+            return redirect('dashboard')
+
         symbol = request.POST.get('symbol').upper()
 
         try:
