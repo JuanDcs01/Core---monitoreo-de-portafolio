@@ -1,27 +1,53 @@
-{% extends "layouts/base.html" %} 
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %}
 {% block content %}
-    <form action="{% url 'add_holding_list' %}" method="POST">
-        {% csrf_token %}
-        <input type="text" name="symbol" placeholder="buscar Símbolo">
-        <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">  
-        <button>Agregar</button>
-    </form>
-    {% if holdings_list %}
-    {% for h in holdings_list %}
+    <div class=".center-container">
         <div>
-            <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
-            {{ h.holding.name }}
-            {{ h.holding.symbol }}
-            {{ h.holding.price }}
-            <form action="{% url 'delete_holding_list' %}" method="POST">
-                {% csrf_token %}
-                <input type="hidden" name="holding_list_id" value="{{ h.id }}">
-                <input type="hidden" name="watch_list" value="{{ watch_list.name }}">
-                <button type="submit">Eliminar</button>
-            </form>
+            {% if holdings_list %}
+            <div class="table-hf table-header">
+                <h3 class="m-0">{{ watch_list.name }}</h3>
+                <form action="{% url 'add_holding_list' %}" method="POST">
+                    {% csrf_token %}
+                    
+                    <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">
+                    <div class="d-flex">
+                        <input class="form-control me-3" type="text" name="symbol" placeholder="buscar Símbolo">
+                        <button class="btn btn-dark d-flex"><i class="bi bi-plus-lg"></i> Agregar</button>
+                    </div>
+                </form>
+            </div>
+            <table class="table w-100 table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Logo</th>
+                        <th>Símbolo</th>
+                        <th>Tipo</th>
+                        <th>Precio</th>
+                        <th>Cambio {{ market_state | market_state }}
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in holdings_list %}   
+                        <tr onclick="window.location='{% url 'holding' h.holding.symbol %}'" style="cursor: pointer;">
+                                <td>
+                                    <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" class="rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
+                                </td>
+                                <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
+                                <td>{{ h.holding.type | holding_type }}</td>
+                                <td>{{ h.holding.price | intcomma:False }}</td>
+                                <td>
+                                    <div style="{% if h.holding.day_change > 0 %} color: green; {% elif h.holding.day_change < 0 %} color: red; {% endif %} ">
+                                        {{ h.holding.day_change_percent | intcomma:False }}% ({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change | intcomma:False }}) 
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+            <div class="table-hf table-footer"></div>
+            {% else %}
+                <p>La lista esta vacía</p>
+            {% endif %}
         </div>
-    {% endfor %}
-    {% else %}
-    <p>La lista esta vacía</p>
-    {% endif %}
+    </div>
 {% endblock content %}

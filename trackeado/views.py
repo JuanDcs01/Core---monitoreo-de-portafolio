@@ -158,6 +158,12 @@ def watch_list_details(request, watch_list):
 
     watch_list = get_object_or_404(WatchList, name=watch_list)
 
+    holding = yf.Ticker('VOO')
+
+    info = holding.info
+
+    market_state = info.get('marketState')
+
     if user.id == watch_list.user.id:
 
         holdings_list = HoldingList.objects.select_related('holding').filter(watch_list=watch_list)
@@ -166,14 +172,21 @@ def watch_list_details(request, watch_list):
 
             symbols = [h.holding.symbol for h in holdings_list]
 
-            data = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+            data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+            data2 = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
 
             for h in holdings_list:
-                h.holding.price = round(data.get(h.holding.symbol).get('Open').dropna().iloc[-1], 2)
+                last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
+                current_price = round(data2.get(h.holding.symbol).get('Close').dropna().iloc[-1], 2)
+                h.holding.day_change = round(current_price - last_day_price, 2)
+                h.holding.day_change_percent = round(h.holding.day_change / current_price * 100, 2)
+
+                h.holding.price = current_price
+
                 logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
                 h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
         
-        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list })
+        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list, 'market_state': market_state })
 
     else:
         return redirect('watch_lists')  
