@@ -27,11 +27,10 @@
                             <tr>
                                 <td>{{ w.date }}</td>
                                 <td>{{ w.get_type_display }}</td>
-                                <td>{{ w.net_amount | round_number | intcomma:False }}</td>
+                                <td style="{% if w.type == 'D' %}color: green;{% else %}color: red{% endif %}">
+                                    {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number | intcomma:False }}</td>
                                 <td>{{ w.commission | round_number | intcomma:False }}</td>
-                                <td><div style="{% if w.type == 'D' %}color: green;{% else %}color: red{% endif %}">
-                                    {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.total | round_number | intcomma:False }}
-                                </div>
+                                <td>{{ w.total | round_number | intcomma:False }}</div>
                                 </td>
                                 <td>
                                     <form action="{% url 'delete_wallet_transactions' %}" method="POST">
