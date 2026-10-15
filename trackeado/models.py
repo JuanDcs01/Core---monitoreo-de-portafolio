@@ -90,5 +90,9 @@ class Trade(models.Model):
     date = models.DateField()
 
     @property
+    def net_amount(self):
+        return self.price * self.shares
+
+    @property
     def total(self):
-        return (self.price * self.shares) + self.commission if self.type == 'B' else (self.price * self.shares) - self.commission
+        return self.net_amount + self.commission if self.type == 'B' else self.net_amount - self.commission

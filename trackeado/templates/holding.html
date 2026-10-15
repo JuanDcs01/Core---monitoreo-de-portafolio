@@ -92,6 +92,7 @@
                                 <th>Tipo</th>  
                                 <th>Acciones</th>
                                 <th>Precio</th>
+                                <th>Monto</th>
                                 <th>Comisión</th>
                                 <th>Total</th>
                                 <th></th>
@@ -104,6 +105,7 @@
                                     <td>{{ t.get_type_display }}</td>
                                     <td>{{ t.shares | no_trailing_zeros }}</td>
                                     <td>{{ t.price | round_number | intcomma:False }}</td>
+                                    <td>{{ t.net_amount | round_number | intcomma:False }}</td>
                                     <td>{{ t.commission | round_number | intcomma:False }}</td>
                                     <td><div style="{% if t.type == 'D' %}color: green;{% else %}color: red{% endif %}">
                                         {% if t.type == 'D' %}+{% else %}-{% endif %}{{ t.total | round_number | intcomma:False }}
