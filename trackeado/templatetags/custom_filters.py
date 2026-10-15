@@ -1,6 +1,7 @@
 from django import template
 import humanize
 from django.utils.safestring import mark_safe
+from decimal import Decimal
 
 register = template.Library()
 
@@ -49,6 +50,9 @@ def round_number(value):
 
 @register.filter
 def no_trailing_zeros(value):
+
+    if Decimal(value) < 1e-15:
+        return '0.00'
 
     value = str(value)
 
