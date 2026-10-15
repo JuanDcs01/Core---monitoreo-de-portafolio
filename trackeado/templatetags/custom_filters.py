@@ -2,6 +2,7 @@ from django import template
 import humanize
 from django.utils.safestring import mark_safe
 from decimal import Decimal
+from django.utils.html import format_html
 
 register = template.Library()
 
@@ -63,5 +64,18 @@ def no_trailing_zeros(value):
 
         if decimal[x] != '0':
             return int + '.' + decimal[:x + 1]
+
+    return value
+
+@register.filter
+def identify_transaction(value):
+
+    if value in ['Compra', 'Depósito']:
+        return format_html('''<div style="background-color: green; color: white; border: 1px solid green; border-radius: 5px;
+        padding: 0px 6px; display: inline-block">{}</div>''', value)
+
+    if value in ['Venta', 'Retiro']:
+        return format_html('''<div style="background-color: red; color: white; border: 1px solid red; border-radius: 5px;
+        padding: 0px 6px; display: inline-block">{}</div>''', value)
 
     return value

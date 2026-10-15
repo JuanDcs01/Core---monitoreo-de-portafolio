@@ -102,7 +102,7 @@
                             {% for t in trade %}   
                                 <tr>
                                     <td>{{ t.date }}</td>
-                                    <td>{{ t.get_type_display }}</td>
+                                    <td>{{ t.get_type_display | identify_transaction }}</td>
                                     <td>{{ t.shares | no_trailing_zeros }}</td>
                                     <td>{{ t.price | round_number | intcomma:False }}</td>
                                     <td>{{ t.net_amount | round_number | intcomma:False }}</td>
