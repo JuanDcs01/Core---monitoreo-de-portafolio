@@ -473,7 +473,7 @@ def wallet_transactions(request):
 
     wallet = get_object_or_404(Wallet, user=user)
 
-    wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('date')
+    wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-date')
 
     balance = wallet.balance
 
