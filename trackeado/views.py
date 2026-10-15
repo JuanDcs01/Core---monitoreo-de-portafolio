@@ -379,7 +379,8 @@ def holding(request, symbol):
         'form': form,
         'title': 'Registrar trade',
         'button': 'Registrar',
-        'trade': trade 
+        'trade': trade,
+        'holding_id': holding_object.id
     }
 
     if request.method == 'POST':
@@ -479,3 +480,27 @@ def delete_wallet_transactions(request):
     messages.success(request, 'Transacción eliminada.')
 
     return redirect('wallet_transactions')
+
+@login_required
+def delete_trade(request):
+
+    user = request.user
+
+    holding_id = request.POST.get('holding_id')
+    trade_id = request.POST.get('trade_id')
+
+    trade = Trade.objects.filter(id=trade_id).first()
+    holding = Holding.objects.filter(id=holding_id).first()
+
+    wallet = get_object_or_404(Wallet, user=user)    
+
+    with transaction.atomic():
+
+        wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
+        wallet.save()
+        trade.delete()
+        messages.success(request, 'Trade eliminado.')
+        return redirect('holding', holding.symbol)
+    
+    messages.error(request, 'Algo salió mal.')
+    return redirect('holding', holding.symbol)

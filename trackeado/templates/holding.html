@@ -109,6 +109,12 @@
                                 </div>
                                 </td>
                                 <td>
+                                    <form action="{% url 'delete_trade' %}" method="POST">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="trade_id" value="{{ t.id }}">
+                                        <input type="hidden" name="holding_id" value="{{ holding_id }}">
+                                        <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}
