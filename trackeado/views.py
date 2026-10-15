@@ -35,7 +35,15 @@ def dashboard(request):
 
     market_state = info.get('marketState')
 
-    data = yf.download(tickers=symbols, start='2025-11-24', interval="1d", prepost=True, group_by='ticker', threads=True)
+    trades = Trade.objects.select_related('holding').filter(user=user).order_by('date') 
+
+    # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
+    first_trade_date = trades[0].date
+
+    # descargar datos historicos
+    data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+
+    # conseguir el último precio
     data2 = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
     for h in holdings:
