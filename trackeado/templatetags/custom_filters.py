@@ -57,9 +57,14 @@ def no_trailing_zeros(value):
 
     value = str(value)
 
-    int = value[:value.find('.')]
-    decimal = value[value.find('.') + 1:][:16]
+    point = value.find('.')
 
+    if point == -1:
+        return value
+
+    int = value[:point]
+    decimal = value[point + 1:][:16]
+    
     for x in range(len(decimal) -1, -1, -1):
 
         if decimal[x] != '0':
