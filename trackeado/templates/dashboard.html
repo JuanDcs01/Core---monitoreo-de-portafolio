@@ -75,7 +75,19 @@
         {% else %}
             <p>No hay datos</p>
         {% endif %}
+    </div>
 
+    <div class="card">
+        <div class="card-header">Última compra</div>
+        <div class="card-body">
+            {% for k, v in last_holdings_buy.items %}
+                {% if v == 1 %}
+                    <strong>{{ k }}</strong>: hace {{ v }} dia
+                {% else %}
+                    <strong>{{ k }}</strong>: hace {{ v }} días
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
 
 <aside>

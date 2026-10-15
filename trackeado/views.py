@@ -10,6 +10,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from pprint import pprint
 from decimal import Decimal
+from datetime import date
 
 @login_required
 def dashboard(request):
@@ -46,11 +47,15 @@ def dashboard(request):
 
     holdings_total_shares = {}
     holdings_last_prices = {}
+    last_holdings_buy = {}
     
     for t in trades:
 
         if t.holding.symbol not in holdings_total_shares.keys():
             holdings_total_shares[t.holding.symbol] = 0
+
+        last_holdings_buy[t.holding.symbol] = (date.today() - t.date).days      
+
         if t.type == 'B':
             holdings_total_shares[t.holding.symbol] += t.shares
         else:
@@ -82,6 +87,9 @@ def dashboard(request):
 
         total_current_invested_value += h.total_current_invested_value if isinstance(h.shares, Decimal) else 0
 
+        if h.holding.symbol in last_holdings_buy.keys() and h.shares == 0:
+            del last_holdings_buy[h.holding.symbol]
+
     total_balance = total_current_invested_value + wallet.balance
 
     context = {
@@ -90,7 +98,8 @@ def dashboard(request):
         # 'watch_list': watch_list,
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
-        'total_balance': total_balance
+        'total_balance': total_balance,
+        'last_holdings_buy': last_holdings_buy
     }
 
     return render(request, 'dashboard.html', {**context})
