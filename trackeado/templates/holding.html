@@ -74,59 +74,61 @@
     </div>
 </div>
 
-<div class=".center-container">
-        <div class="d-flex">
-            <div>
-                {% include 'components/form.html' %}
-            </div>
-            <div class="w-75 ms-5">
-            {% if trade %}
-                <div class="table-hf table-header justify-content-start">
-                    <h3 class="m-0">Trades</h3>
+{% if exist %}
+    <div class=".center-container">
+            <div class="d-flex">
+                <div>
+                    {% include 'components/form.html' %}
                 </div>
-                <table class="table w-100 table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>  
-                            <th>Acciones</th>
-                            <th>Precio</th>
-                            <th>Comisión</th>
-                            <th>Total</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for t in trade %}   
+                <div class="w-75 ms-5">
+                {% if trade %}
+                    <div class="table-hf table-header justify-content-start">
+                        <h3 class="m-0">Trades</h3>
+                    </div>
+                    <table class="table w-100 table-striped table-hover">
+                        <thead>
                             <tr>
-                                <td>{{ t.date }}</td>
-                                <td>{{ t.get_type_display }}</td>
-                                <td>{{ t.shares | no_trailing_zeros }}</td>
-                                <td>{{ t.price | round_number | intcomma:False }}</td>
-                                <td>{{ t.commission | round_number | intcomma:False }}</td>
-                                <td><div style="{% if t.type == 'D' %}color: green;{% else %}color: red{% endif %}">
-                                    {% if t.type == 'D' %}+{% else %}-{% endif %}{{ t.total | round_number | intcomma:False }}
-                                </div>
-                                </td>
-                                <td>
-                                    <form action="{% url 'delete_trade' %}" method="POST">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="trade_id" value="{{ t.id }}">
-                                        <input type="hidden" name="holding_id" value="{{ holding_id }}">
-                                        <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                </td>
+                                <th>Fecha</th>
+                                <th>Tipo</th>  
+                                <th>Acciones</th>
+                                <th>Precio</th>
+                                <th>Comisión</th>
+                                <th>Total</th>
+                                <th></th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div class="table-hf table-footer"></div>
-            {% else %}
-                <p>No hay datos</p>
-            {% endif %}
+                        </thead>
+                        <tbody>
+                            {% for t in trade %}   
+                                <tr>
+                                    <td>{{ t.date }}</td>
+                                    <td>{{ t.get_type_display }}</td>
+                                    <td>{{ t.shares | no_trailing_zeros }}</td>
+                                    <td>{{ t.price | round_number | intcomma:False }}</td>
+                                    <td>{{ t.commission | round_number | intcomma:False }}</td>
+                                    <td><div style="{% if t.type == 'D' %}color: green;{% else %}color: red{% endif %}">
+                                        {% if t.type == 'D' %}+{% else %}-{% endif %}{{ t.total | round_number | intcomma:False }}
+                                    </div>
+                                    </td>
+                                    <td>
+                                        <form action="{% url 'delete_trade' %}" method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="trade_id" value="{{ t.id }}">
+                                            <input type="hidden" name="holding_id" value="{{ holding_id }}">
+                                            <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="table-hf table-footer"></div>
+                {% else %}
+                    <p>No hay datos</p>
+                {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+{% endif %}
 
 {{ history_list|json_script:"history-max" }}
 {{ history_list_5d|json_script:"history-5d" }}
