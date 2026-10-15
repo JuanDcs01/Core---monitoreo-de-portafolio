@@ -107,10 +107,7 @@
                                     <td>{{ t.price | round_number | intcomma:False }}</td>
                                     <td>{{ t.net_amount | round_number | intcomma:False }}</td>
                                     <td>{{ t.commission | round_number | intcomma:False }}</td>
-                                    <td><div style="{% if t.type == 'D' %}color: green;{% else %}color: red{% endif %}">
-                                        {% if t.type == 'D' %}+{% else %}-{% endif %}{{ t.total | round_number | intcomma:False }}
-                                    </div>
-                                    </td>
+                                    <td>{{ t.total | round_number | intcomma:False }}</td>
                                     <td>
                                         <form action="{% url 'delete_trade' %}" method="POST">
                                             {% csrf_token %}
