@@ -291,11 +291,11 @@ def holding(request, symbol):
 
     exist = UserHolding.objects.filter(user=user, holding=holding_object).first()
 
-    trade = Trade.objects.filter(user=user).order_by('-date')
+    trade = Trade.objects.filter(user=user, holding=holding_object).order_by('-date')
 
     ernings = holding.financials
 
-    print(ernings.__dict__)
+    # print(ernings.__dict__)
 
     df = holding.history(period="max")
     df_5d = holding.history(period="5d", interval="15m", prepost=True)
@@ -413,6 +413,8 @@ def holding(request, symbol):
 
             trade.save()
             wallet.save()
+            messages.success(request, 'Trade agregado.')
+            return redirect('holding', holding_object.symbol)
     
     return render(request, 'holding.html', context)
 
