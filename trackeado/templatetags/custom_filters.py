@@ -47,3 +47,17 @@ def round_number(value):
 
     return round(value, 2)
 
+@register.filter
+def no_trailing_zeros(value):
+
+    value = str(value)
+
+    int = value[:value.find('.')]
+    decimal = value[value.find('.') + 1:][:16]
+
+    for x in range(len(decimal) -1, -1, -1):
+
+        if decimal[x] != '0':
+            return int + '.' + decimal[:x + 1]
+
+    return value

@@ -101,7 +101,7 @@
                             <tr>
                                 <td>{{ t.date }}</td>
                                 <td>{{ t.get_type_display }}</td>
-                                <td>{{ t.shares | intcomma:False }}</td>
+                                <td>{{ t.shares | no_trailing_zeros }}</td>
                                 <td>{{ t.price | round_number | intcomma:False }}</td>
                                 <td>{{ t.commission | round_number | intcomma:False }}</td>
                                 <td><div style="{% if t.type == 'D' %}color: green;{% else %}color: red{% endif %}">
