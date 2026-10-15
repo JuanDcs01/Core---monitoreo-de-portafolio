@@ -46,7 +46,7 @@ def market_state(value):
 @register.filter
 def round_number(value):
 
-    return round(value, 2)
+    return round(Decimal(value), 2)
 
 @register.filter
 def no_trailing_zeros(value):
