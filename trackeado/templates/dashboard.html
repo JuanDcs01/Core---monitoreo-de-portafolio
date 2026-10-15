@@ -2,10 +2,27 @@
 {% block content %}
 
 <div class=".center-container">
+    <div class="row g-3 mb-4">
+        <div class="col-xl mt-0">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Balance total</h6> 
+                    {{ total_balance | round_number | intcomma:False }}
+                </div>
+            </div>
+        </div>
+        <div class="col-xl mt-0">
+            <div class="card">
+                <div class="card-body">
+                <h6>Valor actual</h6> {{ total_current_invested_value | round_number | intcomma:False }}
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card mb-4">
         <div class="d-flex align-items-center">
             <div class="card-body d-flex">
-                Balance: {{ balance | round_number | intcomma:False }}
+                Disponible: {{ available_balance | round_number | intcomma:False }}
             </div>
         </div>
     </div>
@@ -27,6 +44,8 @@
                     <th>Logo</th>
                     <th>Símbolo</th>
                     <th>Tipo</th>
+                    <th>Activos</th>
+                    <th>Valor actual</th>
                     <th>Precio</th>
                     <th>Cambio {{ market_state | market_state }}
                     </th>
@@ -40,6 +59,8 @@
                             </td>
                             <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                             <td>{{ h.holding.type | holding_type }}</td>
+                            <td>{{ h.shares | no_trailing_zeros }}</td>
+                            <td>{{ h.total_current_invested_value | round_number | intcomma:False }}</td>
                             <td>{{ h.price | intcomma:False }}</td>
                             <td>
                                 <div style="{% if h.day_change > 0 %} color: green; {% elif h.day_change < 0 %} color: red; {% endif %} ">

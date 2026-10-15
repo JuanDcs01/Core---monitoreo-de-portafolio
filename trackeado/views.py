@@ -18,16 +18,14 @@ def dashboard(request):
 
     wallet = get_object_or_404(Wallet, user=user)
 
-    balance = wallet.balance
+    user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
-    holdings = UserHolding.objects.select_related('holding').filter(user=user)
+    # watch_list = WatchList.objects.filter(user=user)
 
-    watch_list = WatchList.objects.filter(user=user)
+    if not user_holdings:
+        return render(request, 'dashboard.html', {'holdings':user_holdings})
 
-    if not holdings:
-        return render(request, 'dashboard.html', {'holdings':holdings})
-
-    symbols = [h.holding.symbol for h in holdings]
+    symbols = [h.holding.symbol for h in user_holdings]
 
     holding = yf.Ticker('VOO')
 
@@ -46,7 +44,26 @@ def dashboard(request):
     # conseguir el último precio
     data2 = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
-    for h in holdings:
+    holdings_total_shares = {}
+    holdings_last_prices = {}
+    
+    for t in trades:
+
+        if t.holding.symbol not in holdings_total_shares.keys():
+            holdings_total_shares[t.holding.symbol] = 0
+        if t.type == 'B':
+            holdings_total_shares[t.holding.symbol] += t.shares
+        else:
+            holdings_total_shares[t.holding.symbol] -= t.shares
+
+        last_price = holdings_last_prices.get(t.holding.symbol)
+
+        if last_price is None:
+            holdings_last_prices[t.holding.symbol] = Decimal(data2.get(t.holding.symbol).get('Close').dropna().iloc[-1])
+
+    total_current_invested_value = 0
+
+    for h in user_holdings:
 
         last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
         current_price = data2.get(h.holding.symbol).get('Close').dropna().iloc[-1]
@@ -58,11 +75,22 @@ def dashboard(request):
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
+        h.shares = holdings_total_shares[h.holding.symbol] if h.holding.symbol in holdings_total_shares.keys() else '0.00'
+
+
+        h.total_current_invested_value = h.shares * holdings_last_prices[h.holding.symbol] if isinstance(h.shares, Decimal) else '0.00'
+
+        total_current_invested_value += h.total_current_invested_value if isinstance(h.shares, Decimal) else 0
+
+    total_balance = total_current_invested_value + wallet.balance
+
     context = {
-        'holdings': holdings,
+        'holdings': user_holdings,
         'market_state': market_state,
-        'watch_list': watch_list,
-        'balance': balance
+        # 'watch_list': watch_list,
+        'available_balance': wallet.balance,
+        'total_current_invested_value': total_current_invested_value,
+        'total_balance': total_balance
     }
 
     return render(request, 'dashboard.html', {**context})
