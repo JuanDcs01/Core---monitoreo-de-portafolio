@@ -498,38 +498,62 @@ def wallet_transactions(request):
 
     wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-date', '-id')
 
-    balance = wallet.balance
-
-    if request.method == 'GET':
-
-        form = WalletTransactionForm()
-
+    context = {
+        'wallet_transactions': wallet_transactions,
+        'balance': wallet.balance,
+        'form': WalletTransactionForm(),
+        'title': 'Registrar transacción',
+        'button': 'Registrar',
+        'editing_transaction_id': None,
+    }
 
     if request.method == 'POST':
 
-        form = WalletTransactionForm(request.POST)
+        transaction_id = request.POST.get('transaction_id')
+        old_transaction = None
+
+        if transaction_id:
+            # Solo puede editar transacciones de su propia wallet
+            old_transaction = get_object_or_404(WalletTransaction, id=transaction_id, wallet=wallet)
+
+            # Guardar lo viejo ANTES de crear el form: is_valid() sobrescribe la instancia
+            old_type = old_transaction.type
+            old_net_amount = old_transaction.net_amount
+            old_total = old_transaction.total
+            old_commission = old_transaction.commission
+
+            form = WalletTransactionForm(request.POST, instance=old_transaction)
+            context.update(title='Editar transacción', button='Actualizar',
+                           editing_transaction_id=old_transaction.id)
+        else:
+            form = WalletTransactionForm(request.POST)
+
+        context['form'] = form
 
         if not form.is_valid():
-            messages.error(request, 'No fue posible registrar la transacción')
-            return render(request, 'wallet_transactions.html', {'wallet_transactions': wallet_transactions, 'balance': balance, 'form': form,
-                                                                'title': 'Registrar transacción', 
-                                                                'button': 'Registrar',})
+            messages.error(request, 'No fue posible realizar la acción.')
+            return render(request, 'wallet_transactions.html', context)
 
         with transaction.atomic():
             wallet_transaction = form.instance
             wallet_transaction.wallet = wallet
+
+            if old_transaction:
+                # 1) Deshacer el efecto de la transacción vieja (igual que en delete)
+                wallet.balance = wallet.balance - old_net_amount if old_type == 'D' else wallet.balance + old_total
+                wallet.commission_paid -= old_commission
+
             wallet_transaction.save()
 
-            wallet.balance = wallet.balance + wallet_transaction.net_amount if wallet_transaction.type == 'D' else  wallet.balance - wallet_transaction.total
+            # 2) Aplicar el efecto de la nueva (igual que antes)
+            wallet.balance = wallet.balance + wallet_transaction.net_amount if wallet_transaction.type == 'D' else wallet.balance - wallet_transaction.total
             wallet.commission_paid += wallet_transaction.commission
             wallet.save()
 
-        messages.success(request, 'Transacción regsitrada')
+        messages.success(request, 'Transacción actualizada.' if old_transaction else 'Transacción registrada.')
         return redirect('wallet_transactions')
 
-    return render(request, 'wallet_transactions.html', {'wallet_transactions': wallet_transactions, 'balance': balance, 'form': form,
-                                                        'title': 'Registrar transacción', 
-                                                        'button': 'Registrar',})
+    return render(request, 'wallet_transactions.html', context)
 
 @login_required
 def delete_wallet_transactions(request):

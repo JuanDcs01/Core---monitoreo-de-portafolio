@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load humanize %} {% load custom_filters %}
+{% extends "layouts/base.html" %} {% load humanize %} {% load custom_filters %} {% load static %} {% load l10n %}
 {% block content %}
 
     <div class=".center-container">
@@ -20,6 +20,7 @@
                             <th>Comisión</th>
                             <th>Total</th>
                             <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -30,7 +31,18 @@
                                 <td style="{% if w.type == 'D' %}color: green;{% else %}color: red{% endif %}">
                                     {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number | intcomma:False }}</td>
                                 <td>{{ w.commission | round_number | intcomma:False }}</td>
-                                <td>{{ w.total | round_number | intcomma:False }}</div>
+                                <td>{{ w.total | round_number | intcomma:False }}</td>
+                                <td>
+                                    {% localize off %}
+                                    <button type="button" class="btn btn-dark btn-edit-transaction"
+                                            data-transaction-id="{{ w.id }}"
+                                            data-date="{{ w.date|date:'Y-m-d' }}"
+                                            data-type="{{ w.type }}"
+                                            data-net-amount="{{ w.net_amount }}"
+                                            data-commission="{{ w.commission }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    {% endlocalize %}
                                 </td>
                                 <td>
                                     <form action="{% url 'delete_wallet_transactions' %}" method="POST">
@@ -50,4 +62,8 @@
             </div>
         </div>
     </div>
+
+{{ editing_transaction_id|json_script:"editing-transaction-id" }}
+<script src="{% static '/js/wallet_transactions.js' %}"></script>
+
 {% endblock content %}
