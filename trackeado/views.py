@@ -328,7 +328,7 @@ def holding(request, symbol):
 
     exist = UserHolding.objects.filter(user=user, holding=holding_object).first()
 
-    trade = Trade.objects.filter(user=user, holding=holding_object).order_by('-date')
+    trade = Trade.objects.filter(user=user, holding=holding_object).order_by('-date', '-id')
 
     ernings = holding.financials
 
@@ -496,7 +496,7 @@ def wallet_transactions(request):
 
     wallet = get_object_or_404(Wallet, user=user)
 
-    wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-date')
+    wallet_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-date', '-id')
 
     balance = wallet.balance
 
