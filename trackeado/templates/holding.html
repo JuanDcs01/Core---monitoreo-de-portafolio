@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %} {% load static %}
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %} {% load static %} {% load l10n %}
 {% block content %}
 <div>
 
@@ -113,6 +113,7 @@
                                 <th>Comisión</th>
                                 <th>Total</th>
                                 <th></th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -125,6 +126,19 @@
                                     <td>{{ t.net_amount | round_number | intcomma:False }}</td>
                                     <td>{{ t.commission | round_number | intcomma:False }}</td>
                                     <td>{{ t.total | round_number | intcomma:False }}</td>
+                                    <td>
+                                        {% localize off %}
+                                        <button type="button" class="btn btn-dark btn-edit-trade"
+                                                data-trade-id="{{ t.id }}"
+                                                data-date="{{ t.date|date:'Y-m-d' }}"
+                                                data-type="{{ t.type }}"
+                                                data-price="{{ t.price }}"
+                                                data-shares="{{ t.shares }}"
+                                                data-commission="{{ t.commission }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        {% endlocalize %}
+                                    </td>
                                     <td>
                                         <form action="{% url 'delete_trade' %}" method="POST">
                                             {% csrf_token %}
@@ -149,6 +163,8 @@
 {{ history_list|json_script:"history-max" }}
 {{ history_list_5d|json_script:"history-5d" }}
 {{ history_list_1d|json_script:"history-1d" }}
+
+{{ editing_trade_id|json_script:"editing-trade-id" }}
 <script src="{% static '/js/holding.js' %}"></script>
 
 {% endblock content %}

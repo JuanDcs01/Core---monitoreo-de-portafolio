@@ -297,3 +297,95 @@ botones.forEach(button => {
             el.addEventListener("input", calculateTotal)
         );
     })();
+
+// ===== Modo editar trade =====
+(function () {
+    const inputs = {
+        date: document.getElementById("id_date"),
+        type: document.getElementById("id_type"),
+        price: document.getElementById("id_price"),
+        shares: document.getElementById("id_shares"),
+        commission: document.getElementById("id_commission"),
+    };
+
+    // El form solo existe si el holding existe ({% if exist %})
+    if (!inputs.type) return;
+
+    const form = inputs.type.closest("form");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const titleEl = form.closest(".form").querySelector(".form-title"); // NUEVO
+    if (!submitBtn) return;
+
+    // Estado original del form de "registrar"
+    const originalText = submitBtn.textContent.trim();
+    const originalTitle = titleEl ? titleEl.textContent.trim() : ""; // NUEVO
+    const initial = {};
+    Object.entries(inputs).forEach(([k, el]) => { if (el) initial[k] = el.value; });
+
+    // Elementos que solo existen en modo edición
+    const hiddenId = document.createElement("input");
+    hiddenId.type = "hidden";
+    hiddenId.name = "trade_id";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-secondary w-100 ms-1"; // NUEVO: w-100 como el botón principal
+    cancelBtn.textContent = "Cancelar";
+
+    // El total se calcula con eventos "input", así que los disparamos a mano
+    function recalcTotal() {
+        Object.values(inputs).forEach(el => el && el.dispatchEvent(new Event("input", { bubbles: true })));
+    }
+
+    function enterEditMode(tradeId) {
+        hiddenId.value = tradeId;
+        form.appendChild(hiddenId);
+        submitBtn.textContent = "Actualizar";
+        if (titleEl) titleEl.textContent = "Editar trade"; // NUEVO
+        submitBtn.insertAdjacentElement("afterend", cancelBtn);
+    }
+
+    function exitEditMode() {
+        hiddenId.remove();
+        cancelBtn.remove();
+        submitBtn.textContent = originalText;
+        if (titleEl) titleEl.textContent = originalTitle; // NUEVO
+        Object.entries(initial).forEach(([k, v]) => { inputs[k].value = v; });
+        recalcTotal();
+    }
+
+    // Caso: la validación del servidor falló al actualizar -> la página
+    // se recargó con el form ya lleno; solo hay que volver a poner el modo edición
+    const editingEl = document.getElementById("editing-trade-id");
+    const editingId = editingEl ? JSON.parse(editingEl.textContent) : null;
+    if (editingId) enterEditMode(editingId);
+
+    // Click en el lápiz: cargar datos al form
+    // "423.880000000000" -> "423.88" | "0.150000" -> "0.15" | "5.000" -> "5"
+    function trimZeros(value) {
+        return value.includes(".") ? value.replace(/\.?0+$/, "") : value;
+    }
+    document.querySelectorAll(".btn-edit-trade").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const d = btn.dataset;
+            if (inputs.date) inputs.date.value = d.date;
+            inputs.type.value = d.type;
+            inputs.price.value = trimZeros(d.price);
+            inputs.shares.value = trimZeros(d.shares);
+            inputs.commission.value = trimZeros(d.commission);
+
+            enterEditMode(d.tradeId);
+            recalcTotal();
+            form.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        // Si la página cargó con errores del servidor, lo más limpio es recargar
+        if (editingId) {
+            window.location.href = window.location.pathname;
+            return;
+        }
+        exitEditMode();
+    });
+})();

@@ -425,17 +425,34 @@ def holding(request, symbol):
         'title': 'Registrar trade',
         'button': 'Registrar',
         'trade': trade,
-        'holding_id': holding_object.id
+        'holding_id': holding_object.id,
+        'editing_trade_id': None,
     }
 
     if request.method == 'POST':
 
-        form = TradeForm(request.POST)
+        trade_id = request.POST.get('trade_id')
+        old_trade = None
+
+        if trade_id:
+            # Solo puede editar trades propios y de este holding
+            old_trade = get_object_or_404(Trade, id=trade_id, user=user, holding=holding_object)
+
+            # OJO: guardar lo viejo ANTES de crear el form (ver explicación abajo)
+            old_type = old_trade.type
+            old_total = old_trade.total
+
+            form = TradeForm(request.POST, instance=old_trade)
+            context['title'] = 'Editar trade'
+            context['button'] = 'Actualizar'
+            context['editing_trade_id'] = old_trade.id
+        else:
+            form = TradeForm(request.POST)
 
         context['form'] = form
 
         if not form.is_valid():
-            messages.error(request, 'No fue posbile realizar la acción.')
+            messages.error(request, 'No fue posible realizar la acción.')
             return render(request, 'holding.html', context)
 
         with transaction.atomic():
@@ -446,11 +463,17 @@ def holding(request, symbol):
 
             wallet = get_object_or_404(Wallet, user=user)
 
+            if old_trade:
+                # 1) Deshacer el efecto del trade viejo en la wallet
+                wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
+
+            # 2) Aplicar el efecto del trade nuevo (igual que antes)
             wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
 
             trade.save()
             wallet.save()
-            messages.success(request, 'Trade agregado.')
+
+            messages.success(request, 'Trade actualizado.' if old_trade else 'Trade agregado.')
             return redirect('holding', holding_object.symbol)
     
     return render(request, 'holding.html', context)
