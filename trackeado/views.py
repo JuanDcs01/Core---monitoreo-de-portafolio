@@ -81,10 +81,9 @@ def dashboard(request):
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
-        h.shares = holdings_total_shares[h.holding.symbol] if h.holding.symbol in holdings_total_shares.keys() else '0.00'
+        h.shares = holdings_total_shares[h.holding.symbol] if h.holding.symbol in holdings_total_shares.keys() else 0
 
-
-        h.total_current_invested_value = h.shares * holdings_last_prices[h.holding.symbol] if isinstance(h.shares, Decimal) else '0.00'
+        h.total_current_invested_value = h.shares * holdings_last_prices[h.holding.symbol] if isinstance(h.shares, Decimal) else 0
 
         total_current_invested_value += h.total_current_invested_value if isinstance(h.shares, Decimal) else 0
 
