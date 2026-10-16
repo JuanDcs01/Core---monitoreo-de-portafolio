@@ -18,6 +18,13 @@
                 </div>
             </div>
         </div>
+                <div class="col-xl mt-0">
+            <div class="card">
+                <div class="card-body">
+                <h6>Ganancia no realizada</h6> {{ total_unrealized_gain | round_number | intcomma:False }}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card mb-4">
         <div class="d-flex align-items-center">
@@ -29,7 +36,7 @@
     <div>
     {% if holdings %}
         <div class="table-hf table-header">
-            <h3 class="m-0">Portafolio</h3>
+            <h4 class="m-0">Portafolio</h4>
             <form action="{% url 'add_symbol' %}" method="POST">
                 {% csrf_token %}
                     <div class="d-flex">
@@ -47,8 +54,8 @@
                     <th>Activos</th>
                     <th>Valor actual</th>
                     <th>Precio</th>
-                    <th>Cambio {{ market_state | market_state }}
-                    </th>
+                    <th>Cambio {{ market_state | market_state }}</th>
+                    <th>Gan. No realizada</th>
                 </tr>
             </thead>
             <tbody>
@@ -67,6 +74,7 @@
                                     {{ h.day_change_percent | intcomma:False }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | intcomma:False }}) 
                                 </div>
                             </td>
+                            <td>{{ h.unrealized_gain | round_number | intcomma:False }}</td>
                         </tr>
                     {% endfor %}
             </tbody>
@@ -77,16 +85,23 @@
         {% endif %}
     </div>
 
-    <div class="card">
-        <div class="card-header">Última compra</div>
-        <div class="card-body">
-            {% for k, v in last_holdings_buy.items %}
-                {% if v == 1 %}
-                    <strong>{{ k }}</strong>: hace {{ v }} dia
-                {% else %}
-                    <strong>{{ k }}</strong>: hace {{ v }} días
-                {% endif %}
-            {% endfor %}
+    <div class="d-flex mt-3 mt-b">
+        <div class="card w-25">
+            <div class="card-header">
+                <h4 class="m-0">Última compra</h4>
+            </div>
+            <div class="card-body">
+                {% for k, v in last_holdings_buy.items %}
+                    <span class="d-flex felx-column">
+                        {% if v == 1 %}
+                            <strong>{{ k }}</strong>: hace {{ v }} dia
+                        {% else %}
+                            <strong>{{ k }}</strong>: hace {{ v }} días
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                </span>
+            </div>
         </div>
     </div>
 

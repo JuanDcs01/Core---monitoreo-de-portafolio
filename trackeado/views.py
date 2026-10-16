@@ -21,85 +21,110 @@ def dashboard(request):
 
     user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
 
-    # watch_list = WatchList.objects.filter(user=user)
-
     if not user_holdings:
         return render(request, 'dashboard.html', {'holdings':user_holdings})
 
     symbols = [h.holding.symbol for h in user_holdings]
 
-    holding = yf.Ticker('VOO')
+    market_state = yf.Ticker('VOO').info.get('marketState')
 
-    info = holding.info
-
-    market_state = info.get('marketState')
-
-    trades = Trade.objects.select_related('holding').filter(user=user).order_by('date') 
+    trades = Trade.objects.select_related('holding').filter(user=user).order_by('date', 'id') 
 
     # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
     first_trade_date = trades[0].date
 
     # descargar datos historicos
-    data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+    history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
 
     # conseguir el último precio
-    data2 = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
+    day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
-    holdings_total_shares = {}
-    holdings_last_prices = {}
-    last_holdings_buy = {}
+    holdings_data = {}
     
     for t in trades:
 
-        if t.holding.symbol not in holdings_total_shares.keys():
-            holdings_total_shares[t.holding.symbol] = 0
-            last_holdings_buy[t.holding.symbol] = None
-
-        last_holdings_buy[t.holding.symbol] = (date.today() - t.date).days      
+        if t.holding.symbol not in holdings_data.keys():
+            holdings_data[t.holding.symbol] = {
+                'total_shares': 0,
+                # 'last_price': Decimal(data2.get(t.holding.symbol).get('Close').dropna().iloc[-1]),
+                'trades': [],
+                'lots': [],
+            }
 
         if t.type == 'B':
-            holdings_total_shares[t.holding.symbol] += t.shares
+            holdings_data[t.holding.symbol]['total_shares'] += t.shares
+            price_per_share = t.total / t.shares
+            holdings_data[t.holding.symbol]['lots'].append({'shares': t.shares,
+                                                       'price_per_share': price_per_share})
         else:
-            holdings_total_shares[t.holding.symbol] -= t.shares
+            holdings_data[t.holding.symbol]['total_shares'] -= t.shares
 
-        last_price = holdings_last_prices.get(t.holding.symbol)
+            partial_shares = None
+            for i in range(0, len(holdings_data[t.holding.symbol]['lots'])):
+                if not partial_shares:
+                    holdings_data[t.holding.symbol]['lots'][i]['shares'] -= t.shares
+                else:
+                    holdings_data[t.holding.symbol]['lots'][i]['shares'] -= partial_shares
 
-        if last_price is None:
-            holdings_last_prices[t.holding.symbol] = Decimal(data2.get(t.holding.symbol).get('Close').dropna().iloc[-1])
+                if holdings_data[t.holding.symbol]['lots'][i]['shares'] < 0:
+                    partial_shares = abs(holdings_data[t.holding.symbol]['lots'][i]['shares'])
+                    holdings_data[t.holding.symbol]['lots'][i]['shares'] = 0
+                    continue
+
+                break
+
+        trade_data = {
+            'object': t,
+            'price_per_share': price_per_share
+        }
+
+        holdings_data[t.holding.symbol]['trades'].append(trade_data)
 
     total_current_invested_value = 0
+    last_holdings_buy = {}
+    total_unrealized_gain = 0
+
+    # pprint(holdings_data)
 
     for h in user_holdings:
 
-        last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
-        current_price = data2.get(h.holding.symbol).get('Close').dropna().iloc[-1]
-        h.day_change = round(current_price - last_day_price, 2)
-        h.day_change_percent = round(h.day_change / current_price * 100, 2)
+        last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
+        h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
-        h.price = round(current_price, 2)
+        h.day_change = round(h.price  - last_day_price, 2)
+        h.day_change_percent = round(h.day_change / h.price  * 100, 2)
 
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
-        h.shares = holdings_total_shares[h.holding.symbol] if h.holding.symbol in holdings_total_shares.keys() else 0
+        h.shares = holdings_data[h.holding.symbol]['total_shares'] if holdings_data.get(h.holding.symbol) else 0
+        h.total_current_invested_value = h.shares * h.price
+        total_current_invested_value += h.total_current_invested_value
 
-        h.total_current_invested_value = h.shares * holdings_last_prices[h.holding.symbol] if isinstance(h.shares, Decimal) else 0
+        h.cost_per_lot = 0
+        if holdings_data.get(h.holding.symbol):
+            for x in holdings_data[h.holding.symbol]['lots']:
+                h.cost_per_lot = x['shares'] * x['price_per_share']
+            
+        unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
+        total_unrealized_gain += unrealized_gain
+        h.unrealized_gain = unrealized_gain
 
-        total_current_invested_value += h.total_current_invested_value if isinstance(h.shares, Decimal) else 0
+        if h.shares > 0:
+            last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['trades'][-1]['object'].date).days
 
-        if h.holding.symbol in last_holdings_buy.keys() and h.shares == 0:
-            del last_holdings_buy[h.holding.symbol]
+        h.price = round(h.price, 2)
 
     total_balance = total_current_invested_value + wallet.balance
 
     context = {
         'holdings': user_holdings,
         'market_state': market_state,
-        # 'watch_list': watch_list,
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
         'total_balance': total_balance,
-        'last_holdings_buy': last_holdings_buy
+        'last_holdings_buy': last_holdings_buy,
+        'total_unrealized_gain': total_unrealized_gain
     }
 
     return render(request, 'dashboard.html', {**context})
