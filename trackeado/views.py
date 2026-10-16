@@ -53,6 +53,7 @@ def dashboard(request):
 
         if t.holding.symbol not in holdings_total_shares.keys():
             holdings_total_shares[t.holding.symbol] = 0
+            last_holdings_buy[t.holding.symbol] = None
 
         last_holdings_buy[t.holding.symbol] = (date.today() - t.date).days      
 
