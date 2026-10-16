@@ -265,3 +265,35 @@ botones.forEach(button => {
     };
 
     document.getElementById('days1').click();
+
+    // Cálculo del total del formulario de trades
+    (function () {
+        const inputType = document.getElementById("id_type");
+        const inputPrice = document.getElementById("id_price");
+        const inputShares = document.getElementById("id_shares");
+        const inputCommission = document.getElementById("id_commission");
+        const spanTotal = document.getElementById("total");
+
+        // El formulario solo existe si el holding existe ({% if exist %})
+        if (!inputType || !inputPrice || !inputShares || !inputCommission || !spanTotal) return;
+
+        function calculateTotal() {
+            const type = inputType.value;
+            const price = parseFloat(inputPrice.value) || 0;
+            const shares = parseFloat(inputShares.value) || 0;
+            const commission = parseFloat(inputCommission.value) || 0;
+
+            let total = 0;
+            if (type === "B") {
+                total = (price * shares) + commission;
+            } else if (type === "S") {
+                total = (price * shares) - commission;
+            }
+
+            spanTotal.textContent = total.toFixed(2);
+        }
+
+        [inputType, inputPrice, inputShares, inputCommission].forEach(el =>
+            el.addEventListener("input", calculateTotal)
+        );
+    })();

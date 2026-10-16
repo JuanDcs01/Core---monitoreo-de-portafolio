@@ -89,7 +89,8 @@
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Tipo</th>  
+                                <th>Tipo</th>
+                                <th>Precio</th>
                                 <th>Acciones</th>
                                 <th>Precio</th>
                                 <th>Monto</th>
@@ -105,6 +106,7 @@
                                     <td>{{ t.get_type_display | identify_transaction }}</td>
                                     <td>{{ t.shares | no_trailing_zeros }}</td>
                                     <td>{{ t.price | round_number | intcomma:False }}</td>
+                                    <td>{{ t.shares | no_trailing_zeros }}</td>
                                     <td>{{ t.net_amount | round_number | intcomma:False }}</td>
                                     <td>{{ t.commission | round_number | intcomma:False }}</td>
                                     <td>{{ t.total | round_number | intcomma:False }}</td>
