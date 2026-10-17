@@ -75,6 +75,7 @@ def dashboard(request):
     total_current_invested_value = 0
     last_holdings_buy = {}
     total_unrealized_gain = 0
+    total_cost_per_lot = 0
 
     for h in user_holdings:
 
@@ -91,14 +92,17 @@ def dashboard(request):
         h.total_current_invested_value = h.shares * h.price
         total_current_invested_value += h.total_current_invested_value
 
-        cost_per_lot = 0
-        
+        h.cost_per_lot = 0
+
         if holdings_data.get(h.holding.symbol):
-            cost_per_lot = sum([lot['shares'] * lot['price_per_share'] for lot in holdings_data[h.holding.symbol]['lots']])
+            h.cost_per_lot = sum([lot['shares'] * lot['price_per_share'] for lot in holdings_data[h.holding.symbol]['lots']])
+
+        total_cost_per_lot += h.cost_per_lot
             
-        unrealized_gain = Decimal(h.total_current_invested_value - cost_per_lot) if cost_per_lot else 0
-        total_unrealized_gain += unrealized_gain
-        h.unrealized_gain = unrealized_gain
+        h.unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
+        
+        h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
+        total_unrealized_gain += h.unrealized_gain
 
         if h.shares > 0:
             last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
@@ -112,7 +116,8 @@ def dashboard(request):
         'total_current_invested_value': total_current_invested_value,
         'total_balance': total_balance,
         'last_holdings_buy': last_holdings_buy,
-        'total_unrealized_gain': total_unrealized_gain
+        'total_unrealized_gain': total_unrealized_gain,
+        'total_cost_per_lot': total_cost_per_lot
     }
 
     return render(request, 'dashboard.html', {**context})

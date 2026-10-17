@@ -14,6 +14,13 @@
         <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
+                <h4>Invertido</h4> {{ total_cost_per_lot | round_number }}
+                </div>
+            </div>
+        </div>
+        <div class="col-xl mt-0">
+            <div class="card">
+                <div class="card-body">
                 <h4>Valor actual</h4> {{ total_current_invested_value | round_number }}
                 </div>
             </div>
@@ -55,6 +62,7 @@
                     <th>Símbolo</th>
                     <th>Tipo</th>
                     <th>Activos</th>
+                    <th>Invertido</th>
                     <th>Valor actual</th>
                     <th>Precio</th>
                     <th>Cambio {{ market_state | market_state }}</th>
@@ -70,6 +78,7 @@
                             <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                             <td>{{ h.holding.type | holding_type }}</td>
                             <td>{{ h.shares | no_trailing_zeros }}</td>
+                            <td>{{ h.cost_per_lot | round_number }}</td>
                             <td>{{ h.total_current_invested_value | round_number }}</td>
                             <td>{{ h.price | round_number }}</td>
                             <td>
@@ -79,8 +88,9 @@
                             </td>
                             <td>
                                 <div style="{% if h.unrealized_gain > 0 %} color: green; {% elif h.unrealized_gain < 0 %} color: red; {% endif %} ">
-                                    ({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }})</td>
+                                    {{ h.unrealized_gain_percent | round_number }}% ({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }})
                                 </div>
+                            </td>
                         </tr>
                     {% endfor %}
             </tbody>
