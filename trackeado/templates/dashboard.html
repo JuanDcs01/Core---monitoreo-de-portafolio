@@ -21,7 +21,9 @@
                 <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
-                <h6>Ganancia no realizada</h6> {{ total_unrealized_gain | round_number | intcomma:False }}
+                <div style="{% if total_unrealized_gain > 0 %} color: green; {% elif total_unrealized_gain < 0 %} color: red; {% endif %} ">
+                    {{ total_unrealized_gain | round_number | intcomma:False }}
+                </div>
                 </div>
             </div>
         </div>
@@ -74,7 +76,10 @@
                                     {{ h.day_change_percent | intcomma:False }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | intcomma:False }}) 
                                 </div>
                             </td>
-                            <td>{{ h.unrealized_gain | round_number | intcomma:False }}</td>
+                            <td>
+                                <div style="{% if h.unrealized_gain > 0 %} color: green; {% elif h.unrealized_gain < 0 %} color: red; {% endif %} ">
+                                    ({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number | intcomma:False }})</td>
+                                </div>
                         </tr>
                     {% endfor %}
             </tbody>
