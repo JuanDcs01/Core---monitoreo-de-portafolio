@@ -6,7 +6,7 @@
         <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
-                    <h6>Balance total</h6> 
+                    <h4>Balance total</h4> 
                     {{ total_balance | round_number | intcomma:False }}
                 </div>
             </div>
@@ -14,13 +14,14 @@
         <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
-                <h6>Valor actual</h6> {{ total_current_invested_value | round_number | intcomma:False }}
+                <h4>Valor actual</h4> {{ total_current_invested_value | round_number | intcomma:False }}
                 </div>
             </div>
         </div>
                 <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
+                <h4>Ganancia no realizada</h4> 
                 <div style="{% if total_unrealized_gain > 0 %} color: green; {% elif total_unrealized_gain < 0 %} color: red; {% endif %} ">
                     {{ total_unrealized_gain | round_number | intcomma:False }}
                 </div>
@@ -70,10 +71,10 @@
                             <td>{{ h.holding.type | holding_type }}</td>
                             <td>{{ h.shares | no_trailing_zeros }}</td>
                             <td>{{ h.total_current_invested_value | round_number | intcomma:False }}</td>
-                            <td>{{ h.price | intcomma:False }}</td>
+                            <td>{{ h.price | round_number | intcomma:False }}</td>
                             <td>
                                 <div style="{% if h.day_change > 0 %} color: green; {% elif h.day_change < 0 %} color: red; {% endif %} ">
-                                    {{ h.day_change_percent | intcomma:False }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | intcomma:False }}) 
+                                    {{ h.day_change_percent | round_number | intcomma:False }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number | intcomma:False }}) 
                                 </div>
                             </td>
                             <td>

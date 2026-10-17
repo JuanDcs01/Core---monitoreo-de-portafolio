@@ -81,8 +81,8 @@ def dashboard(request):
         last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
-        h.day_change = round(h.price  - last_day_price, 2)
-        h.day_change_percent = round(h.day_change / h.price  * 100, 2)
+        h.day_change = h.price  - last_day_price
+        h.day_change_percent = h.day_change / h.price  * 100
 
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
