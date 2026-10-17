@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %}
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load static %}
 {% block content %}
 
 <div class=".center-container">
@@ -120,15 +120,22 @@
             </div>
         </div>
     </div>
-
-<aside>
-    <div style="display: flex; flex-direction: column;">
-    {% for list in watch_list %}
-        <a href="{% url 'watch_list_details' list.name %}">{{ list.name }}</a>
-    {% endfor %}
+    <div class="card w-25">
+        <div class="card-header">
+            <h4 class="m-0">Distribución por tipo</h4>
+        </div>
+        <div class="card-bod d-flex justify-content-center p-3">
+            {% if total_cost_per_lot %}
+                <canvas id="type-distribution" width="190"></canvas>
+            {% else %}
+                <p>No hay datos a mostrar</p>
+            {% endif %}
+        </div>
     </div>
-</aside>
-
 </div>
+
+{{ type_distribution|json_script:"type-distribution-data" }}
+<script src="{% static '/js/dashboard.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 {% endblock content %}

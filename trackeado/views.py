@@ -76,6 +76,11 @@ def dashboard(request):
     last_holdings_buy = {}
     total_unrealized_gain = 0
     total_cost_per_lot = 0
+    type_distribution = {
+        'ETF': 0,
+        'ACCIÓN': 0,
+        'CRIPTO': 0,
+    }
 
     for h in user_holdings:
 
@@ -107,7 +112,19 @@ def dashboard(request):
         if h.shares > 0:
             last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
 
+            if h.holding.type == 'ETF':
+                type_distribution['ETF'] += h.total_current_invested_value
+            elif h.holding.type == 'EQUITY':
+                type_distribution['ACCIÓN'] += h.total_current_invested_value
+            elif h.holding.type == 'CRYPTOCURRENCY':
+                type_distribution['CRIPTO'] += h.total_current_invested_value
+
     total_balance = total_current_invested_value + wallet.balance
+
+    type_distribution_total = sum([value for value in type_distribution.values()])
+
+    for key in type_distribution.keys():
+        type_distribution[key] = round(type_distribution[key] / type_distribution_total * 100, 2)
 
     context = {
         'holdings': user_holdings,
@@ -117,7 +134,8 @@ def dashboard(request):
         'total_balance': total_balance,
         'last_holdings_buy': last_holdings_buy,
         'total_unrealized_gain': total_unrealized_gain,
-        'total_cost_per_lot': total_cost_per_lot
+        'total_cost_per_lot': total_cost_per_lot,
+        'type_distribution': type_distribution
     }
 
     return render(request, 'dashboard.html', {**context})
