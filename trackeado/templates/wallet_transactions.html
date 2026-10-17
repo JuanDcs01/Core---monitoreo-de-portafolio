@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load humanize %} {% load custom_filters %} {% load static %} {% load l10n %}
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load static %} {% load l10n %}
 {% block content %}
 
     <div class=".center-container">
@@ -29,9 +29,9 @@
                                 <td>{{ w.date }}</td>
                                 <td>{{ w.get_type_display | identify_transaction }}</td>
                                 <td style="{% if w.type == 'D' %}color: green;{% else %}color: red{% endif %}">
-                                    {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number | intcomma:False }}</td>
-                                <td>{{ w.commission | round_number | intcomma:False }}</td>
-                                <td>{{ w.total | round_number | intcomma:False }}</td>
+                                    {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number }}</td>
+                                <td>{{ w.commission | round_number }}</td>
+                                <td>{{ w.total | round_number }}</td>
                                 <td>
                                     {% localize off %}
                                     <button type="button" class="btn btn-dark btn-edit-transaction"

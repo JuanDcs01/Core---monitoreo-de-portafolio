@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %}
+{% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
     <div class=".center-container">
         <div>
@@ -34,10 +34,10 @@
                                 </td>
                                 <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                                 <td>{{ h.holding.type | holding_type }}</td>
-                                <td>{{ h.holding.price | intcomma:False }}</td>
+                                <td>{{ h.holding.price }}</td>
                                 <td>
                                     <div style="{% if h.holding.day_change > 0 %} color: green; {% elif h.holding.day_change < 0 %} color: red; {% endif %} ">
-                                        {{ h.holding.day_change_percent | intcomma:False }}% ({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change | intcomma:False }}) 
+                                        {{ h.holding.day_change_percent }}% ({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change }}) 
                                     </div>
                                 </td>
                             </tr>

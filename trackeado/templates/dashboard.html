@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %}
+{% extends "layouts/base.html" %} {% load custom_filters %}
 {% block content %}
 
 <div class=".center-container">
@@ -7,14 +7,14 @@
             <div class="card">
                 <div class="card-body">
                     <h4>Balance total</h4> 
-                    {{ total_balance | round_number | intcomma:False }}
+                    {{ total_balance | round_number }}
                 </div>
             </div>
         </div>
         <div class="col-xl mt-0">
             <div class="card">
                 <div class="card-body">
-                <h4>Valor actual</h4> {{ total_current_invested_value | round_number | intcomma:False }}
+                <h4>Valor actual</h4> {{ total_current_invested_value | round_number }}
                 </div>
             </div>
         </div>
@@ -23,7 +23,7 @@
                 <div class="card-body">
                 <h4>Ganancia no realizada</h4> 
                 <div style="{% if total_unrealized_gain > 0 %} color: green; {% elif total_unrealized_gain < 0 %} color: red; {% endif %} ">
-                    {{ total_unrealized_gain | round_number | intcomma:False }}
+                    {{ total_unrealized_gain | round_number }}
                 </div>
                 </div>
             </div>
@@ -32,7 +32,7 @@
     <div class="card mb-4">
         <div class="d-flex align-items-center">
             <div class="card-body d-flex">
-                Disponible: {{ available_balance | round_number | intcomma:False }}
+                Disponible: {{ available_balance | round_number }}
             </div>
         </div>
     </div>
@@ -70,16 +70,16 @@
                             <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
                             <td>{{ h.holding.type | holding_type }}</td>
                             <td>{{ h.shares | no_trailing_zeros }}</td>
-                            <td>{{ h.total_current_invested_value | round_number | intcomma:False }}</td>
-                            <td>{{ h.price | round_number | intcomma:False }}</td>
+                            <td>{{ h.total_current_invested_value | round_number }}</td>
+                            <td>{{ h.price | round_number }}</td>
                             <td>
                                 <div style="{% if h.day_change > 0 %} color: green; {% elif h.day_change < 0 %} color: red; {% endif %} ">
-                                    {{ h.day_change_percent | round_number | intcomma:False }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number | intcomma:False }}) 
+                                    {{ h.day_change_percent | round_number }}% ({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }}) 
                                 </div>
                             </td>
                             <td>
                                 <div style="{% if h.unrealized_gain > 0 %} color: green; {% elif h.unrealized_gain < 0 %} color: red; {% endif %} ">
-                                    ({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number | intcomma:False }})</td>
+                                    ({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }})</td>
                                 </div>
                         </tr>
                     {% endfor %}

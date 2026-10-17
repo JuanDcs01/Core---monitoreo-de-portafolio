@@ -112,7 +112,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'es'
+# 1. Configura el idioma principal a español (esto le indica a Django los separadores por defecto)
+LANGUAGE_CODE = 'en-us'
+
+# # Habilita explícitamente el uso del separador de miles
+USE_THOUSAND_SEPARATOR = True
 
 TIME_ZONE = 'UTC'
 
