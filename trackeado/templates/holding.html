@@ -62,8 +62,8 @@
                 <h5 class="m-0">Desempeño del Precio</h5>
             </div>
             <div class="card-body d-flex flex-column">
-                <span><strong>Rango hoy:</strong> {{ dayLow | intcomma:False }} - {{ dayHigh | intcomma:False }}</span>
-                <span><strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow | intcomma:False }} - {{ fiftyTwoWeekHigh | intcomma:False }}</span>
+                <span><strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}</span>
+                <span><strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</span>
             </div>
         </div>
         <div class="card">
@@ -71,10 +71,10 @@
                 <h5 class="m-0">Valuación y Riesgo</h5>
             </div>
             <div class="card-body d-flex flex-column">
-                <span><strong>PE ratio:</strong> {{ trailingPE | intcomma:False }}</span>
-                <span><strong>PE proyectado:</strong> {{ forwardPE | intcomma:False }}</span>
+                <span><strong>PE ratio:</strong> {{ trailingPE }}</span>
+                <span><strong>PE proyectado:</strong> {{ forwardPE }}</span>
                 <span><strong>Beta:</strong> {{ beta| intcomma:False }}</span>
-                <span><strong>Dividendo:</strong> {{ dividendYield | intcomma:False }}%</span>
+                <span><strong>Dividendo:</strong> {{ dividendYield }}%</span>
             </div>
         </div>
         <div class="card">
@@ -82,9 +82,9 @@
                 <h5>Proyecciones y Consenso de Analistas</h5>
             </div>
             <div class="card-body d-flex flex-column">
-                <span><strong>Precio objetivo más bajo:</strong> {{ targetLowPrice | intcomma:False }}</span>
-                <span><strong>Precio objetivo más alto:</strong> {{ targetHighPrice | intcomma:False }}</span>
-                <span><strong>Precio objetivo medio:</strong> {{ targetMedianPrice | intcomma:False }}</span>
+                <span><strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}</span>
+                <span><strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}</span>
+                <span><strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}</span>
                 <span><strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}</span>
             </div>
         </div>
@@ -121,11 +121,11 @@
                                 <tr>
                                     <td>{{ t.date }}</td>
                                     <td>{{ t.get_type_display | identify_transaction }}</td>
-                                    <td>{{ t.price | round_number | intcomma:False }}</td>
+                                    <td>{{ t.price | round_number }}</td>
                                     <td>{{ t.shares | no_trailing_zeros }}</td>
-                                    <td>{{ t.net_amount | round_number | intcomma:False }}</td>
-                                    <td>{{ t.commission | round_number | intcomma:False }}</td>
-                                    <td>{{ t.total | round_number | intcomma:False }}</td>
+                                    <td>{{ t.net_amount | round_number }}</td>
+                                    <td>{{ t.commission | round_number }}</td>
+                                    <td>{{ t.total | round_number }}</td>
                                     <td>
                                         {% localize off %}
                                         <button type="button" class="btn btn-dark btn-edit-trade"
