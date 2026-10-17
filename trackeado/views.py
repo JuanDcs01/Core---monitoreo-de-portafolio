@@ -91,12 +91,12 @@ def dashboard(request):
         h.total_current_invested_value = h.shares * h.price
         total_current_invested_value += h.total_current_invested_value
 
-        h.cost_per_lot = 0
+        cost_per_lot = 0
+        
         if holdings_data.get(h.holding.symbol):
-            for x in holdings_data[h.holding.symbol]['lots']:
-                cost_per_lot += x['shares'] * x['price_per_share']
+            cost_per_lot = sum([lot['shares'] * lot['price_per_share'] for lot in holdings_data[h.holding.symbol]['lots']])
             
-        unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
+        unrealized_gain = Decimal(h.total_current_invested_value - cost_per_lot) if cost_per_lot else 0
         total_unrealized_gain += unrealized_gain
         h.unrealized_gain = unrealized_gain
 
