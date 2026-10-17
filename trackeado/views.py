@@ -46,16 +46,15 @@ def dashboard(request):
         if t.holding.symbol not in holdings_data.keys():
             holdings_data[t.holding.symbol] = {
                 'total_shares': 0,
-                # 'last_price': Decimal(data2.get(t.holding.symbol).get('Close').dropna().iloc[-1]),
-                'trades': [],
                 'lots': [],
             }
 
         if t.type == 'B':
             holdings_data[t.holding.symbol]['total_shares'] += t.shares
             price_per_share = t.total / t.shares
-            holdings_data[t.holding.symbol]['lots'].append({'shares': t.shares,
-                                                       'price_per_share': price_per_share})
+            holdings_data[t.holding.symbol]['lots'].append({'date': t.date,
+                                                            'shares': t.shares,
+                                                            'price_per_share': price_per_share})
         else:
             holdings_data[t.holding.symbol]['total_shares'] -= t.shares
 
@@ -73,18 +72,9 @@ def dashboard(request):
 
                 break
 
-        trade_data = {
-            'object': t,
-            'price_per_share': price_per_share
-        }
-
-        holdings_data[t.holding.symbol]['trades'].append(trade_data)
-
     total_current_invested_value = 0
     last_holdings_buy = {}
     total_unrealized_gain = 0
-
-    # pprint(holdings_data)
 
     for h in user_holdings:
 
@@ -111,9 +101,7 @@ def dashboard(request):
         h.unrealized_gain = unrealized_gain
 
         if h.shares > 0:
-            last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['trades'][-1]['object'].date).days
-
-        h.price = round(h.price, 2)
+            last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
 
     total_balance = total_current_invested_value + wallet.balance
 
