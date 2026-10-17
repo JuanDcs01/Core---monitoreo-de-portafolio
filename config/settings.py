@@ -49,6 +49,10 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
 ]
 
+FORMAT_MODULE_PATH = [
+    'config.formats',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -112,10 +116,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-# 1. Configura el idioma principal a español (esto le indica a Django los separadores por defecto)
-LANGUAGE_CODE = 'en-us'
+# Configura el idioma principal a español (esto le indica a Django los separadores por defecto)
+LANGUAGE_CODE = 'es'
 
-# # Habilita explícitamente el uso del separador de miles
+# Habilita explícitamente el uso del separador de miles
 USE_THOUSAND_SEPARATOR = True
 
 TIME_ZONE = 'UTC'
