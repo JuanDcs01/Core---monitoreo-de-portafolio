@@ -189,3 +189,24 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # logo.dev
 LOGODEV_TOKEN = 'pk_JT8lFssUTjqsgt2QCZIMRA'
+
+# Recuperar contraseña
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": os.environ.get('EMAIL_HOST'),
+            "port": os.environ.get('EMAIL_PORT'),
+            "use_tls": True,
+            "username": os.environ.get('EMAIL_HOST_USER'),
+            "password": os.environ.get('EMAIL_HOST_PASSWORD'),
+        },
+    }
+}
+
+# El correo predeterminado desde el cual se enviarán los mensajes
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
+
+# Duración del enlace 
+
+PASSWORD_RESET_TIMEOUT = 1800
