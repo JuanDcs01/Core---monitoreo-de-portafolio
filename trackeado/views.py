@@ -206,16 +206,27 @@ def add_holding(request):
 @login_required
 def delete_holding(request):
 
-    user_holding = get_object_or_404(UserHolding, id=request.POST.get('id'))
+    user = request.user
 
-    if not user_holding:
-        messages.error(request, 'Símbolo no encontrado')
-        return redirect('dashboard')
+    user_holding = get_object_or_404(UserHolding, id=request.POST.get('id'), user=user)
 
-    user_holding.delete()
+    holding_symbol = user_holding.holding.symbol
+
+    trades = Trade.objects.filter(user_holding=user_holding).order_by('-date', '-id')
+
+    wallet = get_object_or_404(Wallet, user=user)
+
+    with transaction.atomic():
+
+        for trade in trades:
+            wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
+
+        wallet.save()
+        user_holding.delete()
+        
     messages.success(request, 'Símbolo Eliminado de la cartera.')
 
-    return redirect('holding', symbol=user_holding.holding.symbol)
+    return redirect('holding', symbol=holding_symbol)
 
 
 @login_required
