@@ -30,7 +30,7 @@
     <div class="kpi">
         <div class="kpi-label">Ganancia no realizada</div>
         <div class="kpi-value {% if total_unrealized_gain > 0 %}up{% elif total_unrealized_gain < 0 %}down{% endif %}">
-            {{ total_unrealized_gain | round_number }}
+            {{ total_unrealized_gain | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
     </div>
 </section>

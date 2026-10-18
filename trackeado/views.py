@@ -82,6 +82,7 @@ def dashboard(request):
         'CRIPTO': 0,
     }
     holding_distribution = {}
+    total_unrealized_gain_percent = 0
 
     for h in user_holdings:
 
@@ -109,6 +110,7 @@ def dashboard(request):
         
         h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
         total_unrealized_gain += h.unrealized_gain
+
 
         if h.shares > 0:
             last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
@@ -140,6 +142,8 @@ def dashboard(request):
     
     holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
 
+    total_unrealized_gain_percent = (total_unrealized_gain / total_current_invested_value) * 100
+
     context = {
         'holdings': user_holdings,
         'market_state': market_state,
@@ -150,7 +154,8 @@ def dashboard(request):
         'total_unrealized_gain': total_unrealized_gain,
         'total_cost_per_lot': total_cost_per_lot,
         'type_distribution': type_distribution,
-        'holding_distribution': holding_distribution
+        'holding_distribution': holding_distribution,
+        'total_unrealized_gain_percent': total_unrealized_gain_percent
     }
 
     return render(request, 'dashboard.html', {**context})
