@@ -12,6 +12,11 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 import os
 from pathlib import Path
+import dj_database_url
+from dotenv import load_dotenv
+
+# Cargar las variables del archivo .env si existe
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,10 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # con el valor viejo como fallback SOLO para no romper el entorno de desarrollo
 # local. Para producción, definí DJANGO_SECRET_KEY y rotá este valor: al haber
 # estado en texto plano en el código ya debe considerarse comprometido.
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-m!l^y66f#vr_w9ojru31othmtlu9&(sz#=^byz#4l$8tnik6(p',
-)
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
@@ -86,11 +88,19 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
+# Reemplaza la URL con tu cadena de conexión de Supabase
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            ssl_require=True # Supabase exige conexión segura
+        )
 }
 
 
@@ -171,21 +181,6 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
-
-# Credenciales de Alpaca Markets (https://app.alpaca.markets -> Paper Trading -> API Keys)
-# Antes había claves reales comentadas acá mismo (quedaban en el repo igual).
-# Si esas keys llegaron a usarse, hay que darlas de baja/rotar en Alpaca.
-ALPACA_API_KEY_ID = os.environ.get('ALPACA_API_KEY_ID', '')
-ALPACA_SECRET_KEY = os.environ.get('ALPACA_SECRET_KEY', '')
-
-# Igual que arriba: esta key vivía hardcodeada en texto plano. Se movió a una
-# variable de entorno; el fallback es solo para que el proyecto siga
-# arrancando en desarrollo. Rotala en Finnhub si este código se compartió o
-# subió a algún repo público/privado con la key original.
-FINNHUB_API_KEY = os.environ.get(
-    'FINNHUB_API_KEY',
-    'dao9fg9r01qqjqh5j6hgdao9fg9r01qqjqh5j6i0',
-)
 
 # login/logout
 
