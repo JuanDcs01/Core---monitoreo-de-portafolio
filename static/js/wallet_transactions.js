@@ -1,4 +1,6 @@
-// ===== Modo editar transacción de wallet =====
+/************************************
+Editar transacción
+***********************************/
 (function () {
     const inputs = {
         date: document.getElementById("id_date"),

@@ -1,3 +1,7 @@
+    /************************************
+Gráfiico Histórico
+************************************/
+    
     const historyDataMax = JSON.parse(document.getElementById('history-max').textContent);
     const historyData5d = JSON.parse(document.getElementById('history-5d').textContent);
     const historyData1d = JSON.parse(document.getElementById('history-1d').textContent);
@@ -266,7 +270,9 @@ botones.forEach(button => {
 
     document.getElementById('days1').click();
 
-    // Cálculo del total del formulario de trades
+/************************************
+Cálculo de total del trade
+***********************************/
     (function () {
         const inputType = document.getElementById("id_type");
         const inputPrice = document.getElementById("id_price");
@@ -298,7 +304,9 @@ botones.forEach(button => {
         );
     })();
 
-// ===== Modo editar trade =====
+/************************************
+Editar trade
+***********************************/
 (function () {
     const inputs = {
         date: document.getElementById("id_date"),
