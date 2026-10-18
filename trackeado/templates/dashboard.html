@@ -132,9 +132,22 @@
             {% endif %}
         </div>
     </div>
+    <div class="card w-25">
+        <div class="card-header">
+            <h4 class="m-0">Distribución por activo</h4>
+        </div>
+        <div class="card-bod d-flex justify-content-center p-3">
+            {% if total_cost_per_lot %}
+                <canvas id="holding-distribution" width="190"></canvas>
+            {% else %}
+                <p>No hay datos a mostrar</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 {{ type_distribution|json_script:"type-distribution-data" }}
+{{ holding_distribution|json_script:"holding-distribution-data" }}
 <script src="{% static '/js/dashboard.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 

@@ -1,73 +1,88 @@
 /************************************
 Gráfiico de distribución por tipo
 ************************************/
-const type_distribution_data = JSON.parse(
-    document.getElementById("type-distribution-data").textContent
+// Función para crear gráficos de dona (doughnut) de manera reutilizable
+function createDoughnutChart(canvasId, dataElementId, chartLabel = 'Dataset 1') {
+    // 1. Obtener y parsear los datos desde el DOM
+    const dataElement = document.getElementById(dataElementId);
+    if (!dataElement) return null; // Validación por si no existe el elemento
+    
+    const chartData = JSON.parse(dataElement.textContent);
+    const labels = Object.keys(chartData);
+    const values = Object.values(chartData);
+
+    // 2. Colores a utilizar en la gráfica
+    const colors = [
+        "#A2D2FF", "#B9FBC0", "#FEFAE0", "#FFCFD2", 
+        "#E1DBFF", "#FDE4CF", "#CFFAF1", "#F1F1F1", 
+        "#C8E6C9", "#FFE0B2", "#E3F2FD", "#FCE4EC"
+    ];
+
+    // 3. Obtener elemento canvas
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return null;
+
+    // 4. Configuración de los datos
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: chartLabel,
+            data: values,
+            backgroundColor: colors,
+            borderColor: "#f4f4f4",
+            hoverBackgroundColor: "#9b9b9b"
+        }]
+    };
+
+    // 5. Construcción y retorno de la gráfica
+    return new Chart(ctx, {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: false,
+            plugins: {
+                legend: {
+                    display: false,
+                },
+                datalabels: {
+                    color: '#000000',
+                    font: {
+                        weight: 'bold',
+                        size: 14
+                    },
+                    formatter: function(value) {
+
+                        if (value > 5) {
+                            console.log(value);
+                            return value == 0 ? '' : value + '%';
+                        } else {
+                            return ''
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.raw}%`;
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+// Gráfica de distribución por tipo
+const typeDistributionChart = createDoughnutChart(
+    'type-distribution', 
+    'type-distribution-data', 
+    'Tipos'
 );
 
-const labels = Object.keys(type_distribution_data);
-const values = Object.values(type_distribution_data);
-
-// colores a utilizar en la grafica
-const colors = [
-    "#A2D2FF",
-    "#FFCFD2",
-    "#B9FBC0",
-];
-
-// obtener elemento canvas
-const ctx = document.getElementById('type-distribution');
-
-// objeto literal de los datos
-const data = {
-    labels: labels,
-    datasets: [
-      {
-        label: 'Dataset 1',
-        data: values,
-        backgroundColor: colors,
-        borderColor: "#f4f4f4",
-        hoverBackgroundColor: "#9b9b9b"
-      }
-    ]
-  };
-
-// construccion de la grafica
-const distributionChart = new Chart(ctx, {
-  type: 'doughnut',
-  data: data,
-  options: {
-    responsive: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      // Configuración del plugin de etiquetas
-      datalabels: {
-        color: '#000000', // Color del texto (blanco para que resalte)
-        font: {
-          weight: 'bold',
-          size: 14
-        },
-        formatter: function(value, context) {
-          // Muestra el valor seguido del signo de porcentaje
-          if (value == 0) {
-            return ''
-          } else {
-            return value + '%';
-          }
-          
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return `${context.raw}%`;
-          }
-        }
-      }
-    }
-  },
-  // ¡Importante! Registra el plugin aquí para que se active
-  plugins: [ChartDataLabels] 
-});
+// Gráfica de distribución por holding (Reutilizando la misma lógica)
+const holdingDistributionChart = createDoughnutChart(
+    'holding-distribution', // Asegúrate de tener un <canvas id="holding-distribution"></canvas> en tu HTML
+    'holding-distribution-data', 
+    'Holdings'
+);

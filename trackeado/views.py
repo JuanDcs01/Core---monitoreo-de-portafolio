@@ -81,6 +81,7 @@ def dashboard(request):
         'ACCIÓN': 0,
         'CRIPTO': 0,
     }
+    holding_distribution = {}
 
     for h in user_holdings:
 
@@ -119,12 +120,25 @@ def dashboard(request):
             elif h.holding.type == 'CRYPTOCURRENCY':
                 type_distribution['CRIPTO'] += h.total_current_invested_value
 
+            holding_distribution[h.holding.symbol] = h.total_current_invested_value 
+
     total_balance = total_current_invested_value + wallet.balance
 
     type_distribution_total = sum([value for value in type_distribution.values()])
 
     for key in type_distribution.keys():
         type_distribution[key] = round(type_distribution[key] / type_distribution_total * 100, 2)
+
+    type_distribution = {k: v for k, v in sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)}
+
+    holding_distribution_total = sum([value for value in holding_distribution.values() ]) + wallet.balance
+
+    for key in holding_distribution.keys():
+        holding_distribution[key] = round(holding_distribution[key] / holding_distribution_total * 100, 2)
+
+    holding_distribution['Efectivo'] = round(wallet.balance / holding_distribution_total * 100, 2)
+    
+    holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
 
     context = {
         'holdings': user_holdings,
@@ -135,7 +149,8 @@ def dashboard(request):
         'last_holdings_buy': last_holdings_buy,
         'total_unrealized_gain': total_unrealized_gain,
         'total_cost_per_lot': total_cost_per_lot,
-        'type_distribution': type_distribution
+        'type_distribution': type_distribution,
+        'holding_distribution': holding_distribution
     }
 
     return render(request, 'dashboard.html', {**context})
