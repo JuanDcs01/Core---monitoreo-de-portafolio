@@ -188,7 +188,7 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # logo.dev
-LOGODEV_TOKEN = 'pk_JT8lFssUTjqsgt2QCZIMRA'
+LOGODEV_TOKEN = os.environ.get('LOGODEV_TOKEN')
 
 # Recuperar contraseña
 MAILERS = {
