@@ -82,10 +82,10 @@ class Trade(models.Model):
         SELL = 'S', 'Venta'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
+    user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)
     type = models.CharField(max_length=1, choices=TradeType.choices)
-    shares = models.DecimalField()
     price = models.DecimalField()
+    shares = models.DecimalField()
     commission = models.DecimalField()
     date = models.DateField()
 

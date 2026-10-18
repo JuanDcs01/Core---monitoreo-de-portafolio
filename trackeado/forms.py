@@ -59,7 +59,7 @@ class TradeForm(forms.ModelForm):
 
         model = Trade
 
-        exclude = ['user', 'holding']
+        exclude = ['user', 'user_holding']
 
         widgets = {
             'type': forms.Select(

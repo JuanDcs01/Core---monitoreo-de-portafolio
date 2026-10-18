@@ -28,7 +28,7 @@ def dashboard(request):
 
     market_state = yf.Ticker('VOO').info.get('marketState')
 
-    trades = Trade.objects.select_related('holding').filter(user=user).order_by('date', 'id') 
+    trades = Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id') 
 
     # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
     first_trade_date = trades[0].date
@@ -43,31 +43,31 @@ def dashboard(request):
     
     for t in trades:
 
-        if t.holding.symbol not in holdings_data.keys():
-            holdings_data[t.holding.symbol] = {
+        if t.user_holding.holding.symbol not in holdings_data.keys():
+            holdings_data[t.user_holding.holding.symbol] = {
                 'total_shares': 0,
                 'lots': [],
             }
 
         if t.type == 'B':
-            holdings_data[t.holding.symbol]['total_shares'] += t.shares
+            holdings_data[t.user_holding.holding.symbol]['total_shares'] += t.shares
             price_per_share = t.total / t.shares
-            holdings_data[t.holding.symbol]['lots'].append({'date': t.date,
+            holdings_data[t.user_holding.holding.symbol]['lots'].append({'date': t.date,
                                                             'shares': t.shares,
                                                             'price_per_share': price_per_share})
         else:
-            holdings_data[t.holding.symbol]['total_shares'] -= t.shares
+            holdings_data[t.user_holding.holding.symbol]['total_shares'] -= t.shares
 
             partial_shares = None
-            for i in range(0, len(holdings_data[t.holding.symbol]['lots'])):
+            for i in range(0, len(holdings_data[t.user_holding.holding.symbol]['lots'])):
                 if not partial_shares:
-                    holdings_data[t.holding.symbol]['lots'][i]['shares'] -= t.shares
+                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= t.shares
                 else:
-                    holdings_data[t.holding.symbol]['lots'][i]['shares'] -= partial_shares
+                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= partial_shares
 
-                if holdings_data[t.holding.symbol]['lots'][i]['shares'] < 0:
-                    partial_shares = abs(holdings_data[t.holding.symbol]['lots'][i]['shares'])
-                    holdings_data[t.holding.symbol]['lots'][i]['shares'] = 0
+                if holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] < 0:
+                    partial_shares = abs(holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'])
+                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] = 0
                     continue
 
                 break
@@ -379,7 +379,7 @@ def holding(request, symbol):
 
     exist = UserHolding.objects.filter(user=user, holding=holding_object).first()
 
-    trade = Trade.objects.filter(user=user, holding=holding_object).order_by('-date', '-id')
+    trade = Trade.objects.filter(user=user, user_holding=exist).order_by('-date', '-id')
 
     ernings = holding.financials
 
@@ -510,7 +510,7 @@ def holding(request, symbol):
 
             trade = form.instance
             trade.user = user
-            trade.holding = holding_object
+            trade.user_holding = exist
 
             wallet = get_object_or_404(Wallet, user=user)
 
@@ -637,7 +637,7 @@ def delete_trade(request):
     trade = Trade.objects.filter(id=trade_id).first()
     holding = Holding.objects.filter(id=holding_id).first()
 
-    wallet = get_object_or_404(Wallet, user=user)    
+    wallet = get_object_or_404(Wallet, user=user)
 
     with transaction.atomic():
 
