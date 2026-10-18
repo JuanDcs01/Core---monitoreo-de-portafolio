@@ -3,71 +3,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Tracker de Acciones en Tiempo Real</title>
-    <!-- Bootstrap para estilos rápidos -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Tracker de Acciones{% endblock title %} · CORE</title>
+
+    <!-- Fuentes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap para componentes base -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>    
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
-<body>
+<body class="{% if user.is_authenticated %}app{% else %}auth{% endif %}">
 
-    <header class="d-flex flex-wrap justify-content-center p-3 mb-4 border-bottom"> 
-        <a href="{% url 'dashboard' %}" class="d-flex align-items-center mb-3 mb-md-0 me-5 link-body-emphasis text-decoration-none 
-        {% if not user.is_authenticated  %}me-md-auto{% endif %}"> 
-            <img class="logo rounded float-start" src="{% static 'img/logo.png' %}" alt="">
-        </a> 
-        {% if user.is_authenticated  %}
-            <div class="me-md-auto">
-                <form action="{% url 'search_holding' %}" method="POST">
-                {% csrf_token %}
-                <div class="d-flex w-200 me-5">
-                <input class="form-control me-3" type="text" name="symbol" placeholder="Consultar Símbolo">
-                <button class="btn btn-dark d-flex" type="submit"><i class="bi bi-search me-1"></i> Buscar</button>
-                </div>  
-                </form>
-            </div>
+<div class="shell">
 
-            <ul class="nav nav-pills">
-                <li class="nav-item">
-                    <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page"><i class="bi bi-speedometer2"></i> Inicio</a>
-                </li> 
-                <li class="nav-item">
-                    <a href="{% url 'wallet_transactions' %}" class="nav-link {% if request.resolver_match.url_name == 'wallet_transactions' %}active{% endif %}" aria-current="page"><i class="bi bi-wallet2"></i> Cartera</a>
-                </li> 
-                <li class="nav-item">
-                    <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
-                </li> 
-                <li class="nav-item"><a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person-fill"></i> Perfil</a>
-                </li> 
-                <li class="nav-item">
-                    <form action="{% url 'logout' %}" method="POST">    
-                        {% csrf_token %}
-                        <button class="nav-link" type="submit"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
-                    </form>
-                </li> 
-            </ul>
-        {% endif %}  
-    </header>
+    {% if user.is_authenticated %}
+    <!-- ===== Barra lateral (en móvil pasa a ser barra superior) ===== -->
+    <aside class="sidebar">
+        <a href="{% url 'dashboard' %}" class="brand" aria-label="Ir al inicio">
+            <img class="logo" src="{% static 'img/logo.png' %}" alt="CORE · Monitoreo de portafolio">
+        </a>
 
-    <main>
-        
-    <div>
-        {% if messages %}
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
+        <form action="{% url 'search_holding' %}" method="POST" class="side-search">
+            {% csrf_token %}
+            <input class="form-control" type="text" name="symbol" placeholder="Consultar símbolo" autocomplete="off">
+            <button class="side-search-btn" type="submit" aria-label="Buscar"><i class="bi bi-search"></i></button>
+        </form>
+
+        <ul class="side-nav">
+            <li>
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" aria-current="page"><i class="bi bi-speedometer2"></i> Inicio</a>
+            </li>
+            <li>
+                <a href="{% url 'wallet_transactions' %}" class="nav-link {% if request.resolver_match.url_name == 'wallet_transactions' %}active{% endif %}"><i class="bi bi-wallet2"></i> Cartera</a>
+            </li>
+            <li>
+                <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
+            </li>
+            <li>
+                <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person-fill"></i> Perfil</a>
+            </li>
+        </ul>
+
+        <form action="{% url 'logout' %}" method="POST" class="side-foot">
+            {% csrf_token %}
+            <button class="nav-link" type="submit"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</button>
+        </form>
+    </aside>
+    {% endif %}
+
+    <div class="shell-body">
+
+        {% if not user.is_authenticated %}
+        <header class="auth-brand">
+            <a href="{% url 'dashboard' %}" aria-label="CORE">
+                <img class="logo" src="{% static 'img/logo.png' %}" alt="CORE · Monitoreo de portafolio">
+            </a>
+        </header>
         {% endif %}
+
+        <main class="content">
+
+            {% if messages %}
+            <div class="flash-stack">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.level_tag == 'error' %}danger{% else %}{{ message.level_tag|default:'info' }}{% endif %} flash" role="alert">
+                        <i class="bi {% if message.level_tag == 'success' %}bi-check-circle-fill{% elif message.level_tag == 'error' %}bi-exclamation-octagon-fill{% elif message.level_tag == 'warning' %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}
+            {% endblock content %}
+        </main>
+
+        <footer class="site-footer">
+            <p>Derechos reservados</p>
+        </footer>
     </div>
 
-    {% block content %}
-    {% endblock content %}
-    </main>
-
-    <footer>
-        <p>Derechos reservados</p>
-    </footer>
+</div>
 
 </body>
 </html>

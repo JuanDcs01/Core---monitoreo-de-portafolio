@@ -1,27 +1,49 @@
-{% extends "layouts/base.html" %} 
+{% extends "layouts/base.html" %}
+{% block title %}Listas{% endblock title %}
 {% block content %}
-    <div class="d-flex">
-        <div>
-        {% include "components/form.html" %}
-        </div>
 
-        <div class="w-100">
-            {% if watch_lists %}
-            <div class="list-group">
-                {% for w in watch_lists %}
-                    <div class="d-flex align-items-center">
-                            <a class="list-group-item list-group-item-action me-5" href="{% url 'watch_list_details' w.name %}">{{ w.name }}</a>
-                        <form action="{% url 'delete_watch_lists' %}" method="POST">
-                            {% csrf_token %}
-                            <input type="hidden" name="watch_list_id" value="{{ w.id }}">
-                            <button class="btn btn-danger" type="submit"><i class="bi bi-trash"></i></button>
-                        </form>
-                    </div>
-                {% endfor %}    
-            </div>
-            {% else %}
-            <p>No hay listas registrada</p>
-            {% endif %}
-        </div>      
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Listas de seguimiento</h1>
+        <p class="page-sub">Agrupa los activos que quieres vigilar</p>
     </div>
-{% endblock content %}  
+</div>
+
+<section class="split">
+    <div class="split-aside">
+        {% include "components/form.html" %}
+    </div>
+
+    <div class="split-main">
+        <div class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Mis listas</h2>
+            </div>
+            {% if watch_lists %}
+                <ul class="row-list">
+                    {% for w in watch_lists %}
+                        <li>
+                            <a class="row-list-link" href="{% url 'watch_list_details' w.name %}">
+                                <i class="bi bi-bookmark-star"></i>
+                                <span>{{ w.name }}</span>
+                                <i class="bi bi-chevron-right row-list-arrow"></i>
+                            </a>
+                            <form action="{% url 'delete_watch_lists' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="watch_list_id" value="{{ w.id }}">
+                                <button class="btn btn-danger btn-icon" type="submit" title="Eliminar lista"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>No hay listas registradas</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

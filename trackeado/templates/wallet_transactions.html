@@ -1,67 +1,80 @@
 {% extends "layouts/base.html" %} {% load custom_filters %} {% load static %} {% load l10n %}
+{% block title %}Cartera{% endblock title %}
 {% block content %}
 
-    <div class=".center-container">
-        <div class="d-flex">
-            <div>
-                {% include 'components/form.html' %}
+<div class="page-head">
+    <div>
+        <h1 class="page-title">Cartera</h1>
+        <p class="page-sub">Depósitos y retiros de tu cuenta</p>
+    </div>
+</div>
+
+<section class="split split--stack split--cols-4">
+    <div class="split-aside">
+        {% include 'components/form.html' %}
+    </div>
+
+    <div class="split-main">
+        <div class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Transacciones</h2>
             </div>
-            <div class="w-75 ms-5">
             {% if wallet_transactions %}
-                <div class="table-hf table-header justify-content-start">
-                    <h3 class="m-0">Transacciones</h3>
-                </div>
-                <table class="table w-100 table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>   
-                            <th>Monto</th>
-                            <th>Comisión</th>
-                            <th>Total</th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for w in wallet_transactions %}   
+                <div class="table-wrap">
+                    <table class="table table-hover data-table">
+                        <thead>
                             <tr>
-                                <td>{{ w.date }}</td>
-                                <td>{{ w.get_type_display | identify_transaction }}</td>
-                                <td style="{% if w.type == 'D' %}color: green;{% else %}color: red{% endif %}">
-                                    {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number }}</td>
-                                <td>{{ w.commission | round_number }}</td>
-                                <td>{{ w.total | round_number }}</td>
-                                <td>
-                                    {% localize off %}
-                                    <button type="button" class="btn btn-dark btn-edit-transaction"
-                                            data-transaction-id="{{ w.id }}"
-                                            data-date="{{ w.date|date:'Y-m-d' }}"
-                                            data-type="{{ w.type }}"
-                                            data-net-amount="{{ w.net_amount }}"
-                                            data-commission="{{ w.commission }}">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    {% endlocalize %}
-                                </td>
-                                <td>
-                                    <form action="{% url 'delete_wallet_transactions' %}" method="POST">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="id" value="{{ w.id }}">
-                                        <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                </td>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th class="num">Monto</th>
+                                <th class="num">Comisión</th>
+                                <th class="num">Total</th>
+                                <th class="col-actions"></th>
                             </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <div class="table-hf table-footer"></div>
+                        </thead>
+                        <tbody>
+                            {% for w in wallet_transactions %}
+                                <tr>
+                                    <td>{{ w.date }}</td>
+                                    <td>{{ w.get_type_display | identify_transaction }}</td>
+                                    <td class="num {% if w.type == 'D' %}up{% else %}down{% endif %}">
+                                        {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number }}
+                                    </td>
+                                    <td class="num">{{ w.commission | round_number }}</td>
+                                    <td class="num">{{ w.total | round_number }}</td>
+                                    <td class="col-actions">
+                                        <div class="row-actions">
+                                        {% localize off %}
+                                        <button type="button" class="btn btn-soft btn-icon btn-edit-transaction" title="Editar"
+                                                data-transaction-id="{{ w.id }}"
+                                                data-date="{{ w.date|date:'Y-m-d' }}"
+                                                data-type="{{ w.type }}"
+                                                data-net-amount="{{ w.net_amount }}"
+                                                data-commission="{{ w.commission }}">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        {% endlocalize %}
+                                        <form action="{% url 'delete_wallet_transactions' %}" method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="id" value="{{ w.id }}">
+                                            <button class="btn btn-danger btn-icon" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             {% else %}
-                <p>No hay datos</p>
+                <div class="empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>No hay datos</p>
+                </div>
             {% endif %}
-            </div>
         </div>
     </div>
+</section>
 
 {{ editing_transaction_id|json_script:"editing-transaction-id" }}
 <script src="{% static '/js/wallet_transactions.js' %}"></script>

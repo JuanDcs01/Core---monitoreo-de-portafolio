@@ -1,134 +1,131 @@
 {% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %} {% load static %} {% load l10n %}
+{% block title %}{{ symbol }}{% endblock title %}
 {% block content %}
-<div>
 
-    <style>
-        .active-period {
-            background-color: cadetblue;
-        }
-    </style>
-    
-    <div style="width: 80%; margin: auto; margin-top: 50px;">
-        <img src="{{ logo_url }}" alt="{{ symbol }}" width="40" height="40" lass="me-2 rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
+<!-- ===== Cabecera del activo ===== -->
+<section class="panel asset-head">
+    <div class="asset-head-main">
+        <img class="asset-logo" src="{{ logo_url }}" alt="{{ symbol }}" width="56" height="56" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ symbol }}&background=random&size=56';">
         <div>
-            {{ symbol }}:{{ fullExchangeName }}
+            <div class="asset-ticker">{{ symbol }}<span class="asset-exchange">{{ fullExchangeName }}</span></div>
+            <div class="asset-fullname">{{ longName }}</div>
         </div>
-        <div>
-            {{ longName }}
-        </div>
-        <div class="d-flex align-items-center">
-            <h2 id="currentPrice">
-            </h2>
-            <h5 class="ms-1">
-                {{ marketState | market_state }}
-            </h5>
-        </div>
+    </div>
 
-        <span id="percentChange"></span>
-        <span id="numberChange"></span>
-        <div style="height: 350px; margin: 20px; display: flex; flex-direction: column; align-items: center;">
+    <div class="asset-head-price">
+        <div class="price-row">
+            <h2 id="currentPrice"></h2>
+            <span class="market-state">{{ marketState | market_state }}</span>
+        </div>
+        <div class="change-row">
+            <span id="percentChange"></span>
+            <span id="numberChange"></span>
+        </div>
+    </div>
+
+    <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ exist.id }}">
+        <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" {% if not exist %}disabled{% endif %}><i class="bi bi-trash"></i> Eliminar</button>
+    </form>
+</section>
+
+<!-- ===== Gráfico ===== -->
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Evolución del precio</h2>
+        <div class="seg">
+            <button class="period" id="days1">1 d</button>
+            <button class="period" id="days5">5 d</button>
+            <button class="period" id="months1">1 m</button>
+            <button class="period" id="months3">3 m</button>
+            <button class="period" id="months6">6 m</button>
+            <button class="period" id="YTD">YTD</button>
+            <button class="period" id="year1">1 a</button>
+            <button class="period" id="year5">5 a</button>
+            <button class="period" id="max">Todo</button>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="chart-box">
             <canvas id="history"></canvas>
-            <div style="display: flex;">
-                <button class="period" id="days1">1 d</button>
-                <button class="period" id="days5">5 d</button>
-                <button class="period" id="months1">1 m</button>
-                <button class="period" id="months3">3 m</button>
-                <button class="period" id="months6">6 m</button>
-                <button class="period" id="YTD">YTD</button>
-                <button class="period" id="year1">1 a</button>
-                <button class="period" id="year5">5 a</button>
-                <button class="period" id="max">Todo</button>
-            </div>
         </div>
     </div>
-        <form action="{% url 'delete_holding' %}" method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="id" value="{{ exist.id }}">
-            <button class="btn btn-danger" type="submit" {% if not exist %}disabled{% endif %}><i class="bi bi-trash"></i></button>
-        </form>
-    <div class="d-flex justify-content-between m-5">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="m-0">Perfil Corporativo</h5>
-            </div>
-            <div class="card-body d-flex flex-column">
-                <span><strong>Sector:</strong> {{ sector }}</span>
-                <span></span><strong>Industria:</strong> {{ industry }}</span>
-                <span><strong>Cap. burs:</strong> {{ marketCap | metric }}</span>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h5 class="m-0">Desempeño del Precio</h5>
-            </div>
-            <div class="card-body d-flex flex-column">
-                <span><strong>Rango hoy:</strong> {{ dayLow }} - {{ dayHigh }}</span>
-                <span><strong>Rango 52 semanas:</strong> {{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</span>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h5 class="m-0">Valuación y Riesgo</h5>
-            </div>
-            <div class="card-body d-flex flex-column">
-                <span><strong>PE ratio:</strong> {{ trailingPE }}</span>
-                <span><strong>PE proyectado:</strong> {{ forwardPE }}</span>
-                <span><strong>Beta:</strong> {{ beta| intcomma:False }}</span>
-                <span><strong>Dividendo:</strong> {{ dividendYield }}%</span>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-header">
-                <h5>Proyecciones y Consenso de Analistas</h5>
-            </div>
-            <div class="card-body d-flex flex-column">
-                <span><strong>Precio objetivo más bajo:</strong> {{ targetLowPrice }}</span>
-                <span><strong>Precio objetivo más alto:</strong> {{ targetHighPrice }}</span>
-                <span><strong>Precio objetivo medio:</strong> {{ targetMedianPrice }}</span>
-                <span><strong>Recomendación de analistas:</strong> {{ recommendationKey | recommendation }}</span>
-            </div>
-        </div>
-    </div>
-</div>
+</section>
 
+<!-- ===== Datos del activo ===== -->
+<section class="info-grid">
+    <div class="panel">
+        <div class="panel-head"><h3 class="panel-title">Perfil corporativo</h3></div>
+        <div class="kv"><span>Sector</span><strong>{{ sector }}</strong></div>
+        <div class="kv"><span>Industria</span><strong>{{ industry }}</strong></div>
+        <div class="kv"><span>Cap. bursátil</span><strong>{{ marketCap | metric }}</strong></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head"><h3 class="panel-title">Desempeño del precio</h3></div>
+        <div class="kv"><span>Rango hoy</span><strong>{{ dayLow }} - {{ dayHigh }}</strong></div>
+        <div class="kv"><span>Rango 52 semanas</span><strong>{{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</strong></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head"><h3 class="panel-title">Valuación y riesgo</h3></div>
+        <div class="kv"><span>PE ratio</span><strong>{{ trailingPE }}</strong></div>
+        <div class="kv"><span>PE proyectado</span><strong>{{ forwardPE }}</strong></div>
+        <div class="kv"><span>Beta</span><strong>{{ beta| intcomma:False }}</strong></div>
+        <div class="kv"><span>Dividendo</span><strong>{{ dividendYield }}%</strong></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head"><h3 class="panel-title">Proyecciones y consenso</h3></div>
+        <div class="kv"><span>Precio objetivo más bajo</span><strong>{{ targetLowPrice }}</strong></div>
+        <div class="kv"><span>Precio objetivo más alto</span><strong>{{ targetHighPrice }}</strong></div>
+        <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
+        <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
+    </div>
+</section>
+
+<!-- ===== Operaciones ===== -->
 {% if exist %}
-    <div class=".center-container">
-            <div class="d-flex">
-                <div>
-                    {% include 'components/form.html' %}
+<section class="split split--stack">
+    <div class="split-aside">
+        {% include 'components/form.html' %}
+    </div>
+
+    <div class="split-main">
+        {% if trade %}
+            <div class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Trades</h2>
                 </div>
-                <div class="w-75 ms-5">
-                {% if trade %}
-                    <div class="table-hf table-header justify-content-start">
-                        <h3 class="m-0">Trades</h3>
-                    </div>
-                    <table class="table w-100 table-striped table-hover">
+                <div class="table-wrap">
+                    <table class="table table-hover data-table">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
                                 <th>Tipo</th>
-                                <th>Precio</th>
-                                <th>Acciones</th>
-                                <th>Monto</th>
-                                <th>Comisión</th>
-                                <th>Total</th>
-                                <th></th>
-                                <th></th>
+                                <th class="num">Precio</th>
+                                <th class="num">Acciones</th>
+                                <th class="num">Monto</th>
+                                <th class="num">Comisión</th>
+                                <th class="num">Total</th>
+                                <th class="col-actions"></th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for t in trade %}   
+                            {% for t in trade %}
                                 <tr>
                                     <td>{{ t.date }}</td>
                                     <td>{{ t.get_type_display | identify_transaction }}</td>
-                                    <td>{{ t.price | round_number }}</td>
-                                    <td>{{ t.shares | no_trailing_zeros }}</td>
-                                    <td>{{ t.net_amount | round_number }}</td>
-                                    <td>{{ t.commission | round_number }}</td>
-                                    <td>{{ t.total | round_number }}</td>
-                                    <td>
+                                    <td class="num">{{ t.price | round_number }}</td>
+                                    <td class="num">{{ t.shares | no_trailing_zeros }}</td>
+                                    <td class="num">{{ t.net_amount | round_number }}</td>
+                                    <td class="num">{{ t.commission | round_number }}</td>
+                                    <td class="num">{{ t.total | round_number }}</td>
+                                    <td class="col-actions">
+                                        <div class="row-actions">
                                         {% localize off %}
-                                        <button type="button" class="btn btn-dark btn-edit-trade"
+                                        <button type="button" class="btn btn-soft btn-icon btn-edit-trade" title="Editar"
                                                 data-trade-id="{{ t.id }}"
                                                 data-date="{{ t.date|date:'Y-m-d' }}"
                                                 data-type="{{ t.type }}"
@@ -138,26 +135,31 @@
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         {% endlocalize %}
-                                    </td>
-                                    <td>
                                         <form action="{% url 'delete_trade' %}" method="POST">
                                             {% csrf_token %}
                                             <input type="hidden" name="trade_id" value="{{ t.id }}">
                                             <input type="hidden" name="holding_id" value="{{ holding_id }}">
-                                            <button class="btn btn-danger"><i class="bi bi-trash"></i></button>
+                                            <button class="btn btn-danger btn-icon" title="Eliminar"><i class="bi bi-trash"></i></button>
                                         </form>
+                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                    <div class="table-hf table-footer"></div>
-                {% else %}
-                    <p>No hay datos</p>
-                {% endif %}
                 </div>
             </div>
-        </div>
+        {% else %}
+            <div class="panel">
+                <div class="panel-head"><h2 class="panel-title">Trades</h2></div>
+                <div class="empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>No hay datos</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
 {% endif %}
 
 {{ history_list|json_script:"history-max" }}

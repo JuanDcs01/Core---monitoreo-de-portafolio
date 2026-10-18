@@ -2,25 +2,21 @@
 {% block title %}Perfil{% endblock title %}
 
 {% block content %}
-<div class="center">
-    <div class="d-flex flex-column justify-content-center align-items-center">
-
-        <div>
-            <h2>{{ user.username }}</h2>
+<div class="center-container">
+    <section class="panel profile">
+        <div class="profile-top">
+            <div class="profile-avatar">{{ user.username|first|upper }}</div>
+            <h1 class="profile-name">{{ user.username }}</h1>
         </div>
 
-        <div>
-            <span>Email:</span>
-            <span>{{ user.email }}</span>
-        </div>  
-        <div class="mb-3">      
-            <span>Te uniste:</span>
-            <span>{{ user.date_joined }}</span>
+        <div class="profile-meta">
+            <div class="kv"><span><i class="bi bi-envelope"></i> Email</span><strong>{{ user.email }}</strong></div>
+            <div class="kv"><span><i class="bi bi-calendar3"></i> Te uniste</span><strong>{{ user.date_joined }}</strong></div>
         </div>
 
-        <div>
-            <a href="{% url 'password_change' %}" class="btn btn-dark">Cambiar contraseña</a>
+        <div class="profile-actions">
+            <a href="{% url 'password_change' %}" class="btn btn-primary w-100"><i class="bi bi-key"></i> Cambiar contraseña</a>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock content %}

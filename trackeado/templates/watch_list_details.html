@@ -1,53 +1,64 @@
 {% extends "layouts/base.html" %} {% load custom_filters %}
+{% block title %}{{ watch_list.name }}{% endblock title %}
 {% block content %}
-    <div class=".center-container">
-        <div>
-            {% if holdings_list %}
-            <div class="table-hf table-header">
-                <h3 class="m-0">{{ watch_list.name }}</h3>
-                <form action="{% url 'add_holding_list' %}" method="POST">
-                    {% csrf_token %}
-                    
-                    <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">
-                    <div class="d-flex">
-                        <input class="form-control me-3" type="text" name="symbol" placeholder="buscar Símbolo">
-                        <button class="btn btn-dark d-flex"><i class="bi bi-plus-lg"></i> Agregar</button>
-                    </div>
-                </form>
-            </div>
-            <table class="table w-100 table-striped table-hover">
+
+<a href="{% url 'watch_lists' %}" class="back-link"><i class="bi bi-arrow-left"></i> Todas las listas</a>
+
+<section class="panel">
+    {% if holdings_list %}
+        <div class="panel-head">
+            <h2 class="panel-title">{{ watch_list.name }}</h2>
+            <form action="{% url 'add_holding_list' %}" method="POST" class="inline-add">
+                {% csrf_token %}
+                <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">
+                <input class="form-control" type="text" name="symbol" placeholder="Buscar símbolo" autocomplete="off">
+                <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Agregar</button>
+            </form>
+        </div>
+        <div class="table-wrap">
+            <table class="table table-hover data-table">
                 <thead>
                     <tr>
-                        <th>Logo</th>
-                        <th>Símbolo</th>
+                        <th>Activo</th>
                         <th>Tipo</th>
-                        <th>Precio</th>
-                        <th>Cambio {{ market_state | market_state }}
-                        </th>
+                        <th class="num">Precio</th>
+                        <th class="num">Cambio {{ market_state | market_state }}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for h in holdings_list %}   
-                        <tr onclick="window.location='{% url 'holding' h.holding.symbol %}'" style="cursor: pointer;">
-                                <td>
-                                    <img src="{{ h.logo_url }}" alt="{{ symbol }}" width="40" height="40" class="rounded" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ asset.symbol }}&background=random&size=32';">
-                                </td>
-                                <td><strong>{{ h.holding.symbol }}</strong><br><small>{{ h.holding.name }}</small></td>
-                                <td>{{ h.holding.type | holding_type }}</td>
-                                <td>{{ h.holding.price }}</td>
-                                <td>
-                                    <div style="{% if h.holding.day_change > 0 %} color: green; {% elif h.holding.day_change < 0 %} color: red; {% endif %} ">
-                                        {{ h.holding.day_change_percent }}% ({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change }}) 
+                    {% for h in holdings_list %}
+                        <tr class="row-link" onclick="window.location='{% url 'holding' h.holding.symbol %}'">
+                            <td>
+                                <div class="asset">
+                                    <img src="{{ h.logo_url }}" alt="{{ h.holding.symbol }}" width="40" height="40" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ h.holding.symbol }}&background=random&size=40';">
+                                    <div>
+                                        <div class="asset-sym">{{ h.holding.symbol }}</div>
+                                        <div class="asset-name">{{ h.holding.name }}</div>
                                     </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
+                                </div>
+                            </td>
+                            <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
+                            <td class="num">{{ h.holding.price }}</td>
+                            <td class="num">
+                                <div class="delta {% if h.holding.day_change > 0 %}up{% elif h.holding.day_change < 0 %}down{% endif %}">
+                                    <span>{{ h.holding.day_change_percent }}%</span>
+                                    <small>({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change }})</small>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
-            <div class="table-hf table-footer"></div>
-            {% else %}
-                <p>La lista esta vacía</p>
-            {% endif %}
         </div>
-    </div>
+    {% else %}
+        <div class="panel-head">
+            <h2 class="panel-title">{{ watch_list.name }}</h2>
+        </div>
+        <div class="empty">
+            <i class="bi bi-inbox"></i>
+            <p>La lista está vacía</p>
+        </div>
+    {% endif %}
+</section>
+
 {% endblock content %}

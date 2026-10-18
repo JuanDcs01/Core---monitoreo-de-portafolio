@@ -2,41 +2,49 @@
     <div class="form">
         <h2 class="form-title">{{ title }}</h2>
 
-        <div class="alert-message">
-            {% for error in form.non_field_errors%}
-                {{ error }}
-            {% endfor %}
+        {% if form.non_field_errors %}
+        <div class="alert-message form-alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <div>
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
         </div>
+        {% endif %}
 
         <form action="" method="post">
             {% csrf_token %}
             {% for f in form %}
                 <div class="form-field">
-                    <div>   
+                    <div>
                         {{ f }}
                     </div>
                     <div class="alert-message">
-                        {{ f.errors }}  
+                        {{ f.errors }}
                     </div>
+                    {% if f.help_text %}
                     <div class="form-text text-muted">
                         {{ f.help_text }}
                     </div>
+                    {% endif %}
                 </div>
             {% endfor %}
             {% if request.resolver_match.url_name == 'holding' %}
-                <div class="form-field">
-                    <span class="form-control" style="background-color: var(--bs-secondary-bg);" id="total">0.00</span>
+                <div class="form-field form-total">
+                    <span class="form-total-label">Total</span>
+                    <span id="total">0.00</span>
                 </div>
             {% endif %}
             <div class="center">
-                <button class="btn btn-dark w-100" type="submit">{{ button }}</button>
+                <button class="btn btn-primary w-100" type="submit">{{ button }}</button>
             </div>
             <div class="form-url">
-            {% if request.resolver_match.url_name == 'login' %}                
-                <a class=".btn-link" href="{% url 'register' %}">Registrarse</a>
-                <a class=".btn-link" href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
+            {% if request.resolver_match.url_name == 'login' %}
+                <a class="link-quiet" href="{% url 'register' %}">Registrarse</a>
+                <a class="link-quiet" href="{% url 'password_reset' %}">¿Olvidaste tu contraseña?</a>
             {% elif request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'password_reset' %}
-                <a class=".btn-link" href="{% url 'login' %}">Iniciar sesión</a>
+                <a class="link-quiet" href="{% url 'login' %}">Iniciar sesión</a>
             {% endif %}
             </div>
         </form>
