@@ -503,7 +503,7 @@ def holding(request, symbol):
 
         if trade_id:
             # Solo puede editar trades propios y de este holding
-            old_trade = get_object_or_404(Trade, id=trade_id, user=user, holding=holding_object)
+            old_trade = get_object_or_404(Trade, id=trade_id, user=user, user_holding=exist)
 
             # OJO: guardar lo viejo ANTES de crear el form (ver explicación abajo)
             old_type = old_trade.type
