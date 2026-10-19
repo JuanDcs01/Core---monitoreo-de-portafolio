@@ -79,14 +79,14 @@
                             <td class="num">{{ h.price | round_number }}</td>
                             <td class="num">
                                 <div class="delta {% if h.day_change > 0 %}up{% elif h.day_change < 0 %}down{% endif %}">
-                                    <span>{{ h.day_change_percent | round_number }}%</span>
-                                    <small>({% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }})</small>
+                                    <span>{% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }}</span>
+                                    <small>({{ h.day_change_percent | round_number }}%)</small>
                                 </div>
                             </td>
                             <td class="num">
                                 <div class="delta {% if h.unrealized_gain > 0 %}up{% elif h.unrealized_gain < 0 %}down{% endif %}">
-                                    <span>{{ h.unrealized_gain_percent | round_number }}%</span>
-                                    <small>({% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }})</small>
+                                    <span>{% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }}</span>
+                                    <small>({{ h.unrealized_gain_percent | round_number }}%)</small>
                                 </div>
                             </td>
                         </tr>

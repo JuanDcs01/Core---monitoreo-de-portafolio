@@ -41,8 +41,8 @@
                             <td class="num">{{ h.holding.price }}</td>
                             <td class="num">
                                 <div class="delta {% if h.holding.day_change > 0 %}up{% elif h.holding.day_change < 0 %}down{% endif %}">
-                                    <span>{{ h.holding.day_change_percent }}%</span>
-                                    <small>({% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change }})</small>
+                                    <span>{% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change | round_number }}</span>
+                                    <small>({{ h.holding.day_change_percent | round_number }}%)</small>
                                 </div>
                             </td>
                         </tr>

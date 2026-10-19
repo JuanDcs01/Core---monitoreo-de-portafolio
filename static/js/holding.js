@@ -22,8 +22,8 @@ Gráfiico Histórico
         const priceSpan = document.getElementById('currentPrice');
         
         if (numberSpan && percentSpan && priceSpan) {
-            numberSpan.innerText = isPositive ? `(+${precioFormateado(diferencia)})` : `(${precioFormateado(diferencia)})`;
-            percentSpan.innerText = `${precioFormateado(porcentaje)}%`;
+            numberSpan.innerText = isPositive ? `+${precioFormateado(diferencia)}` : `${precioFormateado(diferencia)}`;
+            percentSpan.innerText = `(${precioFormateado(porcentaje)}%)`;
             priceSpan.innerText = precioFormateado(ultimoPrecio)
             numberSpan.style.color = colorHex;
             percentSpan.style.color = colorHex;
