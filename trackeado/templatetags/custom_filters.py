@@ -47,6 +47,9 @@ def market_state(value):
 @register.filter
 def round_number(value):
 
+    if not value:
+        return '0.00'
+
     return round(Decimal(value), 2)
 
 @register.filter
