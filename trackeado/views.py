@@ -26,7 +26,10 @@ def dashboard(request):
     trades = list(Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id'))
 
     if not user_holdings:
-        return render(request, 'dashboard.html', {})
+        return render(request, 'dashboard.html', {
+            'total_balance': wallet.balance,
+            'available_balance': wallet.balance
+        })
     
     # obtener estado actual del mercado
     market_state = yf.Ticker('VOO').info.get('marketState')
