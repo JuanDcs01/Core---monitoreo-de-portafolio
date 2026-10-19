@@ -7,114 +7,148 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import datetime
 from django.conf import settings
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, transaction, connection, reset_queries
 from pprint import pprint
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 
+###############################
+# Inicio 
+###############################
 @login_required
 def dashboard(request):
 
+    #todo: obtener datos a utilizar
+
     user = request.user
-
     wallet = get_object_or_404(Wallet, user=user)
-
     user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
+    trades = list(Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id'))
 
     if not user_holdings:
-        return render(request, 'dashboard.html', {'holdings':user_holdings})
+        return render(request, 'dashboard.html', {})
+    
+    # obtener estado actual del mercado
+    market_state = yf.Ticker('VOO').info.get('marketState')
+
+    #todo: obtener datos de yfinance
 
     symbols = [h.holding.symbol for h in user_holdings]
 
-    market_state = yf.Ticker('VOO').info.get('marketState')
+    if trades:
+        # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
+        #! puede fallar si la bolsa permanece cerrada más de lo normal
+        first_trade_date = trades[0].date - timedelta(days=10) 
 
-    trades = Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id') 
-
-    # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
-    first_trade_date = trades[0].date
-
-    # descargar datos historicos
-    history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+        # descargar datos historicos
+        history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+    else:
+        history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
 
     # conseguir el último precio
     day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
+
+    #todo: calcular total de acciones y manejar lotes para el calculo de ganancia no realizada
 
     holdings_data = {}
     
     for t in trades:
 
+        # registrar símbolo en el diccionario si no existe
         if t.user_holding.holding.symbol not in holdings_data.keys():
             holdings_data[t.user_holding.holding.symbol] = {
                 'total_shares': 0,
                 'lots': [],
             }
 
-        if t.type == 'B':
+        if t.type == 'B': # compras
             holdings_data[t.user_holding.holding.symbol]['total_shares'] += t.shares
+            # calcular el precio por acción considerando comisiones (incluidas en el total)
             price_per_share = t.total / t.shares
+            # registrar la fecha, acciones y precio con comissiones por acción para los lotes (compras) 
             holdings_data[t.user_holding.holding.symbol]['lots'].append({'date': t.date,
                                                             'shares': t.shares,
                                                             'price_per_share': price_per_share})
-        else:
+        else: # ventas
             holdings_data[t.user_holding.holding.symbol]['total_shares'] -= t.shares
 
             partial_shares = None
             for i in range(0, len(holdings_data[t.user_holding.holding.symbol]['lots'])):
+                #* si el primer lote (mas antiguo) tiene la suficiente cantidad para cubrir una venta se le resta y termina el bucle
+                #* caso contrario, se lleva a 0, se guarda lo sobrante y se le resta al próximo lote
+                #*  repitiendo el proceso hasta cubrir la venta por completo
+
+                # validar si en la iteración viene una parte de otro lote
                 if not partial_shares:
                     holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= t.shares
                 else:
                     holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= partial_shares
 
+                # validar cuando el lote no haya pudido cubrir la venta por completo
                 if holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] < 0:
                     partial_shares = abs(holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'])
                     holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] = 0
                     continue
 
+                # terminar el bucle cuando se haya cubrido la ventas con los lotes
                 break
 
-    total_current_invested_value = 0
+    #todo: listado de última compra por activo y datos para la gráfica de distruciones    
+
     last_holdings_buy = {}
-    total_unrealized_gain = 0
-    total_cost_per_lot = 0
     type_distribution = {
         'ETF': 0,
         'ACCIÓN': 0,
         'CRIPTO': 0,
     }
     holding_distribution = {}
+
+    #todo: calcular datos de los activos y los totales de la cartera
+
+    total_current_invested_value = 0
+    total_cost_per_lot = 0
+    total_unrealized_gain = 0
     total_unrealized_gain_percent = 0
 
     for h in user_holdings:
 
+        # obtener precio del dia anterior y el más actual
         last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
+        # cambio del dia del activo
         h.day_change = h.price  - last_day_price
         h.day_change_percent = h.day_change / h.price  * 100
 
+        # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
+        
         h.shares = holdings_data[h.holding.symbol]['total_shares'] if holdings_data.get(h.holding.symbol) else 0
+
+        # valor actual del activo en cartera y sumatoria a su total
         h.total_current_invested_value = h.shares * h.price
         total_current_invested_value += h.total_current_invested_value
 
+        # valor de inversión inicial y sumatoria a su total
         h.cost_per_lot = 0
 
         if holdings_data.get(h.holding.symbol):
             h.cost_per_lot = sum([lot['shares'] * lot['price_per_share'] for lot in holdings_data[h.holding.symbol]['lots']])
 
         total_cost_per_lot += h.cost_per_lot
-            
+
+        # ganancia no realizada y sumatoria a su total      
         h.unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
-        
         h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
         total_unrealized_gain += h.unrealized_gain
 
-
         if h.shares > 0:
+            # calcular dias desde la última compra
             last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
 
+            # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
             if h.holding.type == 'ETF':
                 type_distribution['ETF'] += h.total_current_invested_value
             elif h.holding.type == 'EQUITY':
@@ -124,26 +158,43 @@ def dashboard(request):
 
             holding_distribution[h.holding.symbol] = h.total_current_invested_value 
 
+    #todo: sumatoria de totales y ordenamiento para la gráfica
+
     total_balance = total_current_invested_value + wallet.balance
 
-    type_distribution_total = sum([value for value in type_distribution.values()])
-
-    for key in type_distribution.keys():
-        type_distribution[key] = round(type_distribution[key] / type_distribution_total * 100, 2)
-
-    type_distribution = {k: v for k, v in sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)}
+        # distribución por activo y efectivo
 
     holding_distribution_total = sum([value for value in holding_distribution.values() ]) + wallet.balance
 
-    for key in holding_distribution.keys():
-        holding_distribution[key] = round(holding_distribution[key] / holding_distribution_total * 100, 2)
+    if holding_distribution_total > 0:
+        for key in holding_distribution.keys():
+            holding_distribution[key] = round(holding_distribution[key] / holding_distribution_total * 100, 2)
 
-    holding_distribution['Efectivo'] = round(wallet.balance / holding_distribution_total * 100, 2)
+        holding_distribution['Efectivo'] = round(wallet.balance / holding_distribution_total * 100, 2)
     
-    holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
+        holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
 
-    total_unrealized_gain_percent = (total_unrealized_gain / total_current_invested_value) * 100
+        # tipo de distribución
+        type_distribution_total = sum([value for value in type_distribution.values()])
 
+        for key in type_distribution.keys():
+            type_distribution[key] = round(type_distribution[key] / type_distribution_total * 100, 2)
+
+        type_distribution = {k: v for k, v in sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)}
+
+        # porcentaje de la ganancia no realizada total
+
+        total_unrealized_gain_percent = (total_unrealized_gain / total_current_invested_value) * 100
+
+        # ordenar de menor a mayor las últimas compras por activo
+
+        last_holdings_buy = {k: v for k, v in sorted(last_holdings_buy.items(), key=lambda item: item[1])}
+
+    #todo: validar consistencia de datos
+
+    if wallet.balance < 0:
+        messages.warning(request, 'Tu balance disponible no debería ser negativo. Verifica la integridad histórica de tus registros.')
+    
     context = {
         'holdings': user_holdings,
         'market_state': market_state,
