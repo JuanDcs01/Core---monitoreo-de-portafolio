@@ -165,15 +165,15 @@ def dashboard(request):
 
     total_balance = total_current_invested_value + wallet.balance
 
-        # distribución por activo y efectivo
+    # distribución por activo y efectivo
+    total_holding_distribution = sum([value for value in holding_distribution.values()]) + wallet.balance
 
-    holding_distribution_total = sum([value for value in holding_distribution.values() ]) + wallet.balance
+    if total_current_invested_value > 0:
 
-    if holding_distribution_total > 0:
         for key in holding_distribution.keys():
-            holding_distribution[key] = round(holding_distribution[key] / holding_distribution_total * 100, 2)
+            holding_distribution[key] = round(holding_distribution[key] / total_holding_distribution * 100, 2)
 
-        holding_distribution['Efectivo'] = round(wallet.balance / holding_distribution_total * 100, 2)
+        holding_distribution['Efectivo'] = round(wallet.balance / total_holding_distribution * 100, 2)
     
         holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
 
