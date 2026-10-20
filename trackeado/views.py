@@ -12,6 +12,16 @@ from django.db import IntegrityError, transaction, connection, reset_queries
 from pprint import pprint
 from decimal import Decimal
 from datetime import date, timedelta
+from django.db.models import Sum
+
+# Opción 1: Directa desde Dividend (la más eficiente y legible)
+resultado = (
+    Dividend.objects
+    .filter(reinvested=False)
+    .values('user_holding_id', 'user_holding__holding__symbol')
+    .annotate(total_net_amount=Sum('net_amount'))
+    .values('user_holding__holding__symbol', 'total_net_amount')
+)
 
 ###############################
 # Inicio 
@@ -25,6 +35,8 @@ def dashboard(request):
     wallet = get_object_or_404(Wallet, user=user)
     user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
     trades = list(Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id'))
+    dividends = dict(Dividend.objects.filter(reinvested=False).values('user_holding__holding__symbol')
+    .annotate(total_net_amount=Sum('net_amount')).values_list('user_holding__holding__symbol', 'total_net_amount'))
 
     if not user_holdings:
         return render(request, 'dashboard.html', {
@@ -108,10 +120,7 @@ def dashboard(request):
 
                 holdings_data[t.user_holding.holding.symbol]['realized_gain'] = round(holdings_data[t.user_holding.holding.symbol]['realized_gain'] - t.commission, 2)
                 # terminar el bucle cuando se haya cubrido la ventas con los lotes
-                
                 break
-
-    pprint(holdings_data)
 
     #todo: listado de última compra por activo y datos para la gráfica de distruciones    
 
@@ -164,7 +173,10 @@ def dashboard(request):
         h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
         total_unrealized_gain += h.unrealized_gain
 
-        h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
+        if dividends.get(h.holding.symbol): 
+            h.realized_gain = holdings_data[h.holding.symbol]['realized_gain'] + dividends.get(h.holding.symbol)
+        else:
+            h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
 
         if h.shares > 0:
             # calcular dias desde la última compra
