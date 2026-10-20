@@ -52,12 +52,13 @@
                     <tr>
                         <th>Activo</th>
                         <th>Tipo</th>
-                        <th class="num">Activos</th>
+                        <th class="num">Acciones</th>
                         <th class="num">Invertido</th>
                         <th class="num">Valor actual</th>
                         <th class="num">Precio</th>
                         <th class="num">Cambio {{ market_state | market_state }}</th>
                         <th class="num">Gan. no realizada</th>
+                        <th class="num">Gan. realizada</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -88,6 +89,10 @@
                                     <span>{% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }}</span>
                                     <small>({{ h.unrealized_gain_percent | round_number }}%)</small>
                                 </div>
+                            </td>
+                            <td class="num">
+                                <div class="delta {% if h.realized_gain > 0 %}up{% elif h.realized_gain < 0 %}down{% endif %}">
+                                {{ h.realized_gain | round_number }}
                             </td>
                         </tr>
                     {% endfor %}

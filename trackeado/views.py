@@ -63,6 +63,7 @@ def dashboard(request):
             holdings_data[t.user_holding.holding.symbol] = {
                 'total_shares': 0,
                 'lots': [],
+                'realized_gain': 0
             }
 
         if t.type == 'B': # compras
@@ -80,7 +81,7 @@ def dashboard(request):
             for i in range(0, len(holdings_data[t.user_holding.holding.symbol]['lots'])):
                 #* si el primer lote (mas antiguo) tiene la suficiente cantidad para cubrir una venta se le resta y termina el bucle
                 #* caso contrario, se lleva a 0, se guarda lo sobrante y se le resta al próximo lote
-                #*  repitiendo el proceso hasta cubrir la venta por completo
+                #* repitiendo el proceso hasta cubrir la venta por completo
 
                 # validar si en la iteración viene una parte de otro lote
                 if not partial_shares:
@@ -90,12 +91,27 @@ def dashboard(request):
 
                 # validar cuando el lote no haya pudido cubrir la venta por completo
                 if holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] < 0:
+                    if partial_shares and partial_shares > 0:
+                        t.shares = partial_shares
+
                     partial_shares = abs(holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'])
+                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * (t.shares - partial_shares)) - ((t.shares - partial_shares) * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
+
                     holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] = 0
+
                     continue
 
+                if not partial_shares:
+                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * t.shares) - (t.shares * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
+                else:
+                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * partial_shares) - (partial_shares * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
+
+                holdings_data[t.user_holding.holding.symbol]['realized_gain'] = round(holdings_data[t.user_holding.holding.symbol]['realized_gain'] - t.commission, 2)
                 # terminar el bucle cuando se haya cubrido la ventas con los lotes
+                
                 break
+
+    pprint(holdings_data)
 
     #todo: listado de última compra por activo y datos para la gráfica de distruciones    
 
@@ -147,6 +163,8 @@ def dashboard(request):
         h.unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
         h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
         total_unrealized_gain += h.unrealized_gain
+
+        h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
 
         if h.shares > 0:
             # calcular dias desde la última compra
