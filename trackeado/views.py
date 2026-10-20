@@ -138,6 +138,8 @@ def dashboard(request):
     total_cost_per_lot = 0
     total_unrealized_gain = 0
     total_unrealized_gain_percent = 0
+    total_realized_gain = 0
+    total_gain = 0
 
     for h in user_holdings:
 
@@ -177,6 +179,10 @@ def dashboard(request):
             h.realized_gain = holdings_data[h.holding.symbol]['realized_gain'] + dividends.get(h.holding.symbol)
         else:
             h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
+
+        total_realized_gain += h.realized_gain
+
+        h.total_gain = h.realized_gain + h.unrealized_gain
 
         if h.shares > 0:
             # calcular dias desde la última compra
@@ -224,6 +230,8 @@ def dashboard(request):
 
         last_holdings_buy = {k: v for k, v in sorted(last_holdings_buy.items(), key=lambda item: item[1])}
 
+        total_gain = total_unrealized_gain + total_realized_gain
+
     #todo: validar consistencia de datos
 
     if wallet.balance < 0:
@@ -240,7 +248,9 @@ def dashboard(request):
         'total_cost_per_lot': total_cost_per_lot,
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
-        'total_unrealized_gain_percent': total_unrealized_gain_percent
+        'total_unrealized_gain_percent': total_unrealized_gain_percent,
+        'total_realized_gain': total_realized_gain,
+        'total_gain': total_gain
     }
 
     return render(request, 'dashboard.html', {**context})

@@ -334,15 +334,16 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
    -------------------------------------------------------------------------- */
 .kpi-grid {
   display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 16px;
 }
 
 .kpi {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 14px;
+  justify-content: center;
+  gap: 8px;
   padding: 18px 20px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -357,6 +358,10 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
   color: var(--muted);
 }
 .kpi-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
   font-family: var(--font-display);
   font-size: 1.6rem;
   font-weight: 700;
@@ -364,16 +369,25 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
   font-variant-numeric: tabular-nums;
 }
 
+.kpi-value small {
+  font-family: var(--font-body);
+  font-size: .85rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  opacity: .85;
+}
+
 .kpi--hero {
+  justify-content: space-between;
+  gap: 8px;
   color: #fff;
   border: 0;
   background: linear-gradient(135deg, #0a4a8e 0%, #0b6cb4 55%, #12a79f 100%);
   box-shadow: var(--shadow);
 }
 .kpi--hero .kpi-label { color: rgba(255, 255, 255, .75); }
-.kpi--hero .kpi-value { font-size: 2.3rem; }
 .kpi-foot {
-  padding-top: 14px;
+  padding-top: 10px;
   display: flex;
   justify-content: space-between;
   border-top: 1px solid rgba(255, 255, 255, .22);
@@ -903,12 +917,11 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 /* --------------------------------------------------------------------------
    15. Responsive
    -------------------------------------------------------------------------- */
-@media (max-width: 1199.98px) {
-  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
-  .kpi--hero { grid-column: 1 / -1; }
+@media (max-width: 767.98px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 639.98px) {
+@media (max-width: 479.98px) {
   .kpi-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
@@ -955,7 +968,6 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 }
 
 @media (max-width: 575.98px) {
-  .kpi--hero .kpi-value { font-size: 2rem; }
   .page-title { font-size: 1.4rem; }
   .form { padding: 22px 18px; }
   .split--stack .form form { grid-template-columns: minmax(0, 1fr); }
@@ -1029,4 +1041,61 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 input[type="checkbox"] {
   width: 22px;
   height: 22px;
+}
+
+/* --------------------------------------------------------------------------
+   17. Dashboard: tabla de portafolio compacta
+   Objetivo: que las 10 columnas quepan en una laptop sin scroll horizontal.
+   -------------------------------------------------------------------------- */
+.portfolio-table { font-size: .86rem; }
+
+.portfolio-table thead th {
+  padding: 10px 10px;
+  font-size: .66rem;
+  letter-spacing: .04em;
+  line-height: 1.25;
+  vertical-align: bottom;
+}
+.portfolio-table thead th.num { white-space: normal; }
+.portfolio-table tbody td { padding: 12px 10px; }
+
+.portfolio-table thead th:first-child,
+.portfolio-table tbody td:first-child { padding-left: 16px; }
+.portfolio-table thead th:last-child,
+.portfolio-table tbody td:last-child { padding-right: 16px; }
+
+.portfolio-table .asset { min-width: 0; gap: 10px; }
+.portfolio-table .asset img { width: 32px; height: 32px; border-radius: 8px; }
+.portfolio-table .asset-name { max-width: 120px; font-size: .74rem; }
+.portfolio-table .tag { padding: 1px 8px; font-size: .72rem; }
+
+/* Valor arriba y porcentaje debajo: columnas mucho más angostas */
+.portfolio-table .delta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.25;
+}
+.portfolio-table .delta small { margin-left: 0; font-size: .72rem; }
+
+/* En pantallas más chicas se oculta el nombre largo y queda solo el símbolo */
+@media (max-width: 1279.98px) {
+  .portfolio-table .asset-name { display: none; }
+}
+
+/* Laptops chicas: un poco menos de aire entre columnas */
+@media (max-width: 1319.98px) {
+  .portfolio-table { font-size: .82rem; }
+  .portfolio-table thead th,
+  .portfolio-table tbody td { padding-left: 6px; padding-right: 6px; }
+  .portfolio-table thead th:first-child,
+  .portfolio-table tbody td:first-child { padding-left: 14px; }
+  .portfolio-table thead th:last-child,
+  .portfolio-table tbody td:last-child { padding-right: 14px; }
+}
+
+/* Ventanas angostas: se oculta la columna "Tipo" (el resto sigue visible) */
+@media (max-width: 1199.98px) {
+  .portfolio-table thead th:nth-child(2),
+  .portfolio-table tbody td:nth-child(2) { display: none; }
 }

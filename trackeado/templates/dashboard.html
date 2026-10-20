@@ -33,6 +33,18 @@
             {{ total_unrealized_gain | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
     </div>
+    <div class="kpi">
+        <div class="kpi-label">Ganancia realizada</div>
+        <div class="kpi-value {% if total_realized_gain > 0 %}up{% elif total_realized_gain < 0 %}down{% endif %}">
+            {{ total_realized_gain | round_number }} <small>(0.00%)</small> 
+        </div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label">Ganancia total</div>
+        <div class="kpi-value {% if total_gain > 0 %}up{% elif total_gain < 0 %}down{% endif %}">
+            {{ total_gain | round_number }} <small>(0.00%)</small> 
+        </div>
+    </div>
 </section>
 
 <!-- ===== Portafolio ===== -->
@@ -47,7 +59,7 @@
         </div>
     {% if holdings %}
         <div class="table-wrap">
-            <table class="table table-hover data-table">
+            <table class="table table-hover data-table portfolio-table">
                 <thead>
                     <tr>
                         <th>Activo</th>
@@ -59,6 +71,7 @@
                         <th class="num">Cambio {{ market_state | market_state }}</th>
                         <th class="num">Gan. no realizada</th>
                         <th class="num">Gan. realizada</th>
+                        <th class="num">Gan. total</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,7 +105,13 @@
                             </td>
                             <td class="num">
                                 <div class="delta {% if h.realized_gain > 0 %}up{% elif h.realized_gain < 0 %}down{% endif %}">
-                                {{ h.realized_gain | round_number }}
+                                    <span>{% if h.realized_gain > 0 %}+{% endif %}{{ h.realized_gain | round_number }}</span>
+                                </div>
+                            </td>
+                            <td class="num">
+                                <div class="delta {% if h.total_gain > 0 %}up{% elif h.total_gain < 0 %}down{% endif %}">
+                                    <span>{% if h.total_gain > 0 %}+{% endif %}{{ h.total_gain | round_number }}</span>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
