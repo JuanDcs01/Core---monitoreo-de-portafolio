@@ -84,14 +84,21 @@
         <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
     </div>
 </section>
+<!-- ===== Opciones de viostas ===== -->
+<section class="split split--stack">
+   <div class="view-controls">
+       <button id="btn-trades" class="btn-tab {% if active_view != 'dividends' %}active{% endif %}" data-view="trades-view">Trades</button>
+       <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividends</button>
+   </div>
+</section>
+
 
 <!-- ===== Operaciones ===== -->
 {% if exist %}
-<section class="split split--stack">
+<section id="trades-view" class="split split--stack view-panel{% if active_view == 'dividends' %} is-hidden{% endif %}">
     <div class="split-aside">
         {% include 'components/form.html' %}
     </div>
-
     <div class="split-main">
         {% if trade %}
             <div class="panel">
@@ -160,6 +167,115 @@
         {% endif %}
     </div>
 </section>
+
+<section id="dividend-view" class="split split--stack view-panel{% if active_view != 'dividends' %} is-hidden{% endif %}">
+    <div class="split-aside">
+        <div class="center-container">
+            <div class="form">
+                <h2 class="form-title">Registrar dividendo</h2>
+                {% if dividend_form.non_field_errors %}
+                <div class="alert-message form-alert">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <div>
+                        {% for error in dividend_form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form id="dividend-form" action="{% url 'holding' symbol %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="is_dividend" value="True">
+                    {% for f in dividend_form %}
+                        <div class="form-field">
+                            {% if f.name == 'reinvested' %} <strong>Reinvertir dividendo</strong>{% endif %}
+                            <div>
+                                {{ f }}
+                            </div>
+                            <div class="alert-message">
+                                {{ f.errors }}
+                            </div>
+                            {% if f.help_text %}
+                            <div class="form-text text-muted">
+                                {{ f.help_text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <div class="form-field form-total">
+                        <span class="form-total-label">Total</span>
+                        <span id="dividend-total">0.00</span>
+                    </div>
+                    <div class="center">
+                        <button class="btn btn-primary w-100" type="submit">Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="split-main">
+        {% if dividend %}
+            <div class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Dividendos</h2>
+                </div>
+                <div class="table-wrap">
+                    <table class="table table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Reinvertido</th>
+                                <th class="num">Monto</th>
+                                <th class="num">Comisión</th>
+                                <th class="num">Total</th>
+                                <th class="col-actions"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in dividend %}
+                                <tr>
+                                    <td>{{ d.date }}</td>
+                                    <td>{{ d.reinvested | is_reinvested }}</td>
+                                    <td class="num">{{ d.net_amount | round_number }}</td>
+                                    <td class="num">{{ d.commission | round_number }}</td>
+                                    <td class="num">{{ d.total | round_number }}</td>
+                                    <td class="col-actions">
+                                        <div class="row-actions">
+                                        {% localize off %}
+                                            <button type="button" class="btn btn-soft btn-icon btn-edit-dividend" title="Editar"
+                                                    data-dividend-id="{{ d.id }}"
+                                                    data-date="{{ d.date|date:'Y-m-d' }}"
+                                                    data-net-amount="{{ d.net_amount }}"
+                                                    data-commission="{{ d.commission }}"
+                                                    data-reinvested="{{ d.reinvested|yesno:'true,false' }}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        {% endlocalize %}
+                                        <form action="{% url 'delete_dividend' %}" method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="dividend_id" value="{{ d.id }}">
+                                            <button class="btn btn-danger btn-icon" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="panel">
+                <div class="panel-head"><h2 class="panel-title">Dividendos</h2></div>
+                <div class="empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>No hay datos</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
 {% endif %}
 
 {{ history_list|json_script:"history-max" }}
@@ -167,6 +283,7 @@
 {{ history_list_1d|json_script:"history-1d" }}
 
 {{ editing_trade_id|json_script:"editing-trade-id" }}
+{{ editing_dividend_id|json_script:"editing-dividend-id" }}
 <script src="{% static '/js/holding.js' %}"></script>
 
 {% endblock content %}

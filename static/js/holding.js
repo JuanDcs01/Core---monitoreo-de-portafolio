@@ -1,4 +1,4 @@
-    /************************************
+/************************************
 Gráfiico Histórico
 ************************************/
     
@@ -397,3 +397,151 @@ Editar trade
         exitEditMode();
     });
 })();
+
+/************************************
+Dividendos: total, editar
+***********************************/
+(function () {
+    const form = document.getElementById("dividend-form");
+    if (!form) return;
+
+    // Se buscan por name (los ids llevan el prefijo "div_" para no chocar con el form de trades).
+    // Se tolera que el campo del monto se llame net_amount, amount, etc.
+    const field = (...parts) =>
+        Array.from(form.querySelectorAll("input, select")).find(el =>
+            parts.some(p => (el.name || "").toLowerCase().includes(p)));
+
+    const inputs = {
+        date: form.querySelector('[name="date"]'),
+        net_amount: field("net_amount", "amount", "monto"),
+        commission: field("commission", "comision"),
+        reinvested: form.querySelector('[name="reinvested"]'),
+    };
+    const spanTotal = document.getElementById("dividend-total");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const titleEl = form.closest(".form").querySelector(".form-title");
+
+    if (!inputs.net_amount || !inputs.commission || !spanTotal || !submitBtn) {
+        console.warn("Dividendos: no se encontraron los campos del formulario", inputs);
+        return;
+    }
+
+    // --- Total: monto neto + comisión ---
+    function calculateTotal() {
+        const net = parseFloat(inputs.net_amount.value) || 0;
+        const commission = parseFloat(inputs.commission.value) || 0;
+        spanTotal.textContent = (net + commission).toFixed(2);
+    }
+    ["input", "change", "keyup"].forEach(evt =>
+        [inputs.net_amount, inputs.commission].forEach(el => el.addEventListener(evt, calculateTotal)));
+    calculateTotal();
+
+    // --- Edición ---
+    const originalText = submitBtn.textContent.trim();
+    const originalTitle = titleEl ? titleEl.textContent.trim() : "";
+    const initial = {};
+    Object.entries(inputs).forEach(([k, el]) => {
+        if (el) initial[k] = el.type === "checkbox" ? el.checked : el.value;
+    });
+
+    const hiddenId = document.createElement("input");
+    hiddenId.type = "hidden";
+    hiddenId.name = "dividend_id";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-secondary w-100 ms-1";
+    cancelBtn.textContent = "Cancelar";
+
+    function setValue(el, value) {
+        if (!el) return;
+        if (el.type === "checkbox") el.checked = !!value;
+        else el.value = value;
+    }
+
+    function enterEditMode(dividendId) {
+        hiddenId.value = dividendId;
+        form.appendChild(hiddenId);
+        submitBtn.textContent = "Actualizar";
+        if (titleEl) titleEl.textContent = "Editar dividendo";
+        submitBtn.insertAdjacentElement("afterend", cancelBtn);
+    }
+
+    function exitEditMode() {
+        hiddenId.remove();
+        cancelBtn.remove();
+        submitBtn.textContent = originalText;
+        if (titleEl) titleEl.textContent = originalTitle;
+        Object.entries(initial).forEach(([k, v]) => setValue(inputs[k], v));
+        calculateTotal();
+    }
+
+    // La validación del servidor falló al actualizar: volver a poner el modo edición
+    const editingEl = document.getElementById("editing-dividend-id");
+    const editingId = editingEl ? JSON.parse(editingEl.textContent) : null;
+    if (editingId) enterEditMode(editingId);
+
+    function trimZeros(value) {
+        return value.includes(".") ? value.replace(/\.?0+$/, "") : value;
+    }
+
+    document.querySelectorAll(".btn-edit-dividend").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const d = btn.dataset;
+            setValue(inputs.date, d.date);
+            setValue(inputs.net_amount, trimZeros(d.netAmount));
+            setValue(inputs.commission, trimZeros(d.commission));
+            setValue(inputs.reinvested, d.reinvested === "true");
+
+            enterEditMode(d.dividendId);
+            calculateTotal();
+            form.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+    });
+
+    cancelBtn.addEventListener("click", () => {
+        if (editingId) {
+            window.location.href = window.location.pathname + "?view=dividends";
+            return;
+        }
+        exitEditMode();
+    });
+})();
+
+/************************************
+Vistas: trades/dividendos
+************************************/
+function switchView(targetViewId) {
+    const panels = document.querySelectorAll('.view-panel');
+    panels.forEach(panel => {
+        panel.classList.add('is-hidden');
+    });
+
+    const activePanel = document.getElementById(targetViewId);
+    if (activePanel) {
+        activePanel.classList.remove('is-hidden');
+    }
+
+    const isTrades = targetViewId === 'trades-view';
+    const btnTrades = document.getElementById('btn-trades');
+    const btnDividends = document.getElementById('btn-dividends');
+
+    if (btnTrades) btnTrades.classList.toggle('active', isTrades);
+    if (btnDividends) btnDividends.classList.toggle('active', !isTrades);
+
+    // Recordar la vista en la URL para que un refresh no vuelva a trades
+    const url = new URL(window.location.href);
+    if (isTrades) url.searchParams.delete('view');
+    else url.searchParams.set('view', 'dividends');
+    history.replaceState(null, '', url);
+}
+
+// Asignar los eventos de clic directamente desde JS
+document.querySelectorAll('.view-controls .btn-tab').forEach(button => {
+    button.addEventListener('click', function () {
+        const targetView = this.getAttribute('data-view');
+        if (targetView) {
+            switchView(targetView);
+        }
+    });
+});

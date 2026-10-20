@@ -1,8 +1,9 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 import yfinance as yf
-from .models import Holding, UserHolding, WatchList, HoldingList, WalletTransaction, Wallet, Trade
-from .forms import WatchListForm, WalletTransactionForm, TradeForm
+from .models import Holding, UserHolding, WatchList, HoldingList, WalletTransaction, Wallet, Trade, Dividend
+from .forms import WatchListForm, WalletTransactionForm, TradeForm, DividendForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 import datetime
@@ -451,6 +452,8 @@ def holding(request, symbol):
 
     trade = Trade.objects.filter(user=user, user_holding=exist).order_by('-date', '-id')
 
+    dividend = Dividend.objects.filter(user_holding=exist).order_by('-date', '-id')
+
     ernings = holding.financials
 
     # print(ernings.__dict__)
@@ -508,6 +511,8 @@ def holding(request, symbol):
     logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
     form = TradeForm()
+    # auto_id distinto para que los ids no choquen con los del TradeForm (id_date, id_commission...)
+    dividend_form = DividendForm(auto_id='div_%s')
 
     context = {
         'symbol': symbol.upper(),
@@ -548,9 +553,19 @@ def holding(request, symbol):
         'trade': trade,
         'holding_id': holding_object.id,
         'editing_trade_id': None,
+        'dividend_form': dividend_form,
+        'dividend': dividend,
+        'editing_dividend_id': None,
+        # vista que se muestra al cargar: 'trades' (por defecto) o 'dividends'
+        'active_view': 'dividends' if request.GET.get('view') == 'dividends' else 'trades',
     }
 
     if request.method == 'POST':
+
+        # Formulario de dividendos (registrar / editar): se procesa aparte
+        if request.POST.get('is_dividend'):
+            context['active_view'] = 'dividends'
+            return _save_dividend(request, exist, holding_object, context)
 
         trade_id = request.POST.get('trade_id')
         old_trade = None
@@ -719,3 +734,91 @@ def delete_trade(request):
     
     messages.error(request, 'Algo salió mal.')
     return redirect('holding', holding.symbol)
+
+def _dividend_wallet_effect(dividend):
+    """Cuánto suma un dividendo a la wallet. Los reinvertidos no tocan el efectivo.
+    Si el efectivo debe recibir el total (neto de comisión) en vez de net_amount, cámbialo aquí."""
+    return Decimal(0) if dividend.reinvested else dividend.net_amount
+
+
+def _dividend_redirect(holding_object):
+    """Vuelve al holding abriendo directamente la vista de dividendos."""
+    return redirect(f"{reverse('holding', args=[holding_object.symbol])}?view=dividends")
+
+
+def _save_dividend(request, user_holding, holding_object, context):
+    """Registra o edita un dividendo y ajusta la wallet."""
+
+    user = request.user
+
+    if not user_holding:
+        messages.error(request, 'Debes tener el activo en tu cartera para registrar dividendos.')
+        return _dividend_redirect(holding_object)
+
+    dividend_id = request.POST.get('dividend_id')
+    old_dividend = None
+
+    if dividend_id:
+        # Solo puede editar dividendos propios y de este holding
+        old_dividend = get_object_or_404(Dividend, id=dividend_id, user_holding=user_holding)
+
+        # Guardar lo viejo ANTES de crear el form: is_valid() sobrescribe la instancia
+        old_effect = _dividend_wallet_effect(old_dividend)
+
+        form = DividendForm(request.POST, instance=old_dividend, auto_id='div_%s')
+        context['editing_dividend_id'] = old_dividend.id
+    else:
+        form = DividendForm(request.POST, auto_id='div_%s')
+
+    context['dividend_form'] = form
+
+    if not form.is_valid():
+        messages.error(request, 'No fue posible realizar la acción.')
+        return render(request, 'holding.html', context)
+
+    with transaction.atomic():
+
+        wallet = get_object_or_404(Wallet, user=user)
+
+        dividend = form.instance
+        dividend.user_holding = user_holding
+
+        if old_dividend:
+            # 1) Deshacer el efecto del dividendo viejo
+            wallet.balance -= old_effect
+
+        dividend.save()
+
+        # 2) Aplicar el efecto del nuevo
+        wallet.balance += _dividend_wallet_effect(dividend)
+        wallet.save()
+
+    messages.success(request, 'Dividendo actualizado.' if old_dividend else 'Dividendo registrado.')
+    return _dividend_redirect(holding_object)
+
+
+@login_required
+def delete_dividend(request):
+
+    if request.method != 'POST':
+        return redirect('dashboard')
+
+    user = request.user
+
+    dividend = get_object_or_404(
+        Dividend.objects.select_related('user_holding__holding'),
+        id=request.POST.get('dividend_id'),
+        user_holding__user=user,
+    )
+
+    holding_object = dividend.user_holding.holding
+
+    wallet = get_object_or_404(Wallet, user=user)
+
+    with transaction.atomic():
+        wallet.balance -= _dividend_wallet_effect(dividend)
+        wallet.save()
+        dividend.delete()
+
+    messages.success(request, 'Dividendo eliminado.')
+    return _dividend_redirect(holding_object)

@@ -96,3 +96,15 @@ class Trade(models.Model):
     @property
     def total(self):
         return self.net_amount + self.commission if self.type == 'B' else self.net_amount - self.commission
+
+class Dividend(models.Model):
+
+    user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)
+    net_amount = models.DecimalField()
+    commission = models.DecimalField()
+    reinvested = models.BooleanField()
+    date = models.DateField()
+
+    @property
+    def total(self):
+        return self.commission + self.net_amount

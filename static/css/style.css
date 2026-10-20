@@ -155,7 +155,7 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 
 .brand { display: block; padding: 0 6px; }
 .logo  { height: 40px; width: auto; }
-.sidebar .logo { height: 44px; }
+.sidebar .logo { height: 60px; }
 
 .side-search { position: relative; }
 .side-search .form-control {
@@ -969,4 +969,64 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
   .asset-head { padding: 16px; }
   .chart-box { height: 280px; }
   .side-foot .nav-link { padding: 8px 10px; }
+}
+
+/* --------------------------------------------------------------------------
+   16. Nuevo
+   -------------------------------------------------------------------------- */
+
+.is-hidden {
+  display: none !important;
+}
+
+/* Selector de vistas (Trades / Dividends): mismo estilo que .seg, botones del mismo ancho */
+.view-controls {
+  display: flex;
+  gap: 2px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.btn-tab {
+  flex: 1 1 0;              /* mismo ancho para todos */
+  min-width: 140px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: .88rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+
+.btn-tab:hover { color: var(--ink); }
+
+.btn-tab:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.btn-tab.active {
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: 0 1px 3px rgba(20, 30, 50, .14);
+}
+
+@media (max-width: 575.98px) {
+  .view-controls { width: 100%; }
+  .btn-tab { min-width: 0; padding: 8px 10px; }
+}
+
+input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
 }

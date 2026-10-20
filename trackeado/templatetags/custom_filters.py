@@ -87,3 +87,10 @@ def identify_transaction(value):
         padding: 0px 6px; display: inline-block">{}</div>''', value)
 
     return value
+
+@register.filter
+def is_reinvested(value):
+    if value == True:
+        return mark_safe('<i class="bi bi-check-lg text-success"></i>')
+    else:
+        return mark_safe('<i class="bi bi-x-lg text-danger"></i>')
