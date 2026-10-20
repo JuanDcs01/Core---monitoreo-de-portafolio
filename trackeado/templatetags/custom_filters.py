@@ -3,6 +3,7 @@ import humanize
 from django.utils.safestring import mark_safe
 from decimal import Decimal
 from django.utils.html import format_html
+import yfinance as yf
 
 register = template.Library()
 
@@ -94,3 +95,13 @@ def is_reinvested(value):
         return mark_safe('<i class="bi bi-check-lg text-success"></i>')
     else:
         return mark_safe('<i class="bi bi-x-lg text-danger"></i>')
+
+@register.filter
+def to_dop(value):
+
+    dop_currency = yf.Ticker("USDDOP=X").fast_info["last_price"]
+
+    if dop_currency:
+        return value * Decimal(dop_currency)
+    else:
+        return value

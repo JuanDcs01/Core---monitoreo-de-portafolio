@@ -13,7 +13,10 @@
 <section class="kpi-grid">
     <div class="kpi kpi--hero">
         <div class="kpi-label">Balance total</div>
-        <div class="kpi-value">{{ total_balance | round_number }}</div>
+        <div class="d-flex">
+            <div class="kpi-value">{{ total_balance | round_number }}</div>
+            <div style="display: flex; align-items: end; margin-left: 5px;">RD${{ total_balance | to_dop | round_number }}</div>
+        </div>
         <div class="kpi-foot">
             <span>Disponible</span>
             <strong>{{ available_balance | round_number }}</strong>
@@ -22,28 +25,33 @@
     <div class="kpi">
         <div class="kpi-label">Invertido</div>
         <div class="kpi-value">{{ total_cost_per_lot | round_number }}</div>
+        <div>Conversión: RD${{ total_cost_per_lot | to_dop  | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Valor actual</div>
         <div class="kpi-value">{{ total_current_invested_value | round_number }}</div>
+        <div>Conversión: RD${{ total_current_invested_value | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia no realizada</div>
         <div class="kpi-value {% if total_unrealized_gain > 0 %}up{% elif total_unrealized_gain < 0 %}down{% endif %}">
-            {{ total_unrealized_gain | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
+            {{ total_unrealized_gain  | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
+        <div>Conversión: RD${{ total_unrealized_gain | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia realizada</div>
         <div class="kpi-value {% if total_realized_gain > 0 %}up{% elif total_realized_gain < 0 %}down{% endif %}">
             {{ total_realized_gain | round_number }} <small>(0.00%)</small> 
         </div>
+        <div>Conversión: RD${{ total_realized_gain | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia total</div>
         <div class="kpi-value {% if total_gain > 0 %}up{% elif total_gain < 0 %}down{% endif %}">
             {{ total_gain | round_number }} <small>(0.00%)</small> 
         </div>
+        <div class="">Conversión: RD${{ total_gain | to_dop | round_number }}</div>
     </div>
 </section>
 
