@@ -84,16 +84,15 @@
         <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
     </div>
 </section>
-<!-- ===== Opciones de viostas ===== -->
-<section class="split split--stack">
+
+<!-- ===== Operaciones ===== -->
+ <section class="split split--stack">
    <div class="view-controls">
        <button id="btn-trades" class="btn-tab {% if active_view != 'dividends' %}active{% endif %}" data-view="trades-view">Trades</button>
-       <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividends</button>
+       <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividendos</button>
    </div>
 </section>
 
-
-<!-- ===== Operaciones ===== -->
 {% if exist %}
 <section id="trades-view" class="split split--stack view-panel{% if active_view == 'dividends' %} is-hidden{% endif %}">
     <div class="split-aside">
