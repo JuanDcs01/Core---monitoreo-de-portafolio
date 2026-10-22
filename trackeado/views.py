@@ -582,7 +582,7 @@ def holding(request, symbol):
         'title': 'Registrar trade',
         'button': 'Registrar',
         'trade': trade,
-        'holding_id': holding_object.id,
+        'holding_id': holding_object.id if exist else None,
         'editing_trade_id': None,
         'dividend_form': dividend_form,
         'dividend': dividend,
