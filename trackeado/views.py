@@ -110,7 +110,7 @@ def dashboard(request):
                 else:
                     holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * partial_shares) - (partial_shares * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
 
-                holdings_data[t.user_holding.holding.symbol]['realized_gain'] = round(holdings_data[t.user_holding.holding.symbol]['realized_gain'] - t.commission, 2)
+                holdings_data[t.user_holding.holding.symbol]['realized_gain'] = holdings_data[t.user_holding.holding.symbol]['realized_gain'] - t.commission
                 # terminar el bucle cuando se haya cubrido la ventas con los lotes
                 break
 
