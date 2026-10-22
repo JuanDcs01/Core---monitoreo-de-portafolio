@@ -14,14 +14,6 @@ from decimal import Decimal
 from datetime import date, timedelta
 from django.db.models import Sum
 
-# Opción 1: Directa desde Dividend (la más eficiente y legible)
-resultado = (
-    Dividend.objects
-    .filter(reinvested=False)
-    .values('user_holding_id', 'user_holding__holding__symbol')
-    .annotate(total_net_amount=Sum('net_amount'))
-    .values('user_holding__holding__symbol', 'total_net_amount')
-)
 
 ###############################
 # Inicio 
@@ -43,7 +35,7 @@ def dashboard(request):
             'total_balance': wallet.balance,
             'available_balance': wallet.balance
         })
-    
+
     # obtener estado actual del mercado
     market_state = yf.Ticker('VOO').info.get('marketState')
 
@@ -67,7 +59,7 @@ def dashboard(request):
     #todo: calcular total de acciones y manejar lotes para el calculo de ganancia no realizada
 
     holdings_data = {}
-    
+
     for t in trades:
 
         # registrar símbolo en el diccionario si no existe
@@ -154,7 +146,6 @@ def dashboard(request):
         # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
-
         
         h.shares = holdings_data[h.holding.symbol]['total_shares'] if holdings_data.get(h.holding.symbol) else 0
 
@@ -196,7 +187,7 @@ def dashboard(request):
             elif h.holding.type == 'CRYPTOCURRENCY':
                 type_distribution['CRIPTO'] += h.total_current_invested_value
 
-            holding_distribution[h.holding.symbol] = h.total_current_invested_value 
+            holding_distribution[h.holding.symbol] = h.total_current_invested_value
 
     #todo: sumatoria de totales y ordenamiento para la gráfica
 
