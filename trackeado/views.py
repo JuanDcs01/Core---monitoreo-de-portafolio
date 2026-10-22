@@ -514,17 +514,27 @@ def holding(request, symbol):
         earnings_data['net_margins'] = [round((earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x]) * 100) 
                                        for x in range(0, len(earnings_data['date']))]
 
-        q_rev = q_earnings_df.loc['Total Revenue'].dropna().iloc[::-1]
-        q_net = q_earnings_df.loc['Net Income'].dropna().iloc[::-1]
+        q_rev = q_earnings_df.loc['Total Revenue']
+        q_net = q_earnings_df.loc['Net Income']
 
-        dates = q_earnings_df.columns
-        trimestres_calendario = dates.to_period('Q')
+        valid = q_rev.notna() & q_net.notna()
 
-        q_earnings_data['date'] = [f'{q}' for q in trimestres_calendario[::-1]]
-        q_earnings_data['total_revenues'] = [v for v in q_rev.values]
-        q_earnings_data['net_incomes'] = [v for v in q_net.values]
-        q_earnings_data['net_margins'] = [round((q_earnings_data['net_incomes'][x] / q_earnings_data['total_revenues'][x]) * 100) 
-                                       for x in range(0, len(q_earnings_data['date']))]
+        q_rev = q_rev[valid].iloc[::-1]
+        q_net = q_net[valid].iloc[::-1]
+
+        q_earnings_data['date'] = [str(d.to_period('Q')) for d in q_rev.index]
+
+        q_earnings_data['total_revenues'] = q_rev.tolist()
+        q_earnings_data['net_incomes'] = q_net.tolist()
+
+        q_earnings_data['net_margins'] = [
+            round((net / rev) * 100)
+            for rev, net in zip(
+                q_earnings_data['total_revenues'],
+                q_earnings_data['net_incomes']
+            )
+            if rev != 0
+        ]
 
     df = holding.history(period="max")
     df_5d = holding.history(period="5d", interval="15m", prepost=True)
