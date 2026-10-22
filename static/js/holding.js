@@ -671,3 +671,36 @@ if (earningsEl) {
     { tooltipPrefix: 'Año fiscal' }
   );
 }
+
+const q_earningsEl = document.getElementById('q-earnings-data');
+
+if (q_earningsEl) {
+  const q_earningsData = JSON.parse(q_earningsEl.textContent);
+
+  createFinancialChart(
+    'q-total-revenues',
+    q_earningsData['date'],
+    [
+      {
+        type: 'bar',
+        label: 'Ingresos totales',
+        data: q_earningsData['total_revenues'],
+        color: 'rgba(54, 162, 235, 0.65)'
+      },
+      {
+        type: 'bar',
+        label: 'Ingresos netos',
+        data: q_earningsData['net_incomes'],
+        color: 'rgba(153, 102, 255, 0.65)'
+      },
+      {
+        type: 'line',
+        label: 'Margen neto (%)',
+        data: q_earningsData['net_margins'],
+        color: 'rgb(255, 159, 64)',
+        isPercent: true
+      }
+    ],
+    { tooltipPrefix: '3T' }
+  );
+}

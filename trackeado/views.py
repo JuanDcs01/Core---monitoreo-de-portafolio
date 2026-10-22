@@ -486,8 +486,17 @@ def holding(request, symbol):
     dividend = Dividend.objects.filter(user_holding=exist).order_by('-date', '-id')
 
     earnings_df = holding.financials
+    
+    q_earnings_df = holding.quarterly_income_stmt
 
     earnings_data = {
+        'date': [],
+        'total_revenues': [],
+        'net_incomes': [],
+        'net_margins': []
+    }
+
+    q_earnings_data = {
         'date': [],
         'total_revenues': [],
         'net_incomes': [],
@@ -504,6 +513,18 @@ def holding(request, symbol):
         earnings_data['net_incomes'] = [v for v in net.values]
         earnings_data['net_margins'] = [round((earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x]) * 100) 
                                        for x in range(0, len(earnings_data['date']))]
+
+        q_rev = q_earnings_df.loc['Total Revenue'].dropna().iloc[::-1]
+        q_net = q_earnings_df.loc['Net Income'].dropna().iloc[::-1]
+
+        dates = q_earnings_df.columns
+        trimestres_calendario = dates.to_period('Q')
+
+        q_earnings_data['date'] = [f'{q}' for q in trimestres_calendario[::-1]]
+        q_earnings_data['total_revenues'] = [v for v in q_rev.values]
+        q_earnings_data['net_incomes'] = [v for v in q_net.values]
+        q_earnings_data['net_margins'] = [round((q_earnings_data['net_incomes'][x] / q_earnings_data['total_revenues'][x]) * 100) 
+                                       for x in range(0, len(q_earnings_data['date']))]
 
     df = holding.history(period="max")
     df_5d = holding.history(period="5d", interval="15m", prepost=True)
@@ -605,7 +626,8 @@ def holding(request, symbol):
         'editing_dividend_id': None,
         # vista que se muestra al cargar: 'trades' (por defecto) o 'dividends'
         'active_view': 'dividends' if request.GET.get('view') == 'dividends' else 'trades',
-        'earnings_data': earnings_data
+        'earnings_data': earnings_data,
+        'q_earnings_data': q_earnings_data
     }
 
     if request.method == 'POST':
