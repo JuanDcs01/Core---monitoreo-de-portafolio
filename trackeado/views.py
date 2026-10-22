@@ -485,9 +485,25 @@ def holding(request, symbol):
 
     dividend = Dividend.objects.filter(user_holding=exist).order_by('-date', '-id')
 
-    ernings = holding.financials
+    earnings_df = holding.financials
 
-    # print(ernings.__dict__)
+    earnings_data = {
+        'date': [],
+        'total_revenues': [],
+        'net_incomes': [],
+        'net_margins': []
+    }
+
+    # Extraer y ordenar directamente con tu variable
+    if info.get('quoteType') == 'EQUITY':
+        rev = earnings_df.loc['Total Revenue'].dropna().iloc[::-1]
+        net = earnings_df.loc['Net Income'].dropna().iloc[::-1]
+
+        earnings_data['date'] = [d.strftime('%Y') for d in rev.keys()]
+        earnings_data['total_revenues'] = [v for v in rev.values]
+        earnings_data['net_incomes'] = [v for v in net.values]
+        earnings_data['net_margins'] = [round((earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x]) * 100) 
+                                       for x in range(0, len(earnings_data['date']))]
 
     df = holding.history(period="max")
     df_5d = holding.history(period="5d", interval="15m", prepost=True)
@@ -589,6 +605,7 @@ def holding(request, symbol):
         'editing_dividend_id': None,
         # vista que se muestra al cargar: 'trades' (por defecto) o 'dividends'
         'active_view': 'dividends' if request.GET.get('view') == 'dividends' else 'trades',
+        'earnings_data': earnings_data
     }
 
     if request.method == 'POST':

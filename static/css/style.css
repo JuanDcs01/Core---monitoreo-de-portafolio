@@ -965,6 +965,10 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
   .asset-head-price,
   .change-row,
   .price-row { text-align: left; justify-content: flex-start; }
+
+  .split-equal {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 575.98px) {
@@ -1041,6 +1045,12 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 input[type="checkbox"] {
   width: 22px;
   height: 22px;
+}
+
+.split-equal {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 /* --------------------------------------------------------------------------

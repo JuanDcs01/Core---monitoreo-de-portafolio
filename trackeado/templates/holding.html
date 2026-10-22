@@ -85,6 +85,21 @@
     </div>
 </section>
 
+{% if earnings_data %}
+    <section class="split-equal">
+        <div class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Ingresos anuales</h2>
+            </div>
+            <div class="panel-body">
+                <div class="chart-box" style="height: 240px;">
+                    <canvas id="total-revenues"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
 <!-- ===== Operaciones ===== -->
  {% if exist %}
  <section class="split split--stack">
@@ -279,6 +294,8 @@
 {{ history_list|json_script:"history-max" }}
 {{ history_list_5d|json_script:"history-5d" }}
 {{ history_list_1d|json_script:"history-1d" }}
+
+{{ earnings_data|json_script:"earnings-data" }}
 
 {{ editing_trade_id|json_script:"editing-trade-id" }}
 {{ editing_dividend_id|json_script:"editing-dividend-id" }}

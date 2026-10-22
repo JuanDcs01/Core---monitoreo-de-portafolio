@@ -545,3 +545,129 @@ document.querySelectorAll('.view-controls .btn-tab').forEach(button => {
         }
     });
 });
+/************************************
+Gráfica mixta: ingresos total / neto (barras) + margen neto (línea)
+************************************/
+const compactFmt = new Intl.NumberFormat('en', {
+  notation: 'compact',
+  compactDisplay: 'short',
+  maximumFractionDigits: 1
+});
+
+/**
+ * Crea un gráfico financiero reutilizable (barras simples, múltiples o mixto con línea)
+ * @param {string} canvasId - ID del elemento <canvas>
+ * @param {Array} labels - Etiquetas del eje X (ej. años o trimestres)
+ * @param {Array} seriesConfig - Configuración de cada dataset
+ * @param {Object} customOptions - Opciones extra (ej. tooltipTitle)
+ */
+function createFinancialChart(canvasId, labels, seriesConfig, customOptions = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+
+  const ctx = canvas.getContext('2d');
+
+  // Detectar automáticamente si alguna serie usa el eje secundario 'y1'
+  const hasSecondaryAxis = seriesConfig.some(s => s.yAxisID === 'y1' || s.isPercent);
+
+  // Construir los datasets aplicando valores por defecto según sean 'bar' o 'line'
+  const datasets = seriesConfig.map(serie => {
+    const type = serie.type || 'bar';
+    const isLine = type === 'line';
+    const yAxisID = serie.yAxisID || (serie.isPercent ? 'y1' : 'y');
+
+    return {
+      type: type,
+      label: serie.label,
+      data: serie.data,
+      yAxisID: yAxisID,
+      backgroundColor: serie.color || (isLine ? 'rgb(255, 159, 64)' : 'rgba(54, 162, 235, 0.65)'),
+      borderColor: serie.borderColor || serie.color || (isLine ? 'rgb(255, 159, 64)' : undefined),
+      borderRadius: isLine ? 0 : (serie.borderRadius ?? 5),
+      borderWidth: isLine ? (serie.borderWidth ?? 2.5) : 0,
+      tension: isLine ? (serie.tension ?? 0.3) : 0,
+      pointRadius: isLine ? (serie.pointRadius ?? 5) : 0,
+      pointHoverRadius: isLine ? (serie.pointHoverRadius ?? 7) : 0,
+      spanGaps: true,
+      // Las líneas quedan por encima (order 1) y las barras detrás (order 2)
+      order: serie.order ?? (isLine ? 1 : 2)
+    };
+  });
+
+  // Configurar escalas dinámicamente
+  const scales = {
+    x: { grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      position: 'left',
+      ticks: { callback: (v) => compactFmt.format(v) }
+    }
+  };
+
+  if (hasSecondaryAxis) {
+    scales.y1 = {
+      position: 'right',
+      grid: { drawOnChartArea: false },
+      ticks: { callback: (v) => v + '%' }
+    };
+  }
+
+  return new Chart(ctx, {
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: customOptions.showLegend ?? false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `${customOptions.tooltipPrefix || 'Periodo'}: ${items[0].label}`,
+            label: (ctx) => {
+              const val = ctx.parsed.y;
+              if (val === null || val === undefined) return '';
+              if (ctx.dataset.yAxisID === 'y1') {
+                return ` ${ctx.dataset.label}: ${val.toFixed(2)}%`;
+              }
+              return ` ${ctx.dataset.label}: ${compactFmt.format(val)}`;
+            }
+          }
+        }
+      },
+      scales: scales
+    }
+  });
+}
+
+const earningsEl = document.getElementById('earnings-data');
+
+if (earningsEl) {
+  const earningsData = JSON.parse(earningsEl.textContent);
+
+  createFinancialChart(
+    'total-revenues',
+    earningsData['date'],
+    [
+      {
+        type: 'bar',
+        label: 'Ingresos totales',
+        data: earningsData['total_revenues'],
+        color: 'rgba(54, 162, 235, 0.65)'
+      },
+      {
+        type: 'bar',
+        label: 'Ingresos netos',
+        data: earningsData['net_incomes'],
+        color: 'rgba(153, 102, 255, 0.65)'
+      },
+      {
+        type: 'line',
+        label: 'Margen neto (%)',
+        data: earningsData['net_margins'],
+        color: 'rgb(255, 159, 64)',
+        isPercent: true // Activa automáticamente el eje derecho (y1) y el formato %
+      }
+    ],
+    { tooltipPrefix: 'Año fiscal' }
+  );
+}
