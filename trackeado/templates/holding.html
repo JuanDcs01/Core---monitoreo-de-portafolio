@@ -93,8 +93,6 @@
        <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividendos</button>
    </div>
 </section>
-
-{% if exist %}
 <section id="trades-view" class="split split--stack view-panel{% if active_view == 'dividends' %} is-hidden{% endif %}">
     <div class="split-aside">
         {% include 'components/form.html' %}
