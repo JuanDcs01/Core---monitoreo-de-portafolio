@@ -87,12 +87,11 @@
         <div class="kv"><span>Precio objetivo más bajo</span><strong>{{ targetLowPrice }}</strong></div>
         <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
         <div class="kv"><span>Precio objetivo más alto</span><strong>{{ targetHighPrice }}</strong></div>
-        <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
         <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
     </div>
 </section>
 
-{% if earnings_data %}
+{% if quoteType == 'EQUITY' %}
     <section class="split-equal">
         <div class="panel">
             <div class="panel-head">
