@@ -110,7 +110,7 @@ def to_dop(value):
 def sector_es(value):
     # Mapeo completo de Sectores e Industrias de Yahoo Finance / yfinance a Español
 
-    SECTORES_ES = {
+    SECTOR_ES = {
         'Communication Services': 'Servicios de Comunicación',
         'Technology': 'Tecnología',
         'Financial Services': 'Servicios Financieros',
@@ -124,11 +124,11 @@ def sector_es(value):
         'Utilities': 'Servicios Públicos'
     }
 
-    return SECTORES_ES.get(value)
+    return SECTOR_ES.get(value)
 
 @register.filter
 def industry_es(value):
-    INDUSTRIAS_ES = {
+    INDUSTRY_ES = {
         # --- Communication Services ---
         'Advertising Agencies': 'Agencias de Publicidad',
         'Broadcasting': 'Radiodifusión y Medios',
@@ -295,4 +295,30 @@ def industry_es(value):
         'Utilities - Renewable': 'Energías Renovables y Limpias'
     }
 
-    return INDUSTRIAS_ES.get(value)
+    return INDUSTRY_ES.get(value)
+
+@register.filter
+def number_format_es(valor: float | int, decimales: int = 2) -> str:
+    """
+    Formatea números grandes al estándar financiero habitual:
+    - Miles: 'mil' o 'k'
+    - Millones: 'M'
+    - Miles de millones (Billions en inglés): 'Mil M' o 'B'
+    - Billones en español (Trillions en inglés): 'Bln' o 'T'
+    """
+    if valor is None:
+        return "N/A"
+    
+    signo = "-" if valor < 0 else ""
+    n = abs(float(valor))
+
+    if n >= 1e12:
+        return f"{signo}{n / 1e12:.{decimales}f} T"      # o 'Bln' en escala larga española
+    elif n >= 1e9:
+        return f"{signo}{n / 1e9:.{decimales}f} Mil M"  # o 'B' si prefieres la convención bursátil
+    elif n >= 1e6:
+        return f"{signo}{n / 1e6:.{decimales}f} M"
+    elif n >= 1e3:
+        return f"{signo}{n / 1e3:.{decimales}f} mil"
+    else:
+        return f"{signo}{n:.{decimales}f}"

@@ -59,6 +59,9 @@
         <div class="panel-head"><h3 class="panel-title">Perfil corporativo</h3></div>
         <div class="kv"><span>Sector</span><strong>{{ sector | sector_es }}</strong></div>
         <div class="kv"><span>Industria</span><strong>{{ industry | industry_es }}</strong></div>
+        <div class="kv"><span>Cap. bursátil</span><strong>{{ marketCap | number_format_es }}</strong></div>
+        <div class="kv"><span>Empleados</span><strong>{{ fullTimeEmployees | number_format_es }}</strong></div>
+        <div class="kv"><span>Acciones</span><strong>{{ sharesOutstanding | number_format_es }}</strong></div>
     </div>
 
     <div class="panel">
