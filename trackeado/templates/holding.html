@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %} {% load humanize %} {% load static %} {% load l10n %}
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load static %} {% load l10n %}
 {% block title %}{{ symbol }}{% endblock title %}
 {% block content %}
 
@@ -65,22 +65,27 @@
     </div>
 
     <div class="panel">
-        <div class="panel-head"><h3 class="panel-title">Desempeño del precio</h3></div>
+        <div class="panel-head"><h3 class="panel-title">Mercado y Liquidez</h3></div>
         <div class="kv"><span>Rango hoy</span><strong>{{ dayLow }} - {{ dayHigh }}</strong></div>
-        <div class="kv"><span>Rango 52 semanas</span><strong>{{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</strong></div>
+        <div class="kv"><span>Rango 52 sem</span><strong>{{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</strong></div>
+        <div class="kv"><span>Volumen</span><strong>{{ volume }}</strong></div>
+        <div class="kv"><span>Vol. medio</span><strong>{{ averageVolume }}</strong></div>
+        <div class="kv"><span>Vol. med. 10d</span><strong>{{ averageVolume10days }}</strong></div>
     </div>
 
     <div class="panel">
         <div class="panel-head"><h3 class="panel-title">Valuación y riesgo</h3></div>
         <div class="kv"><span>PE ratio</span><strong>{{ trailingPE }}</strong></div>
         <div class="kv"><span>PE proyectado</span><strong>{{ forwardPE }}</strong></div>
-        <div class="kv"><span>Beta</span><strong>{{ beta| intcomma:False }}</strong></div>
+        <div class="kv"><span>EPS</span><strong>{{ trailingEps }}</strong></div>
+        <div class="kv"><span>Beta</span><strong>{{ beta }}</strong></div>
         <div class="kv"><span>Dividendo</span><strong>{{ dividendYield }}%</strong></div>
     </div>
 
     <div class="panel">
         <div class="panel-head"><h3 class="panel-title">Proyecciones y consenso</h3></div>
         <div class="kv"><span>Precio objetivo más bajo</span><strong>{{ targetLowPrice }}</strong></div>
+        <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
         <div class="kv"><span>Precio objetivo más alto</span><strong>{{ targetHighPrice }}</strong></div>
         <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
         <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
