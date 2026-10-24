@@ -13,7 +13,8 @@ from pprint import pprint
 from decimal import Decimal
 from datetime import date, timedelta
 from django.db.models import Sum
-
+from django.core.cache import cache
+import time
 
 ###############################
 # Inicio 
@@ -43,15 +44,27 @@ def dashboard(request):
 
     symbols = [h.holding.symbol for h in user_holdings]
 
+    # Crear una llave única para el usuario y sus símbolos actuales
+    # Ordenar los símbolos para que ['VOO', 'GOOGL'] genere la misma llave que ['GOOGL', 'VOO']
+    symbols_key = "_".join(sorted(symbols))
+    cache_key = f"history_data_{user.id}_{symbols_key}"
+
+    history_data = cache.get(cache_key)
+
     if trades:
         # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
         #! puede fallar si la bolsa permanece cerrada más de lo normal
         first_trade_date = trades[0].date - timedelta(days=10) 
 
-        # descargar datos historicos
-        history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+        if history_data is None:
+            # descargar datos historicos
+            history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+            cache.set(cache_key, history_data, timeout=3600)
+
     else:
-        history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+        if history_data is None:
+            history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+            cache.set(cache_key, history_data, timeout=3600)
 
     # conseguir el último precio
     day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
