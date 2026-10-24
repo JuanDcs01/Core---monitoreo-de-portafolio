@@ -103,7 +103,7 @@ class Dividend(models.Model):
     user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)
     net_amount = models.DecimalField()
     commission = models.DecimalField()
-    reinvested = models.BooleanField()
+    reinvested = models.BooleanField(default=False)
     date = models.DateField()
 
     @property
