@@ -30,12 +30,26 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # con el valor viejo como fallback SOLO para no romper el entorno de desarrollo
 # local. Para producción, definí DJANGO_SECRET_KEY y rotá este valor: al haber
 # estado en texto plano en el código ya debe considerarse comprometido.
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY') or os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+# En Vercel (variable VERCEL=1) DEBUG arranca apagado salvo que se active a mano.
+ON_VERCEL = os.environ.get('VERCEL') == '1'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False' if ON_VERCEL else 'True') == 'True'
 
 ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h]
+# Dominios de Vercel (producción y previews)
+ALLOWED_HOSTS += ['.vercel.app']
+if DEBUG:
+    ALLOWED_HOSTS += ['localhost', '127.0.0.1']
+
+# Necesario para que los formularios POST (login, etc.) funcionen sobre HTTPS en Vercel.
+# Si usás dominio propio: DJANGO_CSRF_TRUSTED_ORIGINS=https://midominio.com
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app'] + [
+    o for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o
+]
+# Vercel termina el HTTPS en su proxy y reenvía el protocolo en esta cabecera.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Application definition
 
@@ -57,6 +71,8 @@ FORMAT_MODULE_PATH = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise sirve el CSS/JS/imágenes desde la propia función (Vercel no tiene runserver ni Nginx)
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,7 +86,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -99,9 +115,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
-            ssl_require=True # Supabase exige conexión segura
+            ssl_require=True, # Supabase exige conexión segura
+            conn_max_age=0,   # serverless: no reutilizar conexiones entre invocaciones
         )
 }
+# Si usás el pooler de Supabase en modo transaction (puerto 6543), hace falta esto:
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 
 # Password validation
@@ -146,7 +165,7 @@ AUTH_USER_MODEL = 'users.User'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # El proyecto guarda su JS/CSS propio en <BASE_DIR>/static/ (fuera de la app),
 # igual que templates/. Sin esto, runserver/collectstatic no lo encuentran.
@@ -154,6 +173,12 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Carpeta destino de `collectstatic` para producción (servida por Nginx/WhiteNoise/CDN).
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise: comprime y sirve los estáticos con cabeceras de caché.
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 
 # Cache
