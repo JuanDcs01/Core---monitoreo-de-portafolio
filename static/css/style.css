@@ -1053,6 +1053,13 @@ input[type="checkbox"] {
   gap: 16px;
 }
 
+/* En pantallas de 768px o menos, pasa a una sola columna */
+@media (max-width: 768px) {
+  .split-equal {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* --------------------------------------------------------------------------
    17. Dashboard: tabla de portafolio compacta
    Objetivo: que las 10 columnas quepan en una laptop sin scroll horizontal.
