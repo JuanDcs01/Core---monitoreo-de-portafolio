@@ -283,8 +283,9 @@ def add_holding(request):
 
                 name = ticker.info.get('longName')
                 type = ticker.info.get('quoteType')
+                sector = ticker.info.get('sector')
 
-                holding = Holding.objects.create(symbol=symbol, name=name, type=type)
+                holding = Holding.objects.create(symbol=symbol, name=name, sector=sector, type=type)
                 UserHolding.objects.create(user=user, holding=holding)
                 messages.success(request, 'Símbolo agregado.')
             

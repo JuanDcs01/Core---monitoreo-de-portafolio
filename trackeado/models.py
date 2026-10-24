@@ -7,6 +7,7 @@ class Holding(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
     symbol = models.CharField(max_length=10, unique=True, db_index=True)
+    sector = models.CharField(max_length=100, null=True)
     type = models.CharField(max_length=20)
 
     def __str__(self):
