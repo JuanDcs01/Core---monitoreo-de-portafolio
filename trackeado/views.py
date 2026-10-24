@@ -166,10 +166,13 @@ def dashboard(request):
         h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
         total_unrealized_gain += h.unrealized_gain
 
-        if dividends.get(h.holding.symbol): 
-            h.realized_gain = holdings_data[h.holding.symbol]['realized_gain'] + dividends.get(h.holding.symbol)
+        if holdings_data.get(h.holding.symbol):
+            if dividends.get(h.holding.symbol):
+                h.realized_gain = holdings_data[h.holding.symbol]['realized_gain'] + dividends.get(h.holding.symbol)
+            else:
+                h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
         else:
-            h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
+            h.realized_gain = 0
 
         total_realized_gain += h.realized_gain
 
