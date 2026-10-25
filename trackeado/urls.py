@@ -17,4 +17,5 @@ urlpatterns = [
     path('wallet/transaction/delete', views.delete_wallet_transactions, name='delete_wallet_transactions'),
     path('trade/delete', views.delete_trade, name='delete_trade'),
     path('dividend/delete', views.delete_dividend, name='delete_dividend'),
+    path('holding/update', views.update_holding_risk, name='update_holding_risk'),
 ]

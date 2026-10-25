@@ -15,8 +15,14 @@ class Holding(models.Model):
 
 class UserHolding(models.Model):
 
+    class Risk(models.TextChoices):
+        LOW = 'L', 'Bajo'
+        MIDIUM = 'M', 'Medio'
+        HIGH = 'H', 'Alto'
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     holding = models.ForeignKey(Holding, on_delete=models.CASCADE)
+    risk = models.CharField(max_length=1, choices=Risk.choices, default=Risk.MIDIUM)
 
     class Meta:
 

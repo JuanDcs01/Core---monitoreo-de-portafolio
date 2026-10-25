@@ -10,9 +10,7 @@
             <div class="asset-ticker">{{ symbol }}<span class="asset-exchange">{{ fullExchangeName }}</span></div>
             <div class="asset-fullname">{{ longName }}</div>
         </div>
-    </div>
-
-    <div class="asset-head-price">
+            <div class="asset-head-price">
         <div class="price-row">
             <h2 id="currentPrice"></h2>
             <span class="market-state">{{ marketState | market_state }}</span>
@@ -22,6 +20,20 @@
             <span id="percentChange"></span>
         </div>
     </div>
+    </div>
+
+
+
+    <strong>Nivel de riesgo: </strong>
+    <form action="{% url 'update_holding_risk' %}" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="user_holding_id" value="{{ exist.id }}">
+        <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not exist %}disabled{% endif %}>
+            <option value="L" {% if exist.risk == 'L' %}selected{% endif %}>Bajo</option>
+            <option value="M" {% if exist.risk == 'M' %}selected{% endif %}>Medio</option>
+            <option value="H" {% if exist.risk == 'H' %}selected{% endif %}>Alto</option>
+        </select>
+    </form>
 
     <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
         {% csrf_token %}

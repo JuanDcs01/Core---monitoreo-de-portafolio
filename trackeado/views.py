@@ -925,3 +925,22 @@ def delete_dividend(request):
 
     messages.success(request, 'Dividendo eliminado.')
     return _dividend_redirect(holding_object)
+
+@login_required
+def update_holding_risk(request):
+
+    user = request.user
+
+    user_holding_id = request.POST.get('user_holding_id')
+    risk = request.POST.get('risk')
+
+    user_holding =  get_object_or_404(UserHolding, id=user_holding_id, user=user)
+
+    if risk in ['L', 'M', 'H']:
+        user_holding.risk = risk
+        user_holding.save()
+        messages.success(request, 'Nivel de riesgo actualizado.')
+    else:
+        messages.error(request, 'Opcion no válida')
+    
+    return redirect('holding', symbol=user_holding.holding.symbol)
