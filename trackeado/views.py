@@ -136,6 +136,12 @@ def dashboard(request):
         'CRIPTO': 0,
     }
     holding_distribution = {}
+    risk_distribution = {
+        'Medio': 0,
+        'Medio alto': 0,
+        'Alto': 0,
+        'Muy alto': 0,
+     }
 
     #todo: calcular datos de los activos y los totales de la cartera
 
@@ -153,8 +159,8 @@ def dashboard(request):
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
         # cambio del dia del activo
-        h.day_change = h.price  - last_day_price
-        h.day_change_percent = h.day_change / h.price  * 100
+        h.day_change = h.price - last_day_price
+        h.day_change_percent = h.day_change / h.price * 100
 
         # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
@@ -205,29 +211,43 @@ def dashboard(request):
 
             holding_distribution[h.holding.symbol] = h.total_current_invested_value
 
+            if h.risk == 'M':
+                risk_distribution['Medio'] += h.total_current_invested_value
+            elif h.risk == 'MH':
+                risk_distribution['Medio alto'] += h.total_current_invested_value
+            elif h.risk == 'H':
+                risk_distribution['Alto'] += h.total_current_invested_value
+            elif h.risk == 'VH':
+                risk_distribution['Muy alto'] += h.total_current_invested_value
     #todo: sumatoria de totales y ordenamiento para la gráfica
 
     total_balance = total_current_invested_value + wallet.balance
 
-    # distribución por activo y efectivo
-    total_holding_distribution = sum([value for value in holding_distribution.values()]) + wallet.balance
+    # total invertido y incluyendo efectivo
+    total_invested_and_cash = sum([value for value in holding_distribution.values()]) + wallet.balance
 
     if total_current_invested_value > 0:
 
         for key in holding_distribution.keys():
-            holding_distribution[key] = round(holding_distribution[key] / total_holding_distribution * 100, 2)
+            holding_distribution[key] = round(holding_distribution[key] / total_invested_and_cash * 100, 2)
 
-        holding_distribution['Efectivo'] = round(wallet.balance / total_holding_distribution * 100, 2)
+        holding_distribution['Efectivo'] = round(wallet.balance / total_invested_and_cash * 100, 2)
     
         holding_distribution = {k: v for k, v in sorted(holding_distribution.items(), key=lambda item: item[1], reverse=True)}
 
         # tipo de distribución
-        type_distribution_total = sum([value for value in type_distribution.values()])
+        total_invested = sum([value for value in type_distribution.values()])
 
         for key in type_distribution.keys():
-            type_distribution[key] = round(type_distribution[key] / type_distribution_total * 100, 2)
+            type_distribution[key] = round(type_distribution[key] / total_invested * 100, 2)
 
         type_distribution = {k: v for k, v in sorted(type_distribution.items(), key=lambda item: item[1], reverse=True)}
+
+        # distribución por riesgo
+        for key in risk_distribution.keys():
+            risk_distribution[key] = round((risk_distribution[key] / total_invested) * 100, 2)
+
+        risk_distribution = {k: v for k, v in sorted(risk_distribution.items(), key=lambda item: item[1], reverse=True)}
 
         # porcentaje de la ganancia no realizada total
 
@@ -255,6 +275,7 @@ def dashboard(request):
         'total_cost_per_lot': total_cost_per_lot,
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
+        'risk_distribution': risk_distribution,
         'total_unrealized_gain_percent': total_unrealized_gain_percent,
         'total_realized_gain': total_realized_gain,
         'total_gain': total_gain
@@ -936,7 +957,7 @@ def update_holding_risk(request):
 
     user_holding =  get_object_or_404(UserHolding, id=user_holding_id, user=user)
 
-    if risk in ['L', 'M', 'H']:
+    if risk in ['M', 'MH', 'H', 'VH']:
         user_holding.risk = risk
         user_holding.save()
         messages.success(request, 'Nivel de riesgo actualizado.')

@@ -86,3 +86,11 @@ const holdingDistributionChart = createDoughnutChart(
     'holding-distribution-data', 
     'Holdings'
 );
+
+// Gráfica de distribución por riesgo
+const riskDistributionChart = createDoughnutChart(
+    'risk-distribution',
+    'risk-distribution-data', 
+    'Risks'
+);
+

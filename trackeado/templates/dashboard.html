@@ -177,10 +177,24 @@
             {% endif %}
         </div>
     </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2 class="panel-title">Distribución por riesgo</h2>
+        </div>
+        <div class="chart-body">
+            {% if total_cost_per_lot %}
+                <canvas id="risk-distribution" width="220" height="220"></canvas>
+            {% else %}
+                <p class="muted m-0">No hay datos a mostrar</p>
+            {% endif %}
+        </div>
+    </div>
 </section>
 
 {{ type_distribution|json_script:"type-distribution-data" }}
 {{ holding_distribution|json_script:"holding-distribution-data" }}
+{{ risk_distribution|json_script:"risk-distribution-data" }}
 <script src="{% static 'js/dashboard.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 

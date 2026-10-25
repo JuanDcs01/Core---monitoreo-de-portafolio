@@ -29,9 +29,10 @@
         {% csrf_token %}
         <input type="hidden" name="user_holding_id" value="{{ exist.id }}">
         <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not exist %}disabled{% endif %}>
-            <option value="L" {% if exist.risk == 'L' %}selected{% endif %}>Bajo</option>
             <option value="M" {% if exist.risk == 'M' %}selected{% endif %}>Medio</option>
+            <option value="MH" {% if exist.risk == 'MH' %}selected{% endif %}>Medio alto</option>
             <option value="H" {% if exist.risk == 'H' %}selected{% endif %}>Alto</option>
+            <option value="VH" {% if exist.risk == 'VH' %}selected{% endif %}>Muy alto</option>
         </select>
     </form>
 
