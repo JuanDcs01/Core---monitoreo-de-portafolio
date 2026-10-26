@@ -27,19 +27,19 @@
     <strong>Nivel de riesgo: </strong>
     <form action="{% url 'update_holding_risk' %}" method="POST">
         {% csrf_token %}
-        <input type="hidden" name="user_holding_id" value="{{ exist.id }}">
-        <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not exist %}disabled{% endif %}>
-            <option value="M" {% if exist.risk == 'M' %}selected{% endif %}>Medio</option>
-            <option value="MH" {% if exist.risk == 'MH' %}selected{% endif %}>Medio alto</option>
-            <option value="H" {% if exist.risk == 'H' %}selected{% endif %}>Alto</option>
-            <option value="VH" {% if exist.risk == 'VH' %}selected{% endif %}>Muy alto</option>
+        <input type="hidden" name="user_holding_id" value="{{ user_holding.id }}">
+        <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not user_holding %}disabled{% endif %}>
+            <option value="M" {% if user_holding.risk == 'M' %}selected{% endif %}>Medio</option>
+            <option value="MH" {% if user_holding.risk == 'MH' %}selected{% endif %}>Medio alto</option>
+            <option value="H" {% if user_holding.risk == 'H' %}selected{% endif %}>Alto</option>
+            <option value="VH" {% if user_holding.risk == 'VH' %}selected{% endif %}>Muy alto</option>
         </select>
     </form>
 
     <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
         {% csrf_token %}
-        <input type="hidden" name="id" value="{{ exist.id }}">
-        <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" {% if not exist %}disabled{% endif %}><i class="bi bi-trash"></i> Eliminar</button>
+        <input type="hidden" name="id" value="{{ user_holding.id }}">
+        <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" {% if not user_holding %}disabled{% endif %}><i class="bi bi-trash"></i> Eliminar</button>
     </form>
 </section>
 
@@ -163,7 +163,7 @@
 {% endif %}
 
 <!-- ===== Operaciones ===== -->
- {% if exist %}
+ {% if user_holding %}
  <section class="split split--stack">
    <div class="view-controls">
        <button id="btn-trades" class="btn-tab {% if active_view != 'dividends' %}active{% endif %}" data-view="trades-view">Trades</button>
@@ -220,7 +220,7 @@
                                         <form action="{% url 'delete_trade' %}" method="POST">
                                             {% csrf_token %}
                                             <input type="hidden" name="trade_id" value="{{ t.id }}">
-                                            <input type="hidden" name="holding_id" value="{{ holding_id }}">
+                                            <input type="hidden" name="holding_id" value="{{ user_holding.holding_id }}">
                                             <button class="btn btn-danger btn-icon" title="Eliminar"><i class="bi bi-trash"></i></button>
                                         </form>
                                         </div>

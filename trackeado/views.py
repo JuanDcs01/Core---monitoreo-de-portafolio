@@ -446,13 +446,7 @@ def holding(request, symbol):
         messages.error(request, 'Símbolo no encontrado')
         return redirect('dashboard')
 
-    holding_object = Holding.objects.filter(symbol=symbol).first()
-
-    exist = UserHolding.objects.filter(user=user, holding=holding_object).first()
-
-    trade = Trade.objects.filter(user=user, user_holding=exist).order_by('date', 'id')
-
-    dividend = Dividend.objects.filter(user_holding=exist).order_by('-date', '-id')
+    user_holding = UserHolding.objects.select_related('holding').filter(user=user, holding__symbol=symbol).first()
 
     earnings_df = holding.financials
     
@@ -555,8 +549,6 @@ def holding(request, symbol):
     history_list[-1]['Close'] = history_list_1d[-1]['Close']
     history_list_5d[-1]['Close'] = history_list_1d[-1]['Close']
 
-    h_metrics = holding_metrics(trade, dividend, Decimal(history_list_1d[-1]['Close']))
-
     logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
     form = TradeForm()
@@ -601,36 +593,42 @@ def holding(request, symbol):
         'history_list_5d': history_list_5d,
         'history_list_1d': history_list_1d,
         'logo_url': f"https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40",
-        'exist': exist,
+        'user_holding': user_holding,
         'form': form,
         'title': 'Registrar trade',
         'button': 'Registrar',
-        'trade': trade,
-        'holding_id': holding_object.id if exist else None,
         'editing_trade_id': None,
         'dividend_form': dividend_form,
-        'dividend': dividend,
         'editing_dividend_id': None,
         # vista que se muestra al cargar: 'trades' (por defecto) o 'dividends'
         'active_view': 'dividends' if request.GET.get('view') == 'dividends' else 'trades',
         'earnings_data': earnings_data,
         'q_earnings_data': q_earnings_data,
-        'h_metrics': h_metrics
     }
+
+    if user_holding:
+
+        trade = Trade.objects.filter(user=user, user_holding=user_holding).order_by('date', 'id')
+        dividend = Dividend.objects.filter(user_holding=user_holding).order_by('-date', '-id')
+        h_metrics = holding_metrics(trade, dividend, Decimal(history_list_1d[-1]['Close']))
+
+        context['trade'] = trade
+        context['dividend'] = dividend
+        context['h_metrics'] = h_metrics
 
     if request.method == 'POST':
 
         # Formulario de dividendos (registrar / editar): se procesa aparte
         if request.POST.get('is_dividend'):
             context['active_view'] = 'dividends'
-            return _save_dividend(request, exist, holding_object, context)
+            return _save_dividend(request, user_holding, context)
 
         trade_id = request.POST.get('trade_id')
         old_trade = None
 
         if trade_id:
             # Solo puede editar trades propios y de este holding
-            old_trade = get_object_or_404(Trade, id=trade_id, user=user, user_holding=exist)
+            old_trade = get_object_or_404(Trade, id=trade_id, user=user, user_holding=user_holding)
 
             # OJO: guardar lo viejo ANTES de crear el form (ver explicación abajo)
             old_type = old_trade.type
@@ -653,7 +651,7 @@ def holding(request, symbol):
 
             trade = form.instance
             trade.user = user
-            trade.user_holding = exist
+            trade.user_holding = user_holding
 
             wallet = get_object_or_404(Wallet, user=user)
 
@@ -668,7 +666,7 @@ def holding(request, symbol):
             wallet.save()
 
             messages.success(request, 'Trade actualizado.' if old_trade else 'Trade agregado.')
-            return redirect('holding', holding_object.symbol)
+            return redirect('holding', user_holding.holding.symbol)
     
     return render(request, 'holding.html', context)
 
@@ -804,14 +802,14 @@ def _dividend_redirect(holding_object):
     return redirect(f"{reverse('holding', args=[holding_object.symbol])}?view=dividends")
 
 
-def _save_dividend(request, user_holding, holding_object, context):
+def _save_dividend(request, user_holding, context):
     """Registra o edita un dividendo y ajusta la wallet."""
 
     user = request.user
 
     if not user_holding:
         messages.error(request, 'Debes tener el activo en tu cartera para registrar dividendos.')
-        return _dividend_redirect(holding_object)
+        return _dividend_redirect(user_holding.holding)
 
     dividend_id = request.POST.get('dividend_id')
     old_dividend = None
@@ -852,7 +850,7 @@ def _save_dividend(request, user_holding, holding_object, context):
         wallet.save()
 
     messages.success(request, 'Dividendo actualizado.' if old_dividend else 'Dividendo registrado.')
-    return _dividend_redirect(holding_object)
+    return _dividend_redirect(user_holding.holding)
 
 
 @login_required
