@@ -1116,3 +1116,95 @@ input[type="checkbox"] {
   .portfolio-table thead th:nth-child(2),
   .portfolio-table tbody td:nth-child(2) { display: none; }
 }
+
+/* --------------------------------------------------------------------------
+   18. Dashboard: menú de filtros del portafolio
+   -------------------------------------------------------------------------- */
+
+/* El panel normalmente recorta (overflow: hidden); aquí el menú debe sobresalir */
+.panel--overflow { overflow: visible; }
+.panel--overflow .panel-head { border-radius: var(--radius) var(--radius) 0 0; }
+.panel--overflow .table-wrap { border-radius: 0 0 var(--radius) var(--radius); }
+
+.filter-dropdown { position: relative; }
+
+.filter-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.filter-menu.is-open { display: block; }
+
+.filter-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.filter-check:hover { background: var(--surface-2); }
+.filter-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.filter-section-title {
+  margin: 6px 0 2px;
+  padding: 10px 10px 6px;
+  border-top: 1px solid var(--line);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.filter-options {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-2);
+  font-size: .88rem;
+  text-align: left;
+}
+.filter-option:hover { background: var(--surface-2); color: var(--ink); }
+.filter-option:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.filter-option.is-active {
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 600;
+}
+/* Marca de selección (icono de Bootstrap Icons) */
+.filter-option.is-active::after {
+  content: "\F26E"; /* bi-check */
+  margin-left: auto;
+  font-family: "bootstrap-icons";
+  font-size: 1rem;
+}

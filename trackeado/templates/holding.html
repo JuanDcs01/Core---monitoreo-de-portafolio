@@ -195,7 +195,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for t in trade %}
+                            {% for t in trade reversed %}
                                 <tr>
                                     <td>{{ t.date }}</td>
                                     <td>{{ t.get_type_display | identify_transaction }}</td>

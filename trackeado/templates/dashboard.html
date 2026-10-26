@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %} {% load custom_filters %} {% load static %}
+{% extends "layouts/base.html" %} {% load custom_filters %} {% load static %} {% load l10n %}
 {% block title %}Inicio{% endblock title %}
 {% block content %}
 
@@ -56,14 +56,50 @@
 </section>
 
 <!-- ===== Portafolio ===== -->
-<section class="panel">
+<section class="panel panel--overflow">
         <div class="panel-head">
             <h2 class="panel-title">Portafolio</h2>
-            <form action="{% url 'add_symbol' %}" method="POST" class="inline-add">
-                {% csrf_token %}
-                <input class="form-control" type="text" name="symbol" placeholder="Buscar símbolo" autocomplete="off">
-                <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Agregar</button>
-            </form>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                {% if holdings %}
+                <div class="filter-dropdown" id="holdings-filter">
+                    <button type="button" class="btn btn-secondary d-flex align-items-center gap-2" id="filter-toggle"
+                            aria-haspopup="true" aria-expanded="false" aria-controls="filter-menu">
+                        <i class="bi bi-funnel"></i> Filtros
+                    </button>
+                    <div class="filter-menu" id="filter-menu">
+                        <label class="filter-check">
+                            <input type="checkbox" id="filter-with-shares" checked>
+                            <span>Solo activos con acciones</span>
+                        </label>
+
+                        <div class="filter-section-title">Ordenar por</div>
+                        <div class="filter-options" id="sort-holdings" role="listbox" aria-label="Ordenar por">
+                            <button type="button" class="filter-option" data-sort="shares_desc"><i class="bi bi-arrow-up"></i> Mayor acciones</button>
+                            <button type="button" class="filter-option" data-sort="shares_asc"><i class="bi bi-arrow-down"></i> Menor acciones</button>
+                            <button type="button" class="filter-option" data-sort="current-invested_desc"><i class="bi bi-arrow-up"></i> Mayor inversión actual</button>
+                            <button type="button" class="filter-option" data-sort="current-invested_asc"><i class="bi bi-arrow-down"></i> Menor inversión actual</button>
+                            <button type="button" class="filter-option" data-sort="current-invested-value_desc"><i class="bi bi-arrow-up"></i> Mayor valor actual</button>
+                            <button type="button" class="filter-option" data-sort="current-invested-value_asc"><i class="bi bi-arrow-down"></i> Menor valor actual</button>
+                            <button type="button" class="filter-option" data-sort="price_desc"><i class="bi bi-arrow-up"></i> Mayor precio</button>
+                            <button type="button" class="filter-option" data-sort="price_asc"><i class="bi bi-arrow-down"></i> Menor precio</button>
+                            <button type="button" class="filter-option" data-sort="day-change_desc"><i class="bi bi-arrow-up"></i> Mayor cambio</button>
+                            <button type="button" class="filter-option" data-sort="day-change_asc"><i class="bi bi-arrow-down"></i> Menor cambio</button>
+                            <button type="button" class="filter-option is-active" data-sort="unrealized-gain-percent_desc"><i class="bi bi-arrow-up"></i> Mayor % ganancia no realizada</button>
+                            <button type="button" class="filter-option" data-sort="unrealized-gain-percent_asc"><i class="bi bi-arrow-down"></i> Menor % ganancia no realizada</button>
+                            <button type="button" class="filter-option" data-sort="realized-gain_desc"><i class="bi bi-arrow-up"></i> Mayor % ganancia realizada</button>
+                            <button type="button" class="filter-option" data-sort="realized-gain_asc"><i class="bi bi-arrow-down"></i> Menor % ganancia realizada</button>
+                            <button type="button" class="filter-option" data-sort="total-gain_desc"><i class="bi bi-arrow-up"></i> Mayor % ganancia total</button>
+                            <button type="button" class="filter-option" data-sort="total-gain_asc"><i class="bi bi-arrow-down"></i> Menor % ganancia total</button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <form action="{% url 'add_symbol' %}" method="POST" class="inline-add">
+                    {% csrf_token %}
+                    <input class="form-control" type="text" name="symbol" placeholder="Buscar símbolo" autocomplete="off">
+                    <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Agregar</button>
+                </form>
+            </div>
         </div>
     {% if holdings %}
         <div class="table-wrap">
@@ -83,45 +119,60 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for h in holdings reversed %}
-                        <tr class="row-link" onclick="window.location='{% url 'holding' h.holding.symbol %}'">
-                            <td>
-                                <div class="asset">
-                                    <img src="{{ h.logo_url }}" alt="{{ h.holding.symbol }}" width="40" height="40" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ h.holding.symbol }}&background=random&size=40';">
-                                    <div>
-                                        <div class="asset-sym">{{ h.holding.symbol }}</div>
-                                        <div class="asset-name">{{ h.holding.name }}</div>
-                                    </div>
+                    <tr id="holdings-filter-empty" class="is-hidden">
+                        <td colspan="10" class="empty">No hay activos con acciones. Desmarca el filtro para ver todos.</td>
+                    </tr>
+                    {% for h in holdings %}
+                        {% localize off %}
+                            <tr class="holding-row"
+                            data-shares="{{ h.shares }}"
+                            data-current-invested="{{ h.current_invested }}"
+                            data-current-invested-value="{{ h.current_invested_value }}"
+                            data-price="{{ h.price }}"
+                            data-day-change="{{ h.day_change }}"
+                            data-unrealized-gain="{{ h.unrealized_gain }}"
+                            data-unrealized-gain-percent="{{ h.unrealized_gain_percent }}"
+                            data-realized-gain="{{ h.realized_gain }}"
+                            data-total-gain="{{ h.total_gain }}"
+                            onclick="window.location='{% url 'holding' h.holding.symbol %}'">
+                        {% endlocalize %}
+                        <td>
+                            <div class="asset">
+                                <img src="{{ h.logo_url }}" alt="{{ h.holding.symbol }}" width="40" height="40" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ h.holding.symbol }}&background=random&size=40';">
+                                <div>
+                                    <div class="asset-sym">{{ h.holding.symbol }}</div>
+                                    <div class="asset-name">{{ h.holding.name }}</div>
                                 </div>
-                            </td>
-                            <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
-                            <td class="num">{{ h.shares | no_trailing_zeros }}</td>
-                            <td class="num">{{ h.current_invested | round_number }}</td>
-                            <td class="num">{{ h.total_current_invested_value | round_number }}</td>
-                            <td class="num">{{ h.price | round_number }}</td>
-                            <td class="num">
-                                <div class="delta {% if h.day_change > 0 %}up{% elif h.day_change < 0 %}down{% endif %}">
-                                    <span>{% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }}</span>
-                                    <small>({{ h.day_change_percent | round_number }}%)</small>
-                                </div>
-                            </td>
-                            <td class="num">
-                                <div class="delta {% if h.unrealized_gain > 0 %}up{% elif h.unrealized_gain < 0 %}down{% endif %}">
-                                    <span>{% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }}</span>
-                                    <small>({{ h.unrealized_gain_percent | round_number }}%)</small>
-                                </div>
-                            </td>
-                            <td class="num">
-                                <div class="delta {% if h.realized_gain > 0 %}up{% elif h.realized_gain < 0 %}down{% endif %}">
-                                    <span>{% if h.realized_gain > 0 %}+{% endif %}{{ h.realized_gain | round_number }}</span>
-                                </div>
-                            </td>
-                            <td class="num">
-                                <div class="delta {% if h.total_gain > 0 %}up{% elif h.total_gain < 0 %}down{% endif %}">
-                                    <span>{% if h.total_gain > 0 %}+{% endif %}{{ h.total_gain | round_number }}</span>
-                                </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </td>
+                        <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
+                        <td class="num">{{ h.shares | no_trailing_zeros }}</td>
+                        <td class="num">{{ h.current_invested | round_number }}</td>
+                        <td class="num">{{ h.current_invested_value | round_number }}</td>
+                        <td class="num">{{ h.price | round_number }}</td>
+                        <td class="num">
+                            <div class="delta {% if h.day_change > 0 %}up{% elif h.day_change < 0 %}down{% endif %}">
+                                <span>{% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }}</span>
+                                <small>({{ h.day_change_percent | round_number }}%)</small>
+                            </div>
+                        </td>
+                        <td class="num">
+                            <div class="delta {% if h.unrealized_gain > 0 %}up{% elif h.unrealized_gain < 0 %}down{% endif %}">
+                                <span>{% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }}</span>
+                                <small>({{ h.unrealized_gain_percent | round_number }}%)</small>
+                            </div>
+                        </td>
+                        <td class="num">
+                            <div class="delta {% if h.realized_gain > 0 %}up{% elif h.realized_gain < 0 %}down{% endif %}">
+                                <span>{% if h.realized_gain > 0 %}+{% endif %}{{ h.realized_gain | round_number }}</span>
+                            </div>
+                        </td>
+                        <td class="num">
+                            <div class="delta {% if h.total_gain > 0 %}up{% elif h.total_gain < 0 %}down{% endif %}">
+                                <span>{% if h.total_gain > 0 %}+{% endif %}{{ h.total_gain | round_number }}</span>
+                            </div>
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>

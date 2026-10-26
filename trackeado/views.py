@@ -115,14 +115,14 @@ def dashboard(request):
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
         h.shares = h_metrics['total_shares']
-        h.total_current_invested_value = h_metrics['current_invested_value']
+        h.current_invested_value = h_metrics['current_invested_value']
         h.current_invested = h_metrics['current_invested']
         h.unrealized_gain = h_metrics['unrealized_gain']
         h.unrealized_gain_percent = h_metrics['unrealized_gain_percent']
         h.realized_gain = h_metrics['realized_gain']
         h.total_gain = h_metrics['total_gain']
 
-        total_current_invested_value += h.total_current_invested_value
+        total_current_invested_value += h.current_invested_value
         total_current_invested += h.current_invested
         total_unrealized_gain += h.unrealized_gain
         total_realized_gain += h.realized_gain
@@ -133,22 +133,22 @@ def dashboard(request):
 
             # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
             if h.holding.type == 'ETF':
-                type_distribution['ETF'] += h.total_current_invested_value
+                type_distribution['ETF'] += h.current_invested_value
             elif h.holding.type == 'EQUITY':
-                type_distribution['ACCIÓN'] += h.total_current_invested_value
+                type_distribution['ACCIÓN'] += h.current_invested_value
             elif h.holding.type == 'CRYPTOCURRENCY':
-                type_distribution['CRIPTO'] += h.total_current_invested_value
+                type_distribution['CRIPTO'] += h.current_invested_value
 
-            holding_distribution[h.holding.symbol] = h.total_current_invested_value
+            holding_distribution[h.holding.symbol] = h.current_invested_value
 
             if h.risk == 'M':
-                risk_distribution['Medio'] += h.total_current_invested_value
+                risk_distribution['Medio'] += h.current_invested_value
             elif h.risk == 'MH':
-                risk_distribution['Medio alto'] += h.total_current_invested_value
+                risk_distribution['Medio alto'] += h.current_invested_value
             elif h.risk == 'H':
-                risk_distribution['Alto'] += h.total_current_invested_value
+                risk_distribution['Alto'] += h.current_invested_value
             elif h.risk == 'VH':
-                risk_distribution['Muy alto'] += h.total_current_invested_value
+                risk_distribution['Muy alto'] += h.current_invested_value
 
     #todo: sumatoria de totales y ordenamiento para la gráfica
 
