@@ -85,7 +85,7 @@
         </div>
         <strong>Dividendos:</strong>
         <div class="{% if  h_metrics.total_dividends > 0 %}up{% endif %}">
-        {{ h_metrics.total_dividends }}
+        {{ h_metrics.total_dividends | no_trailing_zeros }}
         </div>
         <strong>Gan. total:</strong> 
         <div class="{% if  h_metrics.total_gain > 0 %}up{% elif  h_metrics.total_gain < 0 %}down{% endif %}">
@@ -112,8 +112,8 @@
 
     <div class="panel">
         <div class="panel-head"><h3 class="panel-title">Mercado y Liquidez</h3></div>
-        <div class="kv"><span>Rango hoy</span><strong>{{ dayLow }} - {{ dayHigh }}</strong></div>
-        <div class="kv"><span>Rango 52 sem</span><strong>{{ fiftyTwoWeekLow }} - {{ fiftyTwoWeekHigh }}</strong></div>
+        <div class="kv"><span>Rango hoy</span><strong>{{ dayLow | round_number }} - {{ dayHigh | round_number }}</strong></div>
+        <div class="kv"><span>Rango 52 sem</span><strong>{{ fiftyTwoWeekLow | round_number }} - {{ fiftyTwoWeekHigh | round_number }}</strong></div>
         <div class="kv"><span>Volumen</span><strong>{{ volume }}</strong></div>
         <div class="kv"><span>Vol. medio</span><strong>{{ averageVolume }}</strong></div>
         <div class="kv"><span>Vol. med. 10d</span><strong>{{ averageVolume10days }}</strong></div>
@@ -121,11 +121,11 @@
 
     <div class="panel">
         <div class="panel-head"><h3 class="panel-title">Valuación y riesgo</h3></div>
-        <div class="kv"><span>PE ratio</span><strong>{{ trailingPE }}</strong></div>
-        <div class="kv"><span>PE proyectado</span><strong>{{ forwardPE }}</strong></div>
-        <div class="kv"><span>EPS</span><strong>{{ trailingEps }}</strong></div>
-        <div class="kv"><span>Beta</span><strong>{{ beta }}</strong></div>
-        <div class="kv"><span>Dividendo</span><strong>{{ dividendYield }}%</strong></div>
+        <div class="kv"><span>PE ratio</span><strong>{{ trailingPE | round_number }}</strong></div>
+        <div class="kv"><span>PE proyectado</span><strong>{{ forwardPE | round_number }}</strong></div>
+        <div class="kv"><span>EPS</span><strong>{{ trailingEps | round_number }}</strong></div>
+        <div class="kv"><span>Beta</span><strong>{{ beta | round_number }}</strong></div>
+        <div class="kv"><span>Dividendo</span><strong>{{ dividendYield | round_number }}%</strong></div>
     </div>
 
     <div class="panel">

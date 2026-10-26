@@ -57,7 +57,7 @@ def round_number(value):
 @register.filter
 def no_trailing_zeros(value):
 
-    if Decimal(value) < 1e-15:
+    if Decimal(value) < 1e-15 or not value:
         return '0.00'
 
     value = str(value)
