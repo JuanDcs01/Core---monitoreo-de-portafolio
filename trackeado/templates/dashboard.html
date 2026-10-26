@@ -24,8 +24,8 @@
     </div>
     <div class="kpi">
         <div class="kpi-label">Invertido</div>
-        <div class="kpi-value">{{ total_cost_per_lot | round_number }}</div>
-        <div>Conversión: RD${{ total_cost_per_lot | to_dop  | round_number }}</div>
+        <div class="kpi-value">{{ total_current_invested | round_number }}</div>
+        <div>Conversión: RD${{ total_current_invested | to_dop  | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Valor actual</div>
@@ -83,7 +83,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for h in holdings %}
+                    {% for h in holdings reversed %}
                         <tr class="row-link" onclick="window.location='{% url 'holding' h.holding.symbol %}'">
                             <td>
                                 <div class="asset">
@@ -96,7 +96,7 @@
                             </td>
                             <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
                             <td class="num">{{ h.shares | no_trailing_zeros }}</td>
-                            <td class="num">{{ h.cost_per_lot | round_number }}</td>
+                            <td class="num">{{ h.current_invested | round_number }}</td>
                             <td class="num">{{ h.total_current_invested_value | round_number }}</td>
                             <td class="num">{{ h.price | round_number }}</td>
                             <td class="num">
@@ -157,7 +157,7 @@
             <h2 class="panel-title">Distribución por tipo</h2>
         </div>
         <div class="chart-body">
-            {% if total_cost_per_lot %}
+            {% if total_current_invested %}
                 <canvas id="type-distribution" width="220" height="220"></canvas>
             {% else %}
                 <p class="muted m-0">No hay datos a mostrar</p>
@@ -170,7 +170,7 @@
             <h2 class="panel-title">Distribución por activo</h2>
         </div>
         <div class="chart-body">
-            {% if total_cost_per_lot %}
+            {% if total_current_invested %}
                 <canvas id="holding-distribution" width="220" height="220"></canvas>
             {% else %}
                 <p class="muted m-0">No hay datos a mostrar</p>
@@ -183,7 +183,7 @@
             <h2 class="panel-title">Distribución por riesgo</h2>
         </div>
         <div class="chart-body">
-            {% if total_cost_per_lot %}
+            {% if total_current_invested %}
                 <canvas id="risk-distribution" width="220" height="220"></canvas>
             {% else %}
                 <p class="muted m-0">No hay datos a mostrar</p>

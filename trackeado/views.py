@@ -27,9 +27,8 @@ def dashboard(request):
     user = request.user
     wallet = get_object_or_404(Wallet, user=user)
     user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
-    trades = list(Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id'))
-    dividends = dict(Dividend.objects.filter(reinvested=False).values('user_holding__holding__symbol')
-    .annotate(total_net_amount=Sum('net_amount')).values_list('user_holding__holding__symbol', 'total_net_amount'))
+    trades = Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id')
+    dividends = Dividend.objects.select_related('user_holding__user').filter(user_holding__user=user)
 
     if not user_holdings:
         return render(request, 'dashboard.html', {
@@ -69,65 +68,7 @@ def dashboard(request):
     # conseguir el último precio
     day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
-    #todo: calcular total de acciones y manejar lotes para el calculo de ganancia no realizada
-
-    holdings_data = {}
-
-    for t in trades:
-
-        # registrar símbolo en el diccionario si no existe
-        if t.user_holding.holding.symbol not in holdings_data.keys():
-            holdings_data[t.user_holding.holding.symbol] = {
-                'total_shares': 0,
-                'lots': [],
-                'realized_gain': 0
-            }
-
-        if t.type == 'B': # compras
-            holdings_data[t.user_holding.holding.symbol]['total_shares'] += t.shares
-            # calcular el precio por acción considerando comisiones (incluidas en el total)
-            price_per_share = t.total / t.shares
-            # registrar la fecha, acciones y precio con comissiones por acción para los lotes (compras) 
-            holdings_data[t.user_holding.holding.symbol]['lots'].append({'date': t.date,
-                                                            'shares': t.shares,
-                                                            'price_per_share': price_per_share})
-        else: # ventas
-            holdings_data[t.user_holding.holding.symbol]['total_shares'] -= t.shares
-
-            partial_shares = None
-            for i in range(0, len(holdings_data[t.user_holding.holding.symbol]['lots'])):
-                #* si el primer lote (mas antiguo) tiene la suficiente cantidad para cubrir una venta se le resta y termina el bucle
-                #* caso contrario, se lleva a 0, se guarda lo sobrante y se le resta al próximo lote
-                #* repitiendo el proceso hasta cubrir la venta por completo
-
-                # validar si en la iteración viene una parte de otro lote
-                if not partial_shares:
-                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= t.shares
-                else:
-                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] -= partial_shares
-
-                # validar cuando el lote no haya pudido cubrir la venta por completo
-                if holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] < 0:
-                    if partial_shares and partial_shares > 0:
-                        t.shares = partial_shares
-
-                    partial_shares = abs(holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'])
-                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * (t.shares - partial_shares)) - ((t.shares - partial_shares) * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
-
-                    holdings_data[t.user_holding.holding.symbol]['lots'][i]['shares'] = 0
-
-                    continue
-
-                if not partial_shares:
-                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * t.shares) - (t.shares * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
-                else:
-                    holdings_data[t.user_holding.holding.symbol]['realized_gain'] += (t.price * partial_shares) - (partial_shares * holdings_data[t.user_holding.holding.symbol]['lots'][i]['price_per_share'])
-
-                holdings_data[t.user_holding.holding.symbol]['realized_gain'] = holdings_data[t.user_holding.holding.symbol]['realized_gain'] - t.commission
-                # terminar el bucle cuando se haya cubrido la ventas con los lotes
-                break
-
-    #todo: listado de última compra por activo y datos para la gráfica de distruciones    
+    #todo: última compra por activo y datos para la gráfica de distruciones    
 
     last_holdings_buy = {}
     type_distribution = {
@@ -146,7 +87,7 @@ def dashboard(request):
     #todo: calcular datos de los activos y los totales de la cartera
 
     total_current_invested_value = 0
-    total_cost_per_lot = 0
+    total_current_invested = 0
     total_unrealized_gain = 0
     total_unrealized_gain_percent = 0
     total_realized_gain = 0
@@ -158,6 +99,13 @@ def dashboard(request):
         last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
+        # filtrar por el activo actual
+        holding_trades = [t for t in trades if t.user_holding_id == h.id]
+        holding_dividends = [d for d in dividends if d.user_holding_id == h.id]
+
+        # calcular métricas
+        h_metrics = holding_metrics(holding_trades, holding_dividends, h.price)
+
         # cambio del dia del activo
         h.day_change = h.price - last_day_price
         h.day_change_percent = h.day_change / h.price * 100
@@ -165,41 +113,23 @@ def dashboard(request):
         # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
-        
-        h.shares = holdings_data[h.holding.symbol]['total_shares'] if holdings_data.get(h.holding.symbol) else 0
 
-        # valor actual del activo en cartera y sumatoria a su total
-        h.total_current_invested_value = h.shares * h.price
+        h.shares = h_metrics['total_shares']
+        h.total_current_invested_value = h_metrics['current_invested_value']
+        h.current_invested = h_metrics['current_invested']
+        h.unrealized_gain = h_metrics['unrealized_gain']
+        h.unrealized_gain_percent = h_metrics['unrealized_gain_percent']
+        h.realized_gain = h_metrics['realized_gain']
+        h.total_gain = h_metrics['total_gain']
+
         total_current_invested_value += h.total_current_invested_value
-
-        # valor de inversión inicial y sumatoria a su total
-        h.cost_per_lot = 0
-
-        if holdings_data.get(h.holding.symbol):
-            h.cost_per_lot = sum([lot['shares'] * lot['price_per_share'] for lot in holdings_data[h.holding.symbol]['lots']])
-
-        total_cost_per_lot += h.cost_per_lot
-
-        # ganancia no realizada y sumatoria a su total      
-        h.unrealized_gain = Decimal(h.total_current_invested_value - h.cost_per_lot) if h.cost_per_lot else 0
-        h.unrealized_gain_percent = (h.unrealized_gain / h.cost_per_lot) * 100 if h.cost_per_lot else 0
+        total_current_invested += h.current_invested
         total_unrealized_gain += h.unrealized_gain
-
-        if holdings_data.get(h.holding.symbol):
-            if dividends.get(h.holding.symbol):
-                h.realized_gain = holdings_data[h.holding.symbol]['realized_gain'] + dividends.get(h.holding.symbol)
-            else:
-                h.realized_gain = holdings_data[h.holding.symbol]['realized_gain']
-        else:
-            h.realized_gain = 0
-
         total_realized_gain += h.realized_gain
 
-        h.total_gain = h.realized_gain + h.unrealized_gain
-
-        if h.shares > 0:
+        if h.current_invested > 0:
             # calcular dias desde la última compra
-            last_holdings_buy[h.holding.symbol] = (date.today() - holdings_data[h.holding.symbol]['lots'][-1]['date']).days
+            last_holdings_buy[h.holding.symbol] = (date.today() - h_metrics['lots'][-1]['date']).days
 
             # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
             if h.holding.type == 'ETF':
@@ -219,6 +149,7 @@ def dashboard(request):
                 risk_distribution['Alto'] += h.total_current_invested_value
             elif h.risk == 'VH':
                 risk_distribution['Muy alto'] += h.total_current_invested_value
+
     #todo: sumatoria de totales y ordenamiento para la gráfica
 
     total_balance = total_current_invested_value + wallet.balance
@@ -226,7 +157,7 @@ def dashboard(request):
     # total invertido y incluyendo efectivo
     total_invested_and_cash = sum([value for value in holding_distribution.values()]) + wallet.balance
 
-    if total_current_invested_value > 0:
+    if total_current_invested > 0:
 
         for key in holding_distribution.keys():
             holding_distribution[key] = round(holding_distribution[key] / total_invested_and_cash * 100, 2)
@@ -272,7 +203,7 @@ def dashboard(request):
         'total_balance': total_balance,
         'last_holdings_buy': last_holdings_buy,
         'total_unrealized_gain': total_unrealized_gain,
-        'total_cost_per_lot': total_cost_per_lot,
+        'total_current_invested': total_current_invested,
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
         'risk_distribution': risk_distribution,
@@ -965,3 +896,90 @@ def update_holding_risk(request):
         messages.error(request, 'Opcion no válida')
     
     return redirect('holding', symbol=user_holding.holding.symbol)
+
+
+###############################
+# Funciones
+###############################
+
+# calcular métricas de activos   
+def holding_metrics(trades, dividends, current_price):
+    '''Calcular métricas por activo como: inversión actual, valor de la inversión acutal,
+    dividendos recibidos, ganancia no realizada, ganancia realizada y ganancia total  
+    '''
+
+    total_dividends = sum([d.net_amount for d in dividends]) if dividends else 0
+
+    h_metrics = {
+        'lots': [],
+        'current_invested': 0,
+        'total_shares': 0,
+        'realized_gain': total_dividends,
+        'total_dividends': total_dividends,
+        'current_invested_value': 0,
+        'unrealized_gain': 0,
+        'unrealized_gain_percent': 0,
+        'total_gain': 0
+    }
+
+    for t in trades:
+
+        if t.type == 'B': # compras
+            h_metrics['total_shares'] += t.shares
+            # calcular el precio por acción considerando comisiones (incluidas en el total)
+            price_per_share = t.total / t.shares
+            # registrar la fecha, acciones y precio con comissiones por acción para los lotes (compras) 
+            h_metrics['lots'].append({'date': t.date,
+                                        'shares': t.shares,
+                                        'price_per_share': price_per_share})
+        else: # ventas
+            h_metrics['total_shares'] -= t.shares
+
+            partial_shares = None
+            for i in range(0, len(h_metrics['lots'])):
+                #* si el primer lote (mas antiguo) tiene la suficiente cantidad para cubrir una venta se le resta y termina el bucle
+                #* caso contrario, se lleva a 0, se guarda lo sobrante y se le resta al próximo lote
+                #* repitiendo el proceso hasta cubrir la venta por completo
+
+                # validar si en la iteración viene una parte de otro lote
+                if not partial_shares:
+                    h_metrics['lots'][i]['shares'] -= t.shares
+                else:
+                    h_metrics['lots'][i]['shares'] -= partial_shares
+
+                # validar cuando el lote no haya podido cubrir la venta por completo
+                if h_metrics['lots'][i]['shares'] < 0:
+                    if partial_shares and partial_shares > 0:
+                        t.shares = partial_shares
+
+                    # guarda el sobrante
+                    partial_shares = abs(h_metrics['lots'][i]['shares'])
+
+                    h_metrics['lots'][i]['shares'] = 0
+
+                    h_metrics['realized_gain'] += (t.price * (t.shares - partial_shares)) - ((t.shares - partial_shares) * h_metrics['lots'][i]['price_per_share'])
+
+                    continue
+
+                if not partial_shares:
+                    h_metrics['realized_gain'] += (t.price * t.shares) - (t.shares * h_metrics['lots'][i]['price_per_share'])
+                else:
+                    h_metrics['realized_gain'] += (t.price * partial_shares) - (partial_shares * h_metrics['lots'][i]['price_per_share'])
+
+                h_metrics['realized_gain'] -= t.commission
+
+                # terminar el bucle cuando se haya cubrido la ventas con los lotes
+                break
+
+    h_metrics['current_invested'] = sum([lots['shares'] * lots['price_per_share'] for lots in h_metrics['lots']])
+
+    # calcelo de métricas que dependen de la inversión actual
+    if h_metrics['current_invested'] > 0:
+
+        h_metrics['current_invested_value'] = current_price * h_metrics['total_shares']
+        h_metrics['unrealized_gain'] = Decimal(h_metrics['current_invested_value'] - h_metrics['current_invested'])
+        h_metrics['unrealized_gain_percent'] = (h_metrics['unrealized_gain'] / h_metrics['current_invested']) * 100
+    
+    h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain']
+    
+    return h_metrics
