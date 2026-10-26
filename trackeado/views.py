@@ -450,7 +450,7 @@ def holding(request, symbol):
 
     exist = UserHolding.objects.filter(user=user, holding=holding_object).first()
 
-    trade = Trade.objects.filter(user=user, user_holding=exist).order_by('-date', '-id')
+    trade = Trade.objects.filter(user=user, user_holding=exist).order_by('date', 'id')
 
     dividend = Dividend.objects.filter(user_holding=exist).order_by('-date', '-id')
 
@@ -555,6 +555,8 @@ def holding(request, symbol):
     history_list[-1]['Close'] = history_list_1d[-1]['Close']
     history_list_5d[-1]['Close'] = history_list_1d[-1]['Close']
 
+    h_metrics = holding_metrics(trade, dividend, Decimal(history_list_1d[-1]['Close']))
+
     logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
     form = TradeForm()
@@ -612,7 +614,8 @@ def holding(request, symbol):
         # vista que se muestra al cargar: 'trades' (por defecto) o 'dividends'
         'active_view': 'dividends' if request.GET.get('view') == 'dividends' else 'trades',
         'earnings_data': earnings_data,
-        'q_earnings_data': q_earnings_data
+        'q_earnings_data': q_earnings_data,
+        'h_metrics': h_metrics
     }
 
     if request.method == 'POST':

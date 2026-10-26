@@ -66,6 +66,39 @@
     </div>
 </section>
 
+<section class="panel">
+    <div class="panel-head">
+        <h2 class="panel-title">Resumen en cartera</h2>
+    </div>
+    {% if h_metrics.current_invested > 0 or h_metrics.realized_gain != 0 %}
+    <div class="panel-body d-flex justify-content-between">
+       <strong>Acciones:</strong> {{ h_metrics.total_shares | no_trailing_zeros }}
+        <strong>Invertido:</strong> {{ h_metrics.current_invested | round_number }}
+        <strong>Valor actual:</strong> {{ h_metrics.current_invested_value | round_number }}
+        <strong>Gan. no realizada:</strong> 
+        <div class="{% if  h_metrics.unrealized_gain > 0 %}up{% elif  h_metrics.unrealized_gain < 0 %}down{% endif %}"> 
+            {{ h_metrics.unrealized_gain | round_number }}
+        </div>
+        <strong>Gan. realizada:</strong>
+        <div class="{% if  h_metrics.realized_gain > 0 %}up{% elif  h_metrics.realized_gain < 0 %}down{% endif %}"> 
+            {{ h_metrics.realized_gain | round_number }}
+        </div>
+        <strong>Dividendos:</strong>
+        <div class="{% if  h_metrics.total_dividends > 0 %}up{% endif %}">
+        {{ h_metrics.total_dividends }}
+        </div>
+        <strong>Gan. total:</strong> 
+        <div class="{% if  h_metrics.total_gain > 0 %}up{% elif  h_metrics.total_gain < 0 %}down{% endif %}">
+            {{ h_metrics.total_gain | round_number }}
+        </div>
+    </div>
+    {% else %}
+    <div class="panel-body d-flex justify-content-center">
+        <div>No hay datos</div>
+    </div>
+    {% endif %}
+</section>
+
 <!-- ===== Datos del activo ===== -->
 <section class="info-grid">
     <div class="panel">
