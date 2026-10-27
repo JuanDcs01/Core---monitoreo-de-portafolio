@@ -41,7 +41,7 @@ ALLOWED_HOSTS = [h for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(','
 # Dominios de Vercel (producción y previews)
 ALLOWED_HOSTS += ['.vercel.app']
 if DEBUG:
-    ALLOWED_HOSTS += ['localhost', '127.0.0.1']
+    ALLOWED_HOSTS += ['localhost', '127.0.0.1', '*']
 
 # Necesario para que los formularios POST (login, etc.) funcionen sobre HTTPS en Vercel.
 # Si usás dominio propio: DJANGO_CSRF_TRUSTED_ORIGINS=https://midominio.com
