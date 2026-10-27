@@ -82,6 +82,7 @@ h1, h2, h3, h4, h5 {
    -------------------------------------------------------------------------- */
 .shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
 }
@@ -91,6 +92,7 @@ body.auth .shell { grid-template-columns: minmax(0, 1fr); }
 .shell-body {
   min-width: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -1279,6 +1281,38 @@ input[type="checkbox"] {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
     font-size: 14.5px;
   }
+
+  /* La barra superior y el cuerpo comparten la altura de pantalla (sin scroll de más) */
+  body.app .shell {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 64px - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+  }
+  body.app .sidebar { flex: 0 0 auto; }
+  body.app .shell-body { flex: 1 1 auto; min-height: 0; }
+
+  /* Pantallas centradas (perfil, formularios, avisos): fondo blanco y centrado vertical */
+  body.app .content:has(> .center-container, > .status-card) { background: var(--surface); }
+  body.app .content > .center-container { flex: 1 1 auto; padding: 24px 20px; }
+
+  /* Pantallas sin sesión: sin tarjeta, logo + formulario centrados en vertical */
+  body.auth { background: var(--surface); }
+  body.auth .shell-body { justify-content: flex-start; }
+  body.auth .auth-brand { margin-top: auto; padding-top: 24px; }
+  body.auth .content {
+    margin-bottom: auto;
+    padding: 20px 24px 24px;
+  }
+  body.auth .form {
+    max-width: 420px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  body.auth .form-title { text-align: center; }
   body.sheet-lock { overflow: hidden; }
   .btn-label { display: none; }
 
@@ -1373,18 +1407,36 @@ input[type="checkbox"] {
   body.app .grid-3 > .panel { height: auto; }
   body.app .grid-3 .chart-body { min-height: 280px; }
 
-  body.app .profile { max-width: none; box-shadow: none; }
+  body.app .profile {
+    max-width: 420px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  body.app .profile-top { background: none; padding-top: 8px; }
+  body.app .profile-meta { border-top: 0; }
+  body.app .profile-actions { padding: 20px 16px 0; border-top: 0; }
   .site-footer { display: none; }
 
   /* Formularios sueltos (cambiar contraseña, etc.) sin tarjeta */
   body.app .form {
-    max-width: none;
-    padding: 20px 16px;
-    border-width: 1px 0;
+    max-width: 420px;
+    padding: 0;
+    background: none;
+    border: 0;
     border-radius: 0;
     box-shadow: none;
   }
-  body.app .status-card { border-width: 1px 0; border-radius: 0; box-shadow: none; max-width: none; }
+  body.app .center-container .form-title { text-align: center; }
+  body.app .status-card {
+    margin: auto;
+    padding: 24px 20px;
+    max-width: 420px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 
   /* ---- Indicadores del dashboard ---- */
   body.app .kpi-grid {
@@ -1629,6 +1681,7 @@ input[type="checkbox"] {
     top: auto; left: 0; right: 0; bottom: 0;
     z-index: 80;
     max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom);
     background: var(--surface);
@@ -1664,6 +1717,7 @@ input[type="checkbox"] {
     font-size: 1.1rem;
   }
   body.app .split-aside[data-sheet] .form {
+    max-width: none;
     padding: 4px 16px 20px;
     border: 0;
     border-radius: 0;
