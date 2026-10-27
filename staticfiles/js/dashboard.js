@@ -53,7 +53,6 @@ function createDoughnutChart(canvasId, dataElementId, chartLabel = 'Dataset 1') 
                     formatter: function(value) {
 
                         if (value > 5) {
-                            console.log(value);
                             return value == 0 ? '' : value + '%';
                         } else {
                             return ''
@@ -93,3 +92,105 @@ const riskDistributionChart = createDoughnutChart(
     'risk-distribution-data', 
     'Risks'
 );
+
+document.addEventListener('DOMContentLoaded', () => {
+    const dropdown = document.getElementById('holdings-filter');
+    const toggleBtn = document.getElementById('filter-toggle');
+    const menu = document.getElementById('filter-menu');
+    const sortList = document.getElementById('sort-holdings');
+    const sharesCheck = document.getElementById('filter-with-shares');
+    const tableBody = document.querySelector('.portfolio-table tbody');
+    const emptyRow = document.getElementById('holdings-filter-empty');
+
+    if (!dropdown || !toggleBtn || !menu || !sortList || !sharesCheck || !tableBody) return;
+
+    /* ---------- Abrir / cerrar el menú ---------- */
+    const setOpen = (open) => {
+        menu.classList.toggle('is-open', open);
+        toggleBtn.setAttribute('aria-expanded', String(open));
+    };
+
+    toggleBtn.addEventListener('click', () => {
+        setOpen(!menu.classList.contains('is-open'));
+    });
+
+    // Cerrar al hacer clic fuera del menú
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target)) setOpen(false);
+    });
+
+    // En móvil el menú es una hoja inferior con fondo oscuro: un toque fuera solo la cierra
+    // (en fase de captura, para que no active el enlace de la fila que quedó debajo)
+    const mobileMq = window.matchMedia('(max-width: 767.98px)');
+    document.addEventListener('click', (e) => {
+        if (mobileMq.matches && menu.classList.contains('is-open') && !dropdown.contains(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(false);
+        }
+    }, true);
+
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && menu.classList.contains('is-open')) {
+            setOpen(false);
+            toggleBtn.focus();
+        }
+    });
+
+    /* ---------- Filtrar y ordenar ---------- */
+    const getSortValue = () => {
+        const active = sortList.querySelector('.filter-option.is-active');
+        return active ? active.dataset.sort : '';
+    };
+
+    const applyFilters = () => {
+        const rows = Array.from(tableBody.querySelectorAll('.holding-row'));
+
+        // 1. Filtro: solo activos con acciones actualmente
+        const onlyWithShares = sharesCheck.checked;
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const shares = parseFloat(row.getAttribute('data-shares')) || 0;
+            const hide = onlyWithShares && shares <= 0;
+            row.classList.toggle('is-hidden', hide);
+            if (!hide) visibleCount++;
+        });
+
+        if (emptyRow) emptyRow.classList.toggle('is-hidden', visibleCount > 0);
+
+        // 2. Orden
+        const selectedValue = getSortValue();
+        if (!selectedValue) return;
+
+        const separatorIndex = selectedValue.lastIndexOf('_');
+        const field = selectedValue.substring(0, separatorIndex);
+        const direction = selectedValue.substring(separatorIndex + 1);
+
+        rows.sort((rowA, rowB) => {
+            const valA = parseFloat(rowA.getAttribute(`data-${field}`)) || 0;
+            const valB = parseFloat(rowB.getAttribute(`data-${field}`)) || 0;
+            return direction === 'asc' ? valA - valB : valB - valA;
+        });
+
+        rows.forEach(row => tableBody.appendChild(row));
+    };
+
+    /* ---------- Eventos ---------- */
+    sortList.addEventListener('click', (e) => {
+        const option = e.target.closest('.filter-option');
+        if (!option) return;
+
+        sortList.querySelectorAll('.filter-option').forEach(btn => {
+            const isSelected = btn === option;
+            btn.classList.toggle('is-active', isSelected);
+            btn.setAttribute('aria-selected', String(isSelected));
+        });
+        applyFilters();
+    });
+
+    sharesCheck.addEventListener('change', applyFilters);
+
+    // Estado inicial: checkbox marcado + orden por defecto
+    applyFilters();
+});
