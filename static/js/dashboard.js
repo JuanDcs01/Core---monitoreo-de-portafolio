@@ -119,6 +119,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!dropdown.contains(e.target)) setOpen(false);
     });
 
+    // En móvil el menú es una hoja inferior con fondo oscuro: un toque fuera solo la cierra
+    // (en fase de captura, para que no active el enlace de la fila que quedó debajo)
+    const mobileMq = window.matchMedia('(max-width: 767.98px)');
+    document.addEventListener('click', (e) => {
+        if (mobileMq.matches && menu.classList.contains('is-open') && !dropdown.contains(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(false);
+        }
+    }, true);
+
     // Cerrar con Escape
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && menu.classList.contains('is-open')) {

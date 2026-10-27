@@ -10,7 +10,8 @@
 </div>
 
 <section class="split split--stack split--cols-4">
-    <div class="split-aside">
+    <button type="button" class="fab" data-sheet-open aria-label="Registrar transacción"><i class="bi bi-plus-lg"></i></button>
+    <div class="split-aside" data-sheet>
         {% include 'components/form.html' %}
     </div>
 
@@ -21,7 +22,7 @@
             </div>
             {% if wallet_transactions %}
                 <div class="table-wrap">
-                    <table class="table table-hover data-table">
+                    <table class="table table-hover data-table table-stack stack-wallet">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
@@ -35,13 +36,13 @@
                         <tbody>
                             {% for w in wallet_transactions %}
                                 <tr>
-                                    <td>{{ w.date }}</td>
-                                    <td>{{ w.get_type_display | identify_transaction }}</td>
-                                    <td class="num {% if w.type == 'D' %}up{% else %}down{% endif %}">
+                                    <td class="c-date">{{ w.date }}</td>
+                                    <td class="c-type">{{ w.get_type_display | identify_transaction }}</td>
+                                    <td class="num c-net {% if w.type == 'D' %}up{% else %}down{% endif %}" data-label="Monto">
                                         {% if w.type == 'D' %}+{% else %}-{% endif %}{{ w.net_amount | round_number }}
                                     </td>
-                                    <td class="num">{{ w.commission | round_number }}</td>
-                                    <td class="num">{{ w.total | round_number }}</td>
+                                    <td class="num c-comm" data-label="Comisión">{{ w.commission | round_number }}</td>
+                                    <td class="num c-total">{{ w.total | round_number }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}

@@ -7,6 +7,7 @@
         <h1 class="page-title">Resumen</h1>
         <p class="page-sub">Cómo va tu portafolio hoy</p>
     </div>
+   <div class="market-chip">{{ market_state | market_state }}</div>
 </div>
 
 <!-- ===== Indicadores ===== -->
@@ -25,33 +26,33 @@
     <div class="kpi">
         <div class="kpi-label">Invertido</div>
         <div class="kpi-value">{{ total_current_invested | round_number }}</div>
-        <div>Conversión: RD${{ total_current_invested | to_dop  | round_number }}</div>
+        <div class="kpi-sub">Conversión: RD${{ total_current_invested | to_dop  | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Valor actual</div>
         <div class="kpi-value">{{ total_current_invested_value | round_number }}</div>
-        <div>Conversión: RD${{ total_current_invested_value | to_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: RD${{ total_current_invested_value | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia no realizada</div>
         <div class="kpi-value {% if total_unrealized_gain > 0 %}up{% elif total_unrealized_gain < 0 %}down{% endif %}">
             {{ total_unrealized_gain  | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
-        <div>Conversión: RD${{ total_unrealized_gain | to_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: RD${{ total_unrealized_gain | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia realizada</div>
         <div class="kpi-value {% if total_realized_gain > 0 %}up{% elif total_realized_gain < 0 %}down{% endif %}">
             {{ total_realized_gain | round_number }} <small>(0.00%)</small> 
         </div>
-        <div>Conversión: RD${{ total_realized_gain | to_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: RD${{ total_realized_gain | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia total</div>
         <div class="kpi-value {% if total_gain > 0 %}up{% elif total_gain < 0 %}down{% endif %}">
             {{ total_gain | round_number }} <small>(0.00%)</small> 
         </div>
-        <div class="">Conversión: RD${{ total_gain | to_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: RD${{ total_gain | to_dop | round_number }}</div>
     </div>
 </section>
 
@@ -64,7 +65,7 @@
                 <div class="filter-dropdown" id="holdings-filter">
                     <button type="button" class="btn btn-secondary d-flex align-items-center gap-2" id="filter-toggle"
                             aria-haspopup="true" aria-expanded="false" aria-controls="filter-menu">
-                        <i class="bi bi-funnel"></i> Filtros
+                        <i class="bi bi-funnel"></i> <span class="btn-label">Filtros</span>
                     </button>
                     <div class="filter-menu" id="filter-menu">
                         <label class="filter-check">
@@ -99,13 +100,13 @@
                 <form action="{% url 'add_symbol' %}" method="POST" class="inline-add">
                     {% csrf_token %}
                     <input class="form-control" type="text" name="symbol" placeholder="Buscar símbolo" autocomplete="off">
-                    <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Agregar</button>
+                    <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> <span class="btn-label">Agregar</span></button>
                 </form>
             </div>
         </div>
     {% if holdings %}
         <div class="table-wrap">
-            <table class="table table-hover data-table portfolio-table">
+            <table class="table table-hover data-table portfolio-table table-list">
                 <thead>
                     <tr>
                         <th>Activo</th>
@@ -114,7 +115,7 @@
                         <th class="num">Invertido</th>
                         <th class="num">Valor actual</th>
                         <th class="num">Precio</th>
-                        <th class="num">Cambio {{ market_state | market_state }}</th>
+                        <th class="num">Cambio</th>
                         <th class="num">Gan. no realizada</th>
                         <th class="num">Gan. realizada</th>
                         <th class="num">Gan. total</th>
@@ -138,7 +139,7 @@
                             data-total-gain="{{ h.total_gain }}"
                             onclick="window.location='{% url 'holding' h.holding.symbol %}'">
                         {% endlocalize %}
-                        <td>
+                        <td class="c-asset">
                             <div class="asset">
                                 <img src="{{ h.logo_url }}" alt="{{ h.holding.symbol }}" width="40" height="40" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ h.holding.symbol }}&background=random&size=40';">
                                 <div>
@@ -147,29 +148,29 @@
                                 </div>
                             </div>
                         </td>
-                        <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
-                        <td class="num">{{ h.shares | no_trailing_zeros }}</td>
-                        <td class="num">{{ h.current_invested | round_number }}</td>
-                        <td class="num">{{ h.current_invested_value | round_number }}</td>
-                        <td class="num">{{ h.price | round_number }}</td>
-                        <td class="num">
+                        <td class="c-type c-hide-m"><span class="tag">{{ h.holding.type | holding_type }}</span></td>
+                        <td class="num c-shares c-hide-m">{{ h.shares | no_trailing_zeros }}</td>
+                        <td class="num c-invested c-hide-m">{{ h.current_invested | round_number }}</td>
+                        <td class="num c-value c-hide-m">{{ h.current_invested_value | round_number }}</td>
+                        <td class="num c-price">{{ h.price | round_number }}</td>
+                        <td class="num c-day">
                             <div class="delta {% if h.day_change > 0 %}up{% elif h.day_change < 0 %}down{% endif %}">
                                 <span>{% if h.day_change > 0 %}+{% endif %}{{ h.day_change | round_number }}</span>
                                 <small>({{ h.day_change_percent | round_number }}%)</small>
                             </div>
                         </td>
-                        <td class="num">
+                        <td class="num c-unreal">
                             <div class="delta {% if h.unrealized_gain > 0 %}up{% elif h.unrealized_gain < 0 %}down{% endif %}">
                                 <span>{% if h.unrealized_gain > 0 %}+{% endif %}{{ h.unrealized_gain | round_number }}</span>
                                 <small>({{ h.unrealized_gain_percent | round_number }}%)</small>
                             </div>
                         </td>
-                        <td class="num">
+                        <td class="num c-real c-hide-m">
                             <div class="delta {% if h.realized_gain > 0 %}up{% elif h.realized_gain < 0 %}down{% endif %}">
                                 <span>{% if h.realized_gain > 0 %}+{% endif %}{{ h.realized_gain | round_number }}</span>
                             </div>
                         </td>
-                        <td class="num">
+                        <td class="num c-total c-hide-m">
                             <div class="delta {% if h.total_gain > 0 %}up{% elif h.total_gain < 0 %}down{% endif %}">
                                 <span>{% if h.total_gain > 0 %}+{% endif %}{{ h.total_gain | round_number }}</span>
                             </div>

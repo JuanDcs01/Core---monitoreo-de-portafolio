@@ -2,7 +2,10 @@
 {% block title %}{{ watch_list.name }}{% endblock title %}
 {% block content %}
 
-<a href="{% url 'watch_lists' %}" class="back-link"><i class="bi bi-arrow-left"></i> Todas las listas</a>
+<div class="page-head">
+    <a href="{% url 'watch_lists' %}" class="back-link"><i class="bi bi-arrow-left"></i> Todas las listas</a>
+    <div class="market-chip">{{ market_state | market_state }}</div>
+</div>
 
 <section class="panel">
     {% if holdings_list %}
@@ -12,23 +15,23 @@
                 {% csrf_token %}
                 <input type="hidden" name="watch_list_id" value="{{ watch_list.id }}">
                 <input class="form-control" type="text" name="symbol" placeholder="Buscar símbolo" autocomplete="off">
-                <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> Agregar</button>
+                <button class="btn btn-primary d-flex align-items-center gap-1"><i class="bi bi-plus-lg"></i> <span class="btn-label">Agregar</span></button>
             </form>
         </div>
         <div class="table-wrap">
-            <table class="table table-hover data-table">
+            <table class="table table-hover data-table watch-table table-list">
                 <thead>
                     <tr>
                         <th>Activo</th>
                         <th>Tipo</th>
                         <th class="num">Precio</th>
-                        <th class="num">Cambio {{ market_state | market_state }}</th>
+                        <th class="num">Cambio</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for h in holdings_list %}
                         <tr class="row-link" onclick="window.location='{% url 'holding' h.holding.symbol %}'">
-                            <td>
+                            <td class="c-asset">
                                 <div class="asset">
                                     <img src="{{ h.logo_url }}" alt="{{ h.holding.symbol }}" width="40" height="40" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ h.holding.symbol }}&background=random&size=40';">
                                     <div>
@@ -37,9 +40,9 @@
                                     </div>
                                 </div>
                             </td>
-                            <td><span class="tag">{{ h.holding.type | holding_type }}</span></td>
-                            <td class="num">{{ h.holding.price }}</td>
-                            <td class="num">
+                            <td class="c-type c-hide-m"><span class="tag">{{ h.holding.type | holding_type }}</span></td>
+                            <td class="num c-price">{{ h.holding.price }}</td>
+                            <td class="num c-day">
                                 <div class="delta {% if h.holding.day_change > 0 %}up{% elif h.holding.day_change < 0 %}down{% endif %}">
                                     <span>{% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change | round_number }}</span>
                                     <small>({{ h.holding.day_change_percent | round_number }}%)</small>

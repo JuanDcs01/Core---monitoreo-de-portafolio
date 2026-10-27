@@ -40,9 +40,11 @@ def metric(data):
 def market_state(value):
 
     if value in ['POST', 'POSTPOST', 'PREPRE']:
-        return mark_safe('<i class="b bi-moon-stars-fill text-primary"></i>')
+        return mark_safe('<i class="bi bi-moon-stars-fill text-primary"></i> Post-mercado')
     if value == 'PRE':
-        return mark_safe('<i class="bi bi-brightness-alt-high-fill text-warning">')
+        return mark_safe('<i class="bi bi-brightness-alt-high-fill text-warning"></i> Pre-mercado')
+    if value == 'REGULAR':
+        return mark_safe('<i class="bi bi-brightness-high-fill"></i> Mercado abierto')
 
     return ''
 

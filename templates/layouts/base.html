@@ -3,7 +3,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#ffffff">
     <title>{% block title %}Tracker de Acciones{% endblock title %} · CORE</title>
 
     <link rel="icon" href="{% static 'icono.png' %}" type="image/png">
@@ -15,6 +16,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="{% static 'js/mobile.js' %}" defer></script>
 </head>
 <body class="{% if user.is_authenticated %}app{% else %}auth{% endif %}">
 
@@ -41,7 +43,7 @@
                 <a href="{% url 'wallet_transactions' %}" class="nav-link {% if request.resolver_match.url_name == 'wallet_transactions' %}active{% endif %}"><i class="bi bi-wallet2"></i> Cartera</a>
             </li>
             <li>
-                <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
+                <a href="{% url 'watch_lists' %}" class="nav-link {% if request.resolver_match.url_name == 'watch_lists' or request.resolver_match.url_name == 'watch_list_details' %}active{% endif %}"><i class="bi bi-list-ul"></i> Listas</a>
             </li>
             <li>
                 <a href="{% url 'profile' %}" class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"><i class="bi bi-person"></i> Perfil</a>
@@ -82,7 +84,7 @@
             {% endblock content %}
         </main>
 
-        <footer class="site-footer">
+        <footer class="site-footer d-none d-md-block">
             <p>Derechos reservados</p>
         </footer>
     </div>

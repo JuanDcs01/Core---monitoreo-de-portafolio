@@ -6,41 +6,42 @@
 <section class="panel asset-head">
     <div class="asset-head-main">
         <img class="asset-logo" src="{{ logo_url }}" alt="{{ symbol }}" width="56" height="56" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ symbol }}&background=random&size=56';">
-        <div>
+        <div class="asset-id">
             <div class="asset-ticker">{{ symbol }}<span class="asset-exchange">{{ fullExchangeName }}</span></div>
             <div class="asset-fullname">{{ longName }}</div>
         </div>
-            <div class="asset-head-price">
+    </div>
+
+    <div class="asset-head-price">
         <div class="price-row">
             <h2 id="currentPrice"></h2>
-            <span class="market-state">{{ marketState | market_state }}</span>
         </div>
         <div class="change-row">
             <span id="numberChange"></span>
             <span id="percentChange"></span>
         </div>
+        <span class="market-state" style="color: (--ink-2); font-size: .78rem; font-weight: 600;">{{ marketState | market_state }}</span>
     </div>
+
+    <div class="asset-head-tools">
+        <form action="{% url 'update_holding_risk' %}" method="POST" class="risk-form">
+            {% csrf_token %}
+            <label for="risk">Nivel de riesgo</label>
+            <input type="hidden" name="user_holding_id" value="{{ user_holding.id }}">
+            <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not user_holding %}disabled{% endif %}>
+                <option value="M" {% if user_holding.risk == 'M' %}selected{% endif %}>Medio</option>
+                <option value="MH" {% if user_holding.risk == 'MH' %}selected{% endif %}>Medio alto</option>
+                <option value="H" {% if user_holding.risk == 'H' %}selected{% endif %}>Alto</option>
+                <option value="VH" {% if user_holding.risk == 'VH' %}selected{% endif %}>Muy alto</option>
+            </select>
+        </form>
+
+        <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{ user_holding.id }}">
+            <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" title="Eliminar" aria-label="Eliminar" {% if not user_holding %}disabled{% endif %}><i class="bi bi-trash"></i> <span class="btn-label">Eliminar</span></button>
+        </form>
     </div>
-
-
-
-    <strong>Nivel de riesgo: </strong>
-    <form action="{% url 'update_holding_risk' %}" method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="user_holding_id" value="{{ user_holding.id }}">
-        <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not user_holding %}disabled{% endif %}>
-            <option value="M" {% if user_holding.risk == 'M' %}selected{% endif %}>Medio</option>
-            <option value="MH" {% if user_holding.risk == 'MH' %}selected{% endif %}>Medio alto</option>
-            <option value="H" {% if user_holding.risk == 'H' %}selected{% endif %}>Alto</option>
-            <option value="VH" {% if user_holding.risk == 'VH' %}selected{% endif %}>Muy alto</option>
-        </select>
-    </form>
-
-    <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
-        {% csrf_token %}
-        <input type="hidden" name="id" value="{{ user_holding.id }}">
-        <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" {% if not user_holding %}disabled{% endif %}><i class="bi bi-trash"></i> Eliminar</button>
-    </form>
 </section>
 
 <!-- ===== Gráfico ===== -->
@@ -71,30 +72,18 @@
         <h2 class="panel-title">Resumen en cartera</h2>
     </div>
     {% if h_metrics.current_invested > 0 or h_metrics.realized_gain != 0 %}
-    <div class="panel-body d-flex justify-content-between">
-       <strong>Acciones:</strong> {{ h_metrics.total_shares | no_trailing_zeros }}
-        <strong>Invertido:</strong> {{ h_metrics.current_invested | round_number }}
-        <strong>Valor actual:</strong> {{ h_metrics.current_invested_value | round_number }}
-        <strong>Gan. no realizada:</strong> 
-        <div class="{% if  h_metrics.unrealized_gain > 0 %}up{% elif  h_metrics.unrealized_gain < 0 %}down{% endif %}"> 
-            {{ h_metrics.unrealized_gain | round_number }}
-        </div>
-        <strong>Gan. realizada:</strong>
-        <div class="{% if  h_metrics.realized_gain > 0 %}up{% elif  h_metrics.realized_gain < 0 %}down{% endif %}"> 
-            {{ h_metrics.realized_gain | round_number }}
-        </div>
-        <strong>Dividendos:</strong>
-        <div class="{% if  h_metrics.total_dividends > 0 %}up{% endif %}">
-        {{ h_metrics.total_dividends | no_trailing_zeros }}
-        </div>
-        <strong>Gan. total:</strong> 
-        <div class="{% if  h_metrics.total_gain > 0 %}up{% elif  h_metrics.total_gain < 0 %}down{% endif %}">
-            {{ h_metrics.total_gain | round_number }}
-        </div>
+    <div class="stat-grid">
+        <div class="stat"><span>Acciones</span><strong>{{ h_metrics.total_shares | no_trailing_zeros }}</strong></div>
+        <div class="stat"><span>Invertido</span><strong>{{ h_metrics.current_invested | round_number }}</strong></div>
+        <div class="stat"><span>Valor actual</span><strong>{{ h_metrics.current_invested_value | round_number }}</strong></div>
+        <div class="stat"><span>Gan. no realizada</span><strong class="{% if h_metrics.unrealized_gain > 0 %}up{% elif h_metrics.unrealized_gain < 0 %}down{% endif %}">{{ h_metrics.unrealized_gain | round_number }}</strong></div>
+        <div class="stat"><span>Gan. realizada</span><strong class="{% if h_metrics.realized_gain > 0 %}up{% elif h_metrics.realized_gain < 0 %}down{% endif %}">{{ h_metrics.realized_gain | round_number }}</strong></div>
+        <div class="stat"><span>Dividendos</span><strong class="{% if h_metrics.total_dividends > 0 %}up{% endif %}">{{ h_metrics.total_dividends | no_trailing_zeros }}</strong></div>
+        <div class="stat"><span>Gan. total</span><strong class="{% if h_metrics.total_gain > 0 %}up{% elif h_metrics.total_gain < 0 %}down{% endif %}">{{ h_metrics.total_gain | round_number }}</strong></div>
     </div>
     {% else %}
-    <div class="panel-body d-flex justify-content-center">
-        <div>No hay datos</div>
+    <div class="empty">
+        <p>No hay datos</p>
     </div>
     {% endif %}
 </section>
@@ -171,7 +160,8 @@
    </div>
 </section>
 <section id="trades-view" class="split split--stack view-panel{% if active_view == 'dividends' %} is-hidden{% endif %}">
-    <div class="split-aside">
+    <button type="button" class="fab" data-sheet-open aria-label="Registrar trade"><i class="bi bi-plus-lg"></i></button>
+    <div class="split-aside" data-sheet>
         {% include 'components/form.html' %}
     </div>
     <div class="split-main">
@@ -181,7 +171,7 @@
                     <h2 class="panel-title">Trades</h2>
                 </div>
                 <div class="table-wrap">
-                    <table class="table table-hover data-table">
+                    <table class="table table-hover data-table table-stack stack-trades">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
@@ -197,13 +187,13 @@
                         <tbody>
                             {% for t in trade reversed %}
                                 <tr>
-                                    <td>{{ t.date }}</td>
-                                    <td>{{ t.get_type_display | identify_transaction }}</td>
-                                    <td class="num">{{ t.price | round_number }}</td>
-                                    <td class="num">{{ t.shares | no_trailing_zeros }}</td>
-                                    <td class="num">{{ t.net_amount | round_number }}</td>
-                                    <td class="num">{{ t.commission | round_number }}</td>
-                                    <td class="num">{{ t.total | round_number }}</td>
+                                    <td class="c-date">{{ t.date }}</td>
+                                    <td class="c-type">{{ t.get_type_display | identify_transaction }}</td>
+                                    <td class="num c-price" data-label="Precio">{{ t.price | round_number }}</td>
+                                    <td class="num c-shares" data-label="Acciones">{{ t.shares | no_trailing_zeros }}</td>
+                                    <td class="num c-net c-hide-m">{{ t.net_amount | round_number }}</td>
+                                    <td class="num c-comm" data-label="Comisión">{{ t.commission | round_number }}</td>
+                                    <td class="num c-total">{{ t.total | round_number }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}
@@ -244,7 +234,8 @@
 </section>
 
 <section id="dividend-view" class="split split--stack view-panel{% if active_view != 'dividends' %} is-hidden{% endif %}">
-    <div class="split-aside">
+    <button type="button" class="fab" data-sheet-open aria-label="Registrar dividendo"><i class="bi bi-plus-lg"></i></button>
+    <div class="split-aside" data-sheet>
         <div class="center-container">
             <div class="form">
                 <h2 class="form-title">Registrar dividendo</h2>
@@ -296,7 +287,7 @@
                     <h2 class="panel-title">Dividendos</h2>
                 </div>
                 <div class="table-wrap">
-                    <table class="table table-hover data-table">
+                    <table class="table table-hover data-table table-stack stack-dividends">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
@@ -310,11 +301,11 @@
                         <tbody>
                             {% for d in dividend %}
                                 <tr>
-                                    <td>{{ d.date }}</td>
-                                    <td>{{ d.reinvested | is_reinvested }}</td>
-                                    <td class="num">{{ d.net_amount | round_number }}</td>
-                                    <td class="num">{{ d.commission | round_number }}</td>
-                                    <td class="num">{{ d.total | round_number }}</td>
+                                    <td class="c-date">{{ d.date }}</td>
+                                    <td class="c-reinv" data-label="Reinvertido">{{ d.reinvested | is_reinvested }}</td>
+                                    <td class="num c-net" data-label="Monto">{{ d.net_amount | round_number }}</td>
+                                    <td class="num c-comm" data-label="Comisión">{{ d.commission | round_number }}</td>
+                                    <td class="num c-total">{{ d.total | round_number }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}
