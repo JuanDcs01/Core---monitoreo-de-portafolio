@@ -22,26 +22,6 @@
         </div>
         <span class="market-state" style="color: (--ink-2); font-size: .78rem; font-weight: 600;">{{ marketState | market_state }}</span>
     </div>
-
-    <div class="asset-head-tools">
-        <form action="{% url 'update_holding_risk' %}" method="POST" class="risk-form">
-            {% csrf_token %}
-            <label for="risk">Nivel de riesgo</label>
-            <input type="hidden" name="user_holding_id" value="{{ user_holding.id }}">
-            <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not user_holding %}disabled{% endif %}>
-                <option value="M" {% if user_holding.risk == 'M' %}selected{% endif %}>Medio</option>
-                <option value="MH" {% if user_holding.risk == 'MH' %}selected{% endif %}>Medio alto</option>
-                <option value="H" {% if user_holding.risk == 'H' %}selected{% endif %}>Alto</option>
-                <option value="VH" {% if user_holding.risk == 'VH' %}selected{% endif %}>Muy alto</option>
-            </select>
-        </form>
-
-        <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
-            {% csrf_token %}
-            <input type="hidden" name="id" value="{{ user_holding.id }}">
-            <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" title="Eliminar" aria-label="Eliminar" {% if not user_holding %}disabled{% endif %}><i class="bi bi-trash"></i> <span class="btn-label">Eliminar</span></button>
-        </form>
-    </div>
 </section>
 
 <!-- ===== Gráfico ===== -->
@@ -150,6 +130,31 @@
         </div>
     </section>
 {% endif %}
+
+<section class="panel">
+    <div class="panel-head"><h2 class="panel-title">Opciones</h2></div>
+    <div class="panel-body">
+        <div class="asset-head-tools">
+            <form action="{% url 'update_holding_risk' %}" method="POST" class="risk-form">
+                {% csrf_token %}
+                <label for="risk">Nivel de riesgo</label>
+                <input type="hidden" name="user_holding_id" value="{{ user_holding.id }}">
+                <select class="form-control form-select pe-5" name="risk" id="risk" onchange="this.form.submit()" {% if not user_holding %}disabled{% endif %}>
+                    <option value="M" {% if user_holding.risk == 'M' %}selected{% endif %}>Medio</option>
+                    <option value="MH" {% if user_holding.risk == 'MH' %}selected{% endif %}>Medio alto</option>
+                    <option value="H" {% if user_holding.risk == 'H' %}selected{% endif %}>Alto</option>
+                    <option value="VH" {% if user_holding.risk == 'VH' %}selected{% endif %}>Muy alto</option>
+                </select>
+            </form>
+
+            <form action="{% url 'delete_holding' %}" method="POST" class="asset-head-actions">
+                {% csrf_token %}
+                <input type="hidden" name="id" value="{{ user_holding.id }}">
+                <button class="btn btn-danger d-flex align-items-center gap-2" type="submit" title="Eliminar" aria-label="Eliminar" {% if not user_holding %}disabled{% endif %}><i class="bi bi-trash"></i> <span class="btn-label">Eliminar</span></button>
+            </form>
+        </div>
+    </div>
+</section>
 
 <!-- ===== Operaciones ===== -->
  {% if user_holding %}
