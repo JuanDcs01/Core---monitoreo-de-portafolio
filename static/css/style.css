@@ -1314,6 +1314,8 @@ input[type="checkbox"] {
   }
   body.auth .form-title { text-align: center; }
   body.sheet-lock { overflow: hidden; }
+  /* Red de seguridad: nada debe ensanchar la página en horizontal (ni mover la barra fija) */
+  html, body { max-width: 100%; overflow-x: clip; }
   .btn-label { display: none; }
 
   /* ---- Barra superior compacta: logo · búsqueda · salir ---- */
@@ -1469,10 +1471,10 @@ input[type="checkbox"] {
   body.app .kpi--hero .kpi-foot { font-size: .85rem; }
 
   /* ---- Encabezado del portafolio / lista: filtro + búsqueda en una línea ---- */
-  body.app .panel-head > .d-flex { flex: 1 1 100%; flex-wrap: nowrap !important; }
+  body.app .panel-head > .d-flex { flex: 1 1 100%; flex-wrap: nowrap !important; min-width: 0; max-width: 100%; }
   body.app .panel-head > .inline-add { flex: 1 1 100%; }
-  body.app .inline-add { flex: 1 1 auto; min-width: 0; }
-  body.app .inline-add .form-control { flex: 1 1 0; width: auto; min-width: 0; }
+  body.app .inline-add { flex: 1 1 0; min-width: 0; width: 0; }
+  body.app .inline-add .form-control { flex: 1 1 0; width: 0; min-width: 0; }
   body.app .panel-head .btn { padding: .6rem .8rem; flex-shrink: 0; }
   body.app .panel-head .market-chip { margin-left: auto; }
 
