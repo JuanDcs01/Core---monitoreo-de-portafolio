@@ -201,7 +201,9 @@
                     <span class="muted">{% if v == 1 %}hace {{ v }} día{% else %}hace {{ v }} días{% endif %}</span>
                 </li>
             {% empty %}
-                <li class="stat-empty">Sin compras registradas</li>
+                <div class="w-100 h-100 d-flex justify-content-center">
+                    <li class="stat-empty">Sin compras registradas</li>
+                </div>
             {% endfor %}
         </ul>
     </div>
