@@ -931,47 +931,49 @@ def holding_metrics(trades, dividends, current_price):
 
     for t in trades:
 
+        shares = t.shares
+
         if t.type == 'B': # compras
-            h_metrics['total_shares'] += t.shares
+            h_metrics['total_shares'] += shares
             # calcular el precio por acción considerando comisiones (incluidas en el total)
-            price_per_share = t.total / t.shares
+            price_per_share = t.total / shares
             # registrar la fecha, acciones y precio con comissiones por acción para los lotes (compras) 
             h_metrics['lots'].append({'date': t.date,
-                                        'shares': t.shares,
+                                     'shares': shares,
                                         'price_per_share': price_per_share})
         else: # ventas
-            h_metrics['total_shares'] -= t.shares
+            h_metrics['total_shares'] -= shares
 
             partial_shares = None
-            for i in range(0, len(h_metrics['lots'])):
+            for h in h_metrics['lots']:
                 #* si el primer lote (mas antiguo) tiene la suficiente cantidad para cubrir una venta se le resta y termina el bucle
                 #* caso contrario, se lleva a 0, se guarda lo sobrante y se le resta al próximo lote
                 #* repitiendo el proceso hasta cubrir la venta por completo
 
                 # validar si en la iteración viene una parte de otro lote
                 if not partial_shares:
-                    h_metrics['lots'][i]['shares'] -= t.shares
+                    h['shares'] -= shares
                 else:
-                    h_metrics['lots'][i]['shares'] -= partial_shares
+                    h['shares'] -= partial_shares
 
                 # validar cuando el lote no haya podido cubrir la venta por completo
-                if h_metrics['lots'][i]['shares'] < 0:
+                if h['shares'] < 0:
                     if partial_shares and partial_shares > 0:
-                        t.shares = partial_shares
+                        shares = partial_shares
 
                     # guarda el sobrante
-                    partial_shares = abs(h_metrics['lots'][i]['shares'])
+                    partial_shares = abs(h['shares'])
 
-                    h_metrics['lots'][i]['shares'] = 0
+                    h['shares'] = 0
 
-                    h_metrics['realized_gain'] += (t.price * (t.shares - partial_shares)) - ((t.shares - partial_shares) * h_metrics['lots'][i]['price_per_share'])
+                    h_metrics['realized_gain'] += (t.price * (shares - partial_shares)) - ((shares - partial_shares) *h['price_per_share'])
 
                     continue
 
                 if not partial_shares:
-                    h_metrics['realized_gain'] += (t.price * t.shares) - (t.shares * h_metrics['lots'][i]['price_per_share'])
+                    h_metrics['realized_gain'] += (t.price * shares) - (shares * h['price_per_share'])
                 else:
-                    h_metrics['realized_gain'] += (t.price * partial_shares) - (partial_shares * h_metrics['lots'][i]['price_per_share'])
+                    h_metrics['realized_gain'] += (t.price * partial_shares) - (partial_shares * h['price_per_share'])
 
                 h_metrics['realized_gain'] -= t.commission
 
