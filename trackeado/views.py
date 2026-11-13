@@ -30,14 +30,28 @@ def dashboard(request):
     trades = Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id')
     dividends = Dividend.objects.select_related('user_holding__user').filter(user_holding__user=user)
 
-    if not user_holdings:
-        return render(request, 'dashboard.html', {
-            'total_balance': wallet.balance,
-            'available_balance': wallet.balance
-        })
+    total_current_invested_value = Decimal(0)
+    total_current_invested = Decimal(0)
+    total_unrealized_gain = Decimal(0)
+    total_unrealized_gain_percent = Decimal(0)
+    total_realized_gain = Decimal(0)
+    total_gain = Decimal(0)
 
     # obtener estado actual del mercado
     market_state = yf.Ticker('VOO').info.get('marketState')
+    
+    if not user_holdings:
+        return render(request, 'dashboard.html', {
+            'total_balance': wallet.balance,
+            'available_balance': wallet.balance,
+            'total_current_invested': total_current_invested,
+            'total_current_invested_value': total_current_invested_value,
+            'total_unrealized_gain': total_unrealized_gain,
+            'total_unrealized_gain_percent': total_unrealized_gain_percent,
+            'total_realized_gain': total_realized_gain,
+            'total_gain': total_gain,
+            'market_state': market_state
+        })
 
     #todo: obtener datos de yfinance
 
@@ -85,13 +99,6 @@ def dashboard(request):
      }
 
     #todo: calcular datos de los activos y los totales de la cartera
-
-    total_current_invested_value = 0
-    total_current_invested = 0
-    total_unrealized_gain = 0
-    total_unrealized_gain_percent = 0
-    total_realized_gain = 0
-    total_gain = 0
 
     for h in user_holdings:
 
@@ -196,20 +203,20 @@ def dashboard(request):
         messages.warning(request, 'Tu balance disponible no debería ser negativo. Verifica la integridad histórica de tus registros.')
     
     context = {
-        'holdings': user_holdings,
         'market_state': market_state,
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
         'total_balance': total_balance,
-        'last_holdings_buy': last_holdings_buy,
         'total_unrealized_gain': total_unrealized_gain,
         'total_current_invested': total_current_invested,
-        'type_distribution': type_distribution,
-        'holding_distribution': holding_distribution,
-        'risk_distribution': risk_distribution,
         'total_unrealized_gain_percent': total_unrealized_gain_percent,
         'total_realized_gain': total_realized_gain,
-        'total_gain': total_gain
+        'total_gain': total_gain,
+        'holdings': user_holdings,
+        'last_holdings_buy': last_holdings_buy,
+        'type_distribution': type_distribution,
+        'holding_distribution': holding_distribution,
+        'risk_distribution': risk_distribution
     }
 
     return render(request, 'dashboard.html', {**context})
