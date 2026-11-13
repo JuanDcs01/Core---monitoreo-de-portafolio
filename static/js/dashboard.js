@@ -138,6 +138,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+/* ---------- Persistencia en localStorage ---------- */
+    const STORAGE_KEYS = {
+        ONLY_WITH_SHARES: 'portafolio_solo_con_acciones',
+        SORT_ORDER: 'portafolio_orden'
+    };
+
+    const restorePreferences = () => {
+        // 1. Restaurar checkbox (por defecto queda como venga en el HTML, ej. true)
+        const savedShares = localStorage.getItem(STORAGE_KEYS.ONLY_WITH_SHARES);
+        if (savedShares !== null) {
+            sharesCheck.checked = savedShares === 'true';
+        }
+
+        // 2. Restaurar ordenamiento
+        const savedSort = localStorage.getItem(STORAGE_KEYS.SORT_ORDER);
+        if (savedSort) {
+            const targetOption = sortList.querySelector(`.filter-option[data-sort="${savedSort}"]`);
+            if (targetOption) {
+                sortList.querySelectorAll('.filter-option').forEach(btn => {
+                    const isSelected = btn === targetOption;
+                    btn.classList.toggle('is-active', isSelected);
+                    btn.setAttribute('aria-selected', String(isSelected));
+                });
+            }
+        }
+    };
+
     /* ---------- Filtrar y ordenar ---------- */
     const getSortValue = () => {
         const active = sortList.querySelector('.filter-option.is-active');
@@ -186,11 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.toggle('is-active', isSelected);
             btn.setAttribute('aria-selected', String(isSelected));
         });
+
+        localStorage.setItem(STORAGE_KEYS.SORT_ORDER, option.dataset.sort);
         applyFilters();
     });
 
-    sharesCheck.addEventListener('change', applyFilters);
+    sharesCheck.addEventListener('change', () => {
+        localStorage.setItem(STORAGE_KEYS.ONLY_WITH_SHARES, sharesCheck.checked);
+        applyFilters();
+    });
 
-    // Estado inicial: checkbox marcado + orden por defecto
+    // Estado inicial: restaurar preferencias guardadas y aplicar
+    restorePreferences();
     applyFilters();
 });
