@@ -1732,3 +1732,7 @@ input[type="checkbox"] {
   /* el formulario del sheet siempre en una columna */
   body.app .split--stack .split-aside[data-sheet] .form form { grid-template-columns: minmax(0, 1fr); }
 }
+
+.holding-row {
+  cursor: pointer;
+}
