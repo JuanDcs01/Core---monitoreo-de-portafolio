@@ -39,12 +39,14 @@ def metric(data):
 @register.filter
 def market_state(value):
 
-    if value in ['POST', 'POSTPOST', 'PREPRE']:
+    if value == 'POST':
         return mark_safe('<i class="bi bi-moon-stars-fill text-primary"></i> Post-mercado')
     if value == 'PRE':
         return mark_safe('<i class="bi bi-brightness-alt-high-fill text-warning"></i> Pre-mercado')
     if value == 'REGULAR':
         return mark_safe('<i class="bi bi-brightness-high-fill"></i> Mercado abierto')
+    if value in ['POSTPOST', 'PREPRE', 'CLOSED']:
+        return mark_safe('<i class="bi bi-cloudy-fill text-secundary"></i> Mercado cerrado')
 
     return ''
 
