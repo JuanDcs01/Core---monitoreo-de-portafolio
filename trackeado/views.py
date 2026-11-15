@@ -189,7 +189,10 @@ def dashboard(request):
     
     total_balance = total_current_invested_value + wallet.balance
 
-    net_annual_dividends_percent = (net_annual_dividends / total_balance) * 100
+    if total_balance > 0:
+        net_annual_dividends_percent = (net_annual_dividends / total_balance) * 100
+    else:
+        net_annual_dividends_percent = 0
 
     #todo: sumatoria de totales y ordenamiento para la gráfica
 
@@ -232,89 +235,93 @@ def dashboard(request):
     #todo: calculo del TWR
 
     #! falta validar cuando hay dos transacciones el mismo dia
-    
-    subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
 
-    for i in range(1, len(wallet_transactions)):
+    if wallet_transactions:
+        
+        subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
 
-        subperiod.append({'start_date': wallet_transactions[i].date})
+        for i in range(1, len(wallet_transactions)):
 
-        subperiod[i-1]['end_date'] = wallet_transactions[i].date
+            subperiod.append({'start_date': wallet_transactions[i].date})
 
-    for i in range(0, len(subperiod)):
+            subperiod[i-1]['end_date'] = wallet_transactions[i].date
 
-        subperiod_wallet_balance = 0
-        subperiod_balance = 0
+        for i in range(0, len(subperiod)):
 
-        for wt in wallet_transactions:
+            subperiod_wallet_balance = 0
+            subperiod_balance = 0
 
-            if (subperiod[i].get('end_date') and wt.date < subperiod[i]['end_date']) or not subperiod[i].get('end_date'):
-                if wt.type == 'D':
-                    subperiod_wallet_balance += wt.net_amount
+            for wt in wallet_transactions:
+
+                if (subperiod[i].get('end_date') and wt.date < subperiod[i]['end_date']) or not subperiod[i].get('end_date'):
+                    if wt.type == 'D':
+                        subperiod_wallet_balance += wt.net_amount
+                    else:
+                        subperiod_wallet_balance -= wt.total
                 else:
-                    subperiod_wallet_balance -= wt.total
-            else:
-                next_subperiod_wt_value = wt.net_amount if wt.type == 'D' else wt.total
-                break
-
-        if subperiod[i].get('end_date'):
-            subperiod_trades = [t for t in trades if t.date < subperiod[i]['end_date']]
-            subperiod_dividends = [d for d in dividends if d.date < subperiod[i]['end_date']]
-        else:
-            subperiod_trades = trades
-            subperiod_dividends = dividends
-
-        for trade in subperiod_trades:
-
-            if trade.type == 'B':
-                subperiod_wallet_balance -= trade.total
-            else:
-                subperiod_wallet_balance += trade.total
-
-        subperiod_wallet_balance += sum([d.net_amount for d in subperiod_dividends])
-
-        for h in user_holdings:
+                    next_subperiod_wt_value = wt.net_amount if wt.type == 'D' else wt.total
+                    break
 
             if subperiod[i].get('end_date'):
-                end_date = subperiod[i]['end_date']
-
-                while True:
-                    try:
-                        price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
-                        if pd.notna(price):
-                            break
-                    except KeyError:
-                        pass
-                    end_date -= timedelta(days=1)
-
-                price = Decimal(str(price))
+                subperiod_trades = [t for t in trades if t.date < subperiod[i]['end_date']]
+                subperiod_dividends = [d for d in dividends if d.date < subperiod[i]['end_date']]
             else:
-                price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
+                subperiod_trades = trades
+                subperiod_dividends = dividends
 
-            holding_trades = [t for t in subperiod_trades if t.user_holding_id == h.id]
-            holding_dividends = [d for d in subperiod_dividends if d.user_holding_id == h.id]
+            for trade in subperiod_trades:
 
-            h_metrics = holding_metrics(holding_trades, holding_dividends, price)
+                if trade.type == 'B':
+                    subperiod_wallet_balance -= trade.total
+                else:
+                    subperiod_wallet_balance += trade.total
 
-            subperiod_balance += h_metrics['current_invested_value']
+            subperiod_wallet_balance += sum([d.net_amount for d in subperiod_dividends])
 
-        subperiod_balance += subperiod_wallet_balance 
+            for h in user_holdings:
 
-        subperiod[i]['end_value'] = subperiod_balance
+                if subperiod[i].get('end_date'):
+                    end_date = subperiod[i]['end_date']
 
-        if i + 1 < len(subperiod):
-            subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + next_subperiod_wt_value
+                    while True:
+                        try:
+                            price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
+                            if pd.notna(price):
+                                break
+                        except KeyError:
+                            pass
+                        end_date -= timedelta(days=1)
 
-        if subperiod[i]['start_value'] == 0:
-            subperiod[i]['period_return'] = Decimal(0)
-        else:
-            subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
+                    price = Decimal(str(price))
+                else:
+                    price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
-    pprint(subperiod)   
+                holding_trades = [t for t in subperiod_trades if t.user_holding_id == h.id]
+                holding_dividends = [d for d in subperiod_dividends if d.user_holding_id == h.id]
 
-    twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
+                h_metrics = holding_metrics(holding_trades, holding_dividends, price)
 
-    print(twr)
+                subperiod_balance += h_metrics['current_invested_value']
+
+            subperiod_balance += subperiod_wallet_balance 
+
+            subperiod[i]['end_value'] = subperiod_balance
+
+            if i + 1 < len(subperiod):
+                subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + next_subperiod_wt_value
+
+            if subperiod[i]['start_value'] == 0:
+                subperiod[i]['period_return'] = Decimal(0)
+            else:
+                subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
+
+        pprint(subperiod)   
+
+        twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
+
+        print(twr)
+    else:
+        twr = 0
 
     #todo: validar consistencia de datos
 
