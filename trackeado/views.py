@@ -201,6 +201,8 @@ def dashboard(request):
         total_gain = total_unrealized_gain + total_realized_gain
 
     #todo: calculo del TWR
+
+    #! falta validar cuando hay dos transacciones el mismo dia
     
     subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
 
@@ -248,11 +250,12 @@ def dashboard(request):
                 end_date = subperiod[i]['end_date']
 
                 while True:
-                    price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
-
-                    if pd.notna(price):
-                        break
-
+                    try:
+                        price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
+                        if pd.notna(price):
+                            break
+                    except KeyError:
+                        pass
                     end_date -= timedelta(days=1)
 
                 price = Decimal(str(price))
@@ -273,7 +276,10 @@ def dashboard(request):
         if i + 1 < len(subperiod):
             subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + next_subperiod_wt_value
 
-        subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
+        if subperiod[i]['start_value'] == 0:
+            subperiod[i]['period_return'] = Decimal(0)
+        else:
+            subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
 
     pprint(subperiod)   
 
