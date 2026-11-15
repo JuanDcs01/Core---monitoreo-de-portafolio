@@ -16,6 +16,7 @@ from datetime import date, timedelta
 from django.core.cache import cache
 import pandas as pd
 import math
+from concurrent.futures import ThreadPoolExecutor
 
 ###############################
 # Inicio 
@@ -53,7 +54,9 @@ def dashboard(request):
             'total_realized_gain': total_realized_gain,
             'total_gain': total_gain,
             'market_state': market_state,
-            'twr': 0
+            'twr': 0,
+            'net_annual_dividends': 0,
+            'net_annual_dividends_percent': 0
         })
 
     #todo: obtener datos de yfinance
@@ -102,6 +105,8 @@ def dashboard(request):
      }
 
     #todo: calcular datos de los activos y los totales de la cartera
+
+    symbols_active = []
 
     for h in user_holdings:
 
@@ -160,9 +165,33 @@ def dashboard(request):
             elif h.risk == 'VH':
                 risk_distribution['Muy alto'] += h.current_invested_value
 
-    #todo: sumatoria de totales y ordenamiento para la gráfica
+        if h.shares > 0:
+            symbols_active.append(h.holding.symbol)
 
+    #todo: calcular estimación de dividendos netos anuales
+    
+    def get_estimated_annual_dividends(symbol):
+
+        raw_yield = yf.Ticker(symbol).info.get('dividendYield')
+
+        if not raw_yield:
+            raw_yield = 0.0
+
+        for h in user_holdings:
+            if h.holding.symbol == symbol:
+                holding_current_invested_value = h.current_invested_value
+                break
+
+        return holding_current_invested_value * Decimal(raw_yield * 0.70 / 100)
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        net_annual_dividends = sum(list(executor.map(get_estimated_annual_dividends, symbols_active)))
+    
     total_balance = total_current_invested_value + wallet.balance
+
+    net_annual_dividends_percent = (net_annual_dividends / total_balance) * 100
+
+    #todo: sumatoria de totales y ordenamiento para la gráfica
 
     # total invertido y incluyendo efectivo
     total_invested_and_cash = sum([value for value in holding_distribution.values()]) + wallet.balance
@@ -307,7 +336,9 @@ def dashboard(request):
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
         'risk_distribution': risk_distribution,
-        'twr': twr
+        'twr': twr,
+        'net_annual_dividends': net_annual_dividends,
+        'net_annual_dividends_percent': net_annual_dividends_percent
     }
 
     return render(request, 'dashboard.html', {**context})
