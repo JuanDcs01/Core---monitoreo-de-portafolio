@@ -929,7 +929,8 @@ def delete_trade(request):
 def _dividend_wallet_effect(dividend):
     """Cuánto suma un dividendo a la wallet. Los reinvertidos no tocan el efectivo.
     Si el efectivo debe recibir el total (neto de comisión) en vez de net_amount, cámbialo aquí."""
-    return Decimal(0) if dividend.reinvested else dividend.net_amount
+    # return Decimal(0) if dividend.reinvested else dividend.net_amount
+    return dividend.net_amount
 
 
 def _dividend_redirect(holding_object):

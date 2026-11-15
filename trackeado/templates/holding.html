@@ -260,7 +260,7 @@
                     <input type="hidden" name="is_dividend" value="True">
                     {% for f in dividend_form %}
                         <div class="form-field">
-                            {% if f.name == 'reinvested' %} <strong>Reinvertir dividendo</strong>{% endif %}
+                            {% comment %} {% if f.name == 'reinvested' %} <strong>Reinvertir dividendo</strong>{% endif %} {% endcomment %}
                             <div>
                                 {{ f }}
                             </div>
@@ -296,7 +296,7 @@
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Reinvertido</th>
+                                {% comment %} <th>Reinvertido</th> {% endcomment %}
                                 <th class="num">Monto</th>
                                 <th class="num">Comisión</th>
                                 <th class="num">Total</th>
@@ -307,7 +307,7 @@
                             {% for d in dividend %}
                                 <tr>
                                     <td class="c-date">{{ d.date }}</td>
-                                    <td class="c-reinv" data-label="Reinvertido">{{ d.reinvested | is_reinvested }}</td>
+                                    {% comment %} <td class="c-reinv" data-label="Reinvertido">{{ d.reinvested | is_reinvested }}</td> {% endcomment %}
                                     <td class="num c-net" data-label="Monto">{{ d.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ d.commission | round_number }}</td>
                                     <td class="num c-total">{{ d.total | round_number }}</td>
@@ -318,8 +318,8 @@
                                                     data-dividend-id="{{ d.id }}"
                                                     data-date="{{ d.date|date:'Y-m-d' }}"
                                                     data-net-amount="{{ d.net_amount }}"
-                                                    data-commission="{{ d.commission }}"
-                                                    data-reinvested="{{ d.reinvested|yesno:'true,false' }}">
+                                                    data-commission="{{ d.commission }}">
+                                                    {% comment %} data-reinvested="{{ d.reinvested|yesno:'true,false' }}"> {% endcomment %}
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         {% endlocalize %}
