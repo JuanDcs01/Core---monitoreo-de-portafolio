@@ -9,12 +9,13 @@ from django.contrib.auth.decorators import login_required
 import datetime
 from django.conf import settings
 from django.db import IntegrityError, transaction, connection, reset_queries
+import time
 from pprint import pprint
 from decimal import Decimal
 from datetime import date, timedelta
-from django.db.models import Sum
 from django.core.cache import cache
-import time
+import pandas as pd
+import math
 
 ###############################
 # Inicio 
@@ -26,9 +27,10 @@ def dashboard(request):
 
     user = request.user
     wallet = get_object_or_404(Wallet, user=user)
+    wallet_transactions = WalletTransaction.objects.filter(wallet_id=wallet.id).order_by('date', 'id')
     user_holdings = UserHolding.objects.select_related('holding').filter(user=user)
     trades = Trade.objects.select_related('user_holding__holding').filter(user=user).order_by('date', 'id')
-    dividends = Dividend.objects.select_related('user_holding__user').filter(user_holding__user=user)
+    dividends = Dividend.objects.select_related('user_holding__user').filter(user_holding__user=user).order_by('date', 'id')
 
     total_current_invested_value = Decimal(0)
     total_current_invested = Decimal(0)
@@ -50,7 +52,8 @@ def dashboard(request):
             'total_unrealized_gain_percent': total_unrealized_gain_percent,
             'total_realized_gain': total_realized_gain,
             'total_gain': total_gain,
-            'market_state': market_state
+            'market_state': market_state,
+            'twr': 0
         })
 
     #todo: obtener datos de yfinance
@@ -197,6 +200,87 @@ def dashboard(request):
 
         total_gain = total_unrealized_gain + total_realized_gain
 
+    #todo: calculo del TWR
+    
+    subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
+
+    for i in range(1, len(wallet_transactions)):
+
+        subperiod.append({'start_date': wallet_transactions[i].date})
+
+        subperiod[i-1]['end_date'] = wallet_transactions[i].date
+
+    for i in range(0, len(subperiod)):
+
+        subperiod_wallet_balance = 0
+        subperiod_balance = 0
+
+        for wt in wallet_transactions:
+
+            if (subperiod[i].get('end_date') and wt.date < subperiod[i]['end_date']) or not subperiod[i].get('end_date'):
+                if wt.type == 'D':
+                    subperiod_wallet_balance += wt.net_amount
+                else:
+                    subperiod_wallet_balance -= wt.total
+            else:
+                next_subperiod_wt_value = wt.net_amount if wt.type == 'D' else wt.total
+                break
+
+        if subperiod[i].get('end_date'):
+            subperiod_trades = [t for t in trades if t.date < subperiod[i]['end_date']]
+            subperiod_dividends = [d for d in dividends if d.date < subperiod[i]['end_date']]
+        else:
+            subperiod_trades = trades
+            subperiod_dividends = dividends
+
+        for trade in subperiod_trades:
+
+            if trade.type == 'B':
+                subperiod_wallet_balance -= trade.total
+            else:
+                subperiod_wallet_balance += trade.total
+
+        subperiod_wallet_balance += sum([d.net_amount for d in subperiod_dividends])
+
+        for h in user_holdings:
+
+            if subperiod[i].get('end_date'):
+                end_date = subperiod[i]['end_date']
+
+                while True:
+                    price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
+
+                    if pd.notna(price):
+                        break
+
+                    end_date -= timedelta(days=1)
+
+                price = Decimal(str(price))
+            else:
+                price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
+
+            holding_trades = [t for t in subperiod_trades if t.user_holding_id == h.id]
+            holding_dividends = [d for d in subperiod_dividends if d.user_holding_id == h.id]
+
+            h_metrics = holding_metrics(holding_trades, holding_dividends, price)
+
+            subperiod_balance += h_metrics['current_invested_value']
+
+        subperiod_balance += subperiod_wallet_balance 
+
+        subperiod[i]['end_value'] = subperiod_balance
+
+        if i + 1 < len(subperiod):
+            subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + next_subperiod_wt_value
+
+        subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
+
+    pprint(subperiod)   
+
+    twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
+
+    print(twr)
+
     #todo: validar consistencia de datos
 
     if wallet.balance < 0:
@@ -216,7 +300,8 @@ def dashboard(request):
         'last_holdings_buy': last_holdings_buy,
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
-        'risk_distribution': risk_distribution
+        'risk_distribution': risk_distribution,
+        'twr': twr
     }
 
     return render(request, 'dashboard.html', {**context})
@@ -614,7 +699,7 @@ def holding(request, symbol):
 
     if user_holding:
 
-        trade = Trade.objects.filter(user=user, user_holding=user_holding).order_by('date', 'id')
+        trade = Trade.objects.filter(user_holding=user_holding).order_by('date', 'id')
         dividend = Dividend.objects.filter(user_holding=user_holding).order_by('-date', '-id')
         h_metrics = holding_metrics(trade, dividend, Decimal(history_list_1d[-1]['Close']))
 

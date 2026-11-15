@@ -188,6 +188,15 @@
     {% endif %}
 </section>
 
+<section class="kpi-grid">
+    <div class="kpi">
+        <div class="kpi-label">TWR</div>
+                <div class="kpi-value {% if twr > 0 %}up{% elif twr < 0 %}down{% endif %}">
+            {{ twr  | round_number }}%
+        </div>
+    </div>
+</section>
+
 <!-- ===== Resumen inferior ===== -->
 <section class="grid-3">
     <div class="panel">
