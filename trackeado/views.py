@@ -88,7 +88,7 @@ def dashboard(request):
     # conseguir el último precio
     day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
 
-    #todo: última compra por activo y datos para la gráfica de distruciones    
+    #todo: última compra por activo y datos para la gráfica de distruciones
 
     last_holdings_buy = {}
     type_distribution = {
@@ -114,13 +114,6 @@ def dashboard(request):
         last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
-        # filtrar por el activo actual
-        holding_trades = [t for t in trades if t.user_holding_id == h.id]
-        holding_dividends = [d for d in dividends if d.user_holding_id == h.id]
-
-        # calcular métricas
-        h_metrics = holding_metrics(holding_trades, holding_dividends, h.price)
-
         # cambio del dia del activo
         h.day_change = h.price - last_day_price
         h.day_change_percent = h.day_change / h.price * 100
@@ -129,44 +122,52 @@ def dashboard(request):
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
         h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
 
-        h.shares = h_metrics['total_shares']
-        h.current_invested_value = h_metrics['current_invested_value']
-        h.current_invested = h_metrics['current_invested']
-        h.unrealized_gain = h_metrics['unrealized_gain']
-        h.unrealized_gain_percent = h_metrics['unrealized_gain_percent']
-        h.realized_gain = h_metrics['realized_gain']
-        h.total_gain = h_metrics['total_gain']
+        if trades:
+            # filtrar por el activo actual
+            holding_trades = [t for t in trades if t.user_holding_id == h.id]
+            holding_dividends = [d for d in dividends if d.user_holding_id == h.id]
 
-        total_current_invested_value += h.current_invested_value
-        total_current_invested += h.current_invested
-        total_unrealized_gain += h.unrealized_gain
-        total_realized_gain += h.realized_gain
+            # calcular métricas
+            h_metrics = holding_metrics(holding_trades, holding_dividends, h.price)
 
-        if h.current_invested > 0:
-            # calcular dias desde la última compra
-            last_holdings_buy[h.holding.symbol] = (date.today() - h_metrics['lots'][-1]['date']).days
+            h.shares = h_metrics['total_shares']
+            h.current_invested_value = h_metrics['current_invested_value']
+            h.current_invested = h_metrics['current_invested']
+            h.unrealized_gain = h_metrics['unrealized_gain']
+            h.unrealized_gain_percent = h_metrics['unrealized_gain_percent']
+            h.realized_gain = h_metrics['realized_gain']
+            h.total_gain = h_metrics['total_gain']
 
-            # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
-            if h.holding.type == 'ETF':
-                type_distribution['ETF'] += h.current_invested_value
-            elif h.holding.type == 'EQUITY':
-                type_distribution['ACCIÓN'] += h.current_invested_value
-            elif h.holding.type == 'CRYPTOCURRENCY':
-                type_distribution['CRIPTO'] += h.current_invested_value
+            total_current_invested_value += h.current_invested_value
+            total_current_invested += h.current_invested
+            total_unrealized_gain += h.unrealized_gain
+            total_realized_gain += h.realized_gain
 
-            holding_distribution[h.holding.symbol] = h.current_invested_value
+            if h.current_invested > 0:
+                # calcular dias desde la última compra
+                last_holdings_buy[h.holding.symbol] = (date.today() - h_metrics['lots'][-1]['date']).days
 
-            if h.risk == 'M':
-                risk_distribution['Medio'] += h.current_invested_value
-            elif h.risk == 'MH':
-                risk_distribution['Medio alto'] += h.current_invested_value
-            elif h.risk == 'H':
-                risk_distribution['Alto'] += h.current_invested_value
-            elif h.risk == 'VH':
-                risk_distribution['Muy alto'] += h.current_invested_value
+                # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
+                if h.holding.type == 'ETF':
+                    type_distribution['ETF'] += h.current_invested_value
+                elif h.holding.type == 'EQUITY':
+                    type_distribution['ACCIÓN'] += h.current_invested_value
+                elif h.holding.type == 'CRYPTOCURRENCY':
+                    type_distribution['CRIPTO'] += h.current_invested_value
 
-        if h.shares > 0:
-            symbols_active.append(h.holding.symbol)
+                holding_distribution[h.holding.symbol] = h.current_invested_value
+
+                if h.risk == 'M':
+                    risk_distribution['Medio'] += h.current_invested_value
+                elif h.risk == 'MH':
+                    risk_distribution['Medio alto'] += h.current_invested_value
+                elif h.risk == 'H':
+                    risk_distribution['Alto'] += h.current_invested_value
+                elif h.risk == 'VH':
+                    risk_distribution['Muy alto'] += h.current_invested_value
+
+            if h.shares > 0:
+                symbols_active.append(h.holding.symbol)
 
     #todo: calcular estimación de dividendos netos anuales
     
@@ -236,7 +237,7 @@ def dashboard(request):
 
     #! falta validar cuando hay dos transacciones el mismo dia
 
-    if wallet_transactions:
+    if wallet_transactions and trades:
         
         subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
 
@@ -280,6 +281,12 @@ def dashboard(request):
 
             for h in user_holdings:
 
+                holding_trades = [t for t in subperiod_trades if t.user_holding_id == h.id]
+                holding_dividends = [d for d in subperiod_dividends if d.user_holding_id == h.id]
+
+                if not holding_trades:
+                    continue
+
                 if subperiod[i].get('end_date'):
                     end_date = subperiod[i]['end_date']
 
@@ -295,9 +302,6 @@ def dashboard(request):
                     price = Decimal(str(price))
                 else:
                     price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
-
-                holding_trades = [t for t in subperiod_trades if t.user_holding_id == h.id]
-                holding_dividends = [d for d in subperiod_dividends if d.user_holding_id == h.id]
 
                 h_metrics = holding_metrics(holding_trades, holding_dividends, price)
 
@@ -315,11 +319,8 @@ def dashboard(request):
             else:
                 subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
 
-        pprint(subperiod)   
-
         twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
 
-        print(twr)
     else:
         twr = 0
 
