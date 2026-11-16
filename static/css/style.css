@@ -1736,3 +1736,21 @@ input[type="checkbox"] {
 .holding-row {
   cursor: pointer;
 }
+
+.nf { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 0; }
+.nf-card {
+    width: 100%; max-width: 560px; text-align: center;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 48px clamp(20px, 5vw, 48px) 40px;
+}
+.nf-code {
+    font-family: var(--font-display); font-weight: 700; line-height: 1;
+    font-size: clamp(4.5rem, 18vw, 7.5rem); letter-spacing: -.04em; margin: 0;
+    background: linear-gradient(135deg, var(--brand), var(--teal));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.nf-chart { display: block; width: 100%; max-width: 280px; height: auto; margin: 4px auto 20px; }
+.nf-title { font-size: 1.35rem; margin: 0 0 8px; }
+.nf-text { color: var(--muted); margin: 0 auto 28px; max-width: 40ch; }
+.nf-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
