@@ -386,6 +386,10 @@ def add_holding(request):
                     messages.success(request, 'Símbolo no encontrado.')
                     return redirect('dashboard')
 
+                if info.get('currency') != 'USD':
+                    messages.error(request, 'Solo se admite activos en USD')
+                    return redirect('dashboard')
+
                 name = ticker.info.get('longName')
                 type = ticker.info.get('quoteType')
                 sector = ticker.info.get('sector')
