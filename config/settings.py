@@ -234,7 +234,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL')
 
 # Duración del enlace 
 
-PASSWORD_RESET_TIMEOUT = 1800
+PASSWORD_RESET_TIMEOUT = 900
 
 CACHES = {
     'default': {
