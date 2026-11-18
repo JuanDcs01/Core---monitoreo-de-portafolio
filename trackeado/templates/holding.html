@@ -200,7 +200,7 @@
                                     <td class="num c-net c-hide-m">{{ t.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ t.commission | round_number }}</td>
                                     <td class="num c-total">{{ t.total | round_number }}</td>
-                                    <td class="num c-p&l">{{ t.realized_gain | pofit_loss }}</td>
+                                    <td class="num c-p&l">{{ t.realized_gain | profit_loss }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}
