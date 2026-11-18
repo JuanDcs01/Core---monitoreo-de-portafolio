@@ -335,3 +335,17 @@ def number_format_es(valor: float | int, decimales: int = 2) -> str:
         return f"{signo}{n / 1e3:.{decimales}f} mil"
     else:
         return f"{signo}{n:.{decimales}f}"
+
+@register.filter
+def profit_loss(value):
+
+    if not value:
+        return '--'
+
+    if value > 0:
+        return format_html('''<div class="delta up">{}</div>''', f'+{round(value, 2)}')
+    elif value < 0:
+        return format_html('''<div class="delta down">{}</div>''', round(value, 2))
+    
+    return format_html('''<div class="delta">{}</div>''', round(value, 2))
+

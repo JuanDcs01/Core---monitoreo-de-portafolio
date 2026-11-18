@@ -752,6 +752,13 @@ def holding(request, symbol):
         dividend = Dividend.objects.filter(user_holding=user_holding).order_by('-date', '-id')
         h_metrics = holding_metrics(trade, dividend, Decimal(history_list_1d[-1]['Close']))
 
+        for t in trade:
+            if t.type == 'S':
+                t.realized_gain = h_metrics['gain_per_sell'][t.id]
+                print(h_metrics['gain_per_sell'][t.id])
+            else:
+                t.realized_gain = None
+
         context['trade'] = trade
         context['dividend'] = dividend
         context['h_metrics'] = h_metrics
@@ -1064,6 +1071,9 @@ def holding_metrics(trades, dividends, current_price):
         'total_gain': 0
     }
 
+    h_metrics['gain_per_sell'] = {}
+    last_realized_gain = 0
+
     for t in trades:
 
         shares = t.shares
@@ -1112,6 +1122,14 @@ def holding_metrics(trades, dividends, current_price):
 
                 h_metrics['realized_gain'] -= t.commission
 
+                if not h_metrics['gain_per_sell']:
+                    h_metrics['gain_per_sell'][t.id] = h_metrics['realized_gain']
+                    last_realized_gain = h_metrics['realized_gain']
+                else:
+                    value = h_metrics['realized_gain'] - last_realized_gain
+                    h_metrics['gain_per_sell'][t.id] = value
+                    last_realized_gain = h_metrics['realized_gain']
+
                 # terminar el bucle cuando se haya cubrido la ventas con los lotes
                 break
 
@@ -1125,5 +1143,5 @@ def holding_metrics(trades, dividends, current_price):
         h_metrics['unrealized_gain_percent'] = (h_metrics['unrealized_gain'] / h_metrics['current_invested']) * 100
     
     h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain']
-    
+
     return h_metrics
