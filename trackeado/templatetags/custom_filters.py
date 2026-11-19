@@ -127,6 +127,9 @@ def to_dop(value):
 def sector_es(value):
     # Mapeo completo de Sectores e Industrias de Yahoo Finance / yfinance a Español
 
+    if value is None:
+        return "--"
+
     SECTOR_ES = {
         'Communication Services': 'Servicios de Comunicación',
         'Technology': 'Tecnología',
@@ -145,6 +148,10 @@ def sector_es(value):
 
 @register.filter
 def industry_es(value):
+
+    if value is None:
+        return "--"
+    
     INDUSTRY_ES = {
         # --- Communication Services ---
         'Advertising Agencies': 'Agencias de Publicidad',
@@ -315,7 +322,7 @@ def industry_es(value):
     return INDUSTRY_ES.get(value)
 
 @register.filter
-def number_format_es(valor: float | int, decimales: int = 2) -> str:
+def number_format_es(value: float | int, decimal: int = 2) -> str:
     """
     Formatea números grandes al estándar financiero habitual:
     - Miles: 'mil' o 'k'
@@ -323,22 +330,22 @@ def number_format_es(valor: float | int, decimales: int = 2) -> str:
     - Miles de millones (Billions en inglés): 'Mil M' o 'B'
     - Billones en español (Trillions en inglés): 'Bln' o 'T'
     """
-    if valor is None:
-        return "N/A"
+    if value is None:
+        return "--"
     
-    signo = "-" if valor < 0 else ""
-    n = abs(float(valor))
+    sign = "-" if value < 0 else ""
+    n = abs(float(value))
 
     if n >= 1e12:
-        return f"{signo}{n / 1e12:.{decimales}f} T"      # o 'Bln' en escala larga española
+        return f"{sign}{n / 1e12:.{decimal}f} T"      # o 'Bln' en escala larga española
     elif n >= 1e9:
-        return f"{signo}{n / 1e9:.{decimales}f} Mil M"  # o 'B' si prefieres la convención bursátil
+        return f"{sign}{n / 1e9:.{decimal}f} Mil M"  # o 'B' si prefieres la convención bursátil
     elif n >= 1e6:
-        return f"{signo}{n / 1e6:.{decimales}f} M"
+        return f"{sign}{n / 1e6:.{decimal}f} M"
     elif n >= 1e3:
-        return f"{signo}{n / 1e3:.{decimales}f} mil"
+        return f"{sign}{n / 1e3:.{decimal}f} mil"
     else:
-        return f"{signo}{n:.{decimales}f}"
+        return f"{sign}{n:.{decimal}f}"
 
 @register.filter
 def signed_number(value):
@@ -352,6 +359,14 @@ def signed_number(value):
         return format_html('''<div class="delta down">{}</div>''', round(value, 2))
     
     return format_html('''<div class="delta">{}</div>''', round(value, 2))
+
+@register.filter
+def default_value(value):
+
+    if not value:
+        return '--'
+
+    return value
 
 @register.filter
 def check(value):

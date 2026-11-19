@@ -99,10 +99,10 @@
 
     <div class="panel">
         <div class="panel-head"><h3 class="panel-title">Proyecciones y consenso</h3></div>
-        <div class="kv"><span>Precio objetivo más bajo</span><strong>{{ targetLowPrice }}</strong></div>
-        <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice }}</strong></div>
-        <div class="kv"><span>Precio objetivo más alto</span><strong>{{ targetHighPrice }}</strong></div>
-        <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation }}</strong></div>
+        <div class="kv"><span>Precio objetivo más bajo</span><strong>{{ targetLowPrice | default_value }}</strong></div>
+        <div class="kv"><span>Precio objetivo medio</span><strong>{{ targetMedianPrice | default_value }}</strong></div>
+        <div class="kv"><span>Precio objetivo más alto</span><strong>{{ targetHighPrice | default_value }}</strong></div>
+        <div class="kv"><span>Recomendación</span><strong>{{ recommendationKey | recommendation | default_value }}</strong></div>
     </div>
 </section>
 
