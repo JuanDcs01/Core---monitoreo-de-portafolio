@@ -208,7 +208,7 @@
                 <div class="kpi-value {% if net_annual_dividends_percent > 0 %}up{% endif %}">
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 
         </div>
-        <div class="kpi-sub">Impuesto del 30% descontado</div>
+        <div class="kpi-sub">Conversión: RD${{ net_annual_dividends | to_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Dividendos recibidos</div>
