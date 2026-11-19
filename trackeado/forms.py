@@ -55,7 +55,7 @@ class WalletTransactionForm(forms.ModelForm):
 
     def __init__(self, *args, **kargs):
         super().__init__(*args, **kargs)
-        options = [("", "Selecciona el tipo de tranferencia")] + list(TransactionType.choices)
+        options = [("", "Selecciona el tipo de transacción")] + list(TransactionType.choices)
         self.fields['type'].choices = options
 
 class TradeForm(forms.ModelForm):
