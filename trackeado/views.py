@@ -660,12 +660,12 @@ def holding(request, symbol):
     df_1d = holding.history(period="1d", interval="5m", prepost=True)
 
     # 1. Asegurar la zona horaria correcta (Nueva York) antes de extraer la hora
-    # Prevenimos errores en caso de que yfinance devuelva fechas sin timezone (naive)
     for d in [df_5d, df_1d]:
-        if d.index.tz is None:
-            d.index = d.index.tz_localize('UTC').tz_convert('America/New_York')
-        else:
-            d.index = d.index.tz_convert('America/New_York')
+        if not d.empty:
+            if d.index.tz is None:
+                d.index = d.index.tz_localize('UTC').tz_convert('America/New_York')
+            else:
+                d.index = d.index.tz_convert('America/New_York')
 
     # 2. Función para clasificar la fase del mercado
     def get_market_phase(dt):
@@ -678,32 +678,56 @@ def holding(request, symbol):
             return 'regular'
 
     # 3. Aplicar la función al índice de los dataframes intradía
-    df_5d['Phase'] = df_5d.index.map(get_market_phase)
-    df_1d['Phase'] = df_1d.index.map(get_market_phase)
+    if not df_5d.empty:
+        df_5d['Phase'] = df_5d.index.map(get_market_phase)
+    if not df_1d.empty:
+        df_1d['Phase'] = df_1d.index.map(get_market_phase)
 
     # 4. Reseteamos el índice
     df.reset_index(inplace=True)
     df_5d.reset_index(inplace=True)
     df_1d.reset_index(inplace=True)
-    # 5. Formateamos las fechas a string
-    df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-    df_5d["Datetime"] = df_5d["Datetime"].astype(str)
-    df_1d["Datetime"] = df_1d["Datetime"].astype(str)
+
+    # 5. Formateamos las fechas a string de forma segura
+    if 'Date' in df.columns and not df.empty:
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce').dt.strftime('%Y-%m-%d')
+    else:
+        df['Date'] = []
+
+    if 'Datetime' in df_5d.columns and not df_5d.empty:
+        df_5d['Datetime'] = pd.to_datetime(df_5d['Datetime'], errors='coerce').astype(str)
+    else:
+        df_5d['Datetime'] = []
+
+    if 'Datetime' in df_1d.columns and not df_1d.empty:
+        df_1d['Datetime'] = pd.to_datetime(df_1d['Datetime'], errors='coerce').astype(str)
+    else:
+        df_1d['Datetime'] = []
 
     # 6. Convertimos a diccionarios, incluyendo 'Phase' en los de corto plazo
-    history_list = df[['Date', 'Close']].to_dict(orient='records')
-    history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
-    history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].to_dict(orient='records')
+    history_list = df[['Date', 'Close']].dropna(subset=['Close']).to_dict(orient='records') if 'Close' in df.columns else []
+    history_list_5d = df_5d[['Datetime', 'Close', 'Phase']].dropna(subset=['Close']).to_dict(orient='records') if {'Datetime', 'Close', 'Phase'}.issubset(df_5d.columns) else []
+    history_list_1d = df_1d[['Datetime', 'Close', 'Phase']].dropna(subset=['Close']).to_dict(orient='records') if {'Datetime', 'Close', 'Phase'}.issubset(df_1d.columns) else []
 
     for h in history_list_5d:
-        h['Close'] = round(h['Close'], 2)
+        h['Close'] = round(float(h['Close']), 2)
     for h in history_list_1d:
-        h['Close'] = round(h['Close'], 2)
+        h['Close'] = round(float(h['Close']), 2)
     for h in history_list:
-        h['Close'] = round(h['Close'], 2)
+        h['Close'] = round(float(h['Close']), 2)
 
-    history_list[-1]['Close'] = history_list_1d[-1]['Close']
-    history_list_5d[-1]['Close'] = history_list_1d[-1]['Close']
+    # Precio de respaldo si no hay velas intradía todavía
+    fallback_price = (
+        history_list_1d[-1]['Close'] if history_list_1d
+        else history_list_5d[-1]['Close'] if history_list_5d
+        else history_list[-1]['Close'] if history_list
+        else info.get('currentPrice') or info.get('regularMarketPrice') or 0
+    )
+
+    if history_list:
+        history_list[-1]['Close'] = fallback_price
+    if history_list_5d:
+        history_list_5d[-1]['Close'] = fallback_price
 
     logo_symbol = symbol.split('-')[0] if '-' in symbol else symbol
 
