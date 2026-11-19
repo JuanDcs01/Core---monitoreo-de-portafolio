@@ -99,7 +99,7 @@ class DividendForm(forms.ModelForm):
     class Meta:
         model = Dividend
 
-        exclude = ['user_holding']
+        exclude = ['user_holding', 'reinvested']
 
         widgets = {
             'net_amount': forms.NumberInput(attrs={

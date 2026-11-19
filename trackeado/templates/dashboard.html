@@ -118,6 +118,7 @@
                         <th class="num">Cambio</th>
                         <th class="num">Gan. no realizada</th>
                         <th class="num">Gan. realizada</th>
+                        <th class="num">Dividendos</th>
                         <th class="num">Gan. total</th>
                     </tr>
                 </thead>
@@ -136,6 +137,7 @@
                             data-unrealized-gain="{{ h.unrealized_gain }}"
                             data-unrealized-gain-percent="{{ h.unrealized_gain_percent }}"
                             data-realized-gain="{{ h.realized_gain }}"
+                            data-dividends="{{ h.dividends }}"
                             data-total-gain="{{ h.total_gain }}"
                             onclick="window.location='{% url 'holding' h.holding.symbol %}'">
                         {% endlocalize %}
@@ -170,6 +172,11 @@
                                 <span>{% if h.realized_gain > 0 %}+{% endif %}{{ h.realized_gain | round_number }}</span>
                             </div>
                         </td>
+                        <td class="num c-div c-hide-m">
+                            <div class="delta {% if h.dividends > 0 %}up{% endif %}">
+                                <span>{{ h.dividends | signed_number }}</span>
+                            </div>
+                        </td>
                         <td class="num c-total c-hide-m">
                             <div class="delta {% if h.total_gain > 0 %}up{% elif h.total_gain < 0 %}down{% endif %}">
                                 <span>{% if h.total_gain > 0 %}+{% endif %}{{ h.total_gain | round_number }}</span>
@@ -202,6 +209,13 @@
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 
         </div>
         <div class="kpi-sub">Impuesto del 30% descontado</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label">Dividendos recibidos</div>
+        <div class="kpi-value {% if total_dividends > 0 %}up{% endif %}">
+            {{ total_dividends | round_number }}
+        </div>
+        <div class="kpi-sub">Conversión: RD${{ total_dividends | to_dop | round_number }}</div>
     </div>
 </section>
 

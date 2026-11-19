@@ -38,6 +38,7 @@ def dashboard(request):
     total_unrealized_gain = Decimal(0)
     total_unrealized_gain_percent = Decimal(0)
     total_realized_gain = Decimal(0)
+    total_dividends = Decimal(0)
     total_gain = Decimal(0)
 
     # obtener estado actual del mercado
@@ -52,6 +53,7 @@ def dashboard(request):
             'total_unrealized_gain': total_unrealized_gain,
             'total_unrealized_gain_percent': total_unrealized_gain_percent,
             'total_realized_gain': total_realized_gain,
+            'total_dividends': total_dividends,
             'total_gain': total_gain,
             'market_state': market_state,
             'twr': 0,
@@ -136,16 +138,24 @@ def dashboard(request):
             h.unrealized_gain = h_metrics['unrealized_gain']
             h.unrealized_gain_percent = h_metrics['unrealized_gain_percent']
             h.realized_gain = h_metrics['realized_gain']
+            h.dividends = h_metrics['total_dividends']
             h.total_gain = h_metrics['total_gain']
 
             total_current_invested_value += h.current_invested_value
             total_current_invested += h.current_invested
             total_unrealized_gain += h.unrealized_gain
+            total_dividends += h.dividends
             total_realized_gain += h.realized_gain
+
+            if h.dividends == 0:
+                h.dividends = None
 
             if h.current_invested > 0:
                 # calcular dias desde la última compra
-                last_holdings_buy[h.holding.symbol] = (date.today() - h_metrics['lots'][-1]['date']).days
+                for i in range(len(h_metrics['lots']) - 1, -1, -1):
+                    if h_metrics['lots'][i]['type'] == 'B':
+                        last_holdings_buy[h.holding.symbol] = (date.today() - h_metrics['lots'][i]['date']).days
+                        break
 
                 # agregar el valor actual del activo a la sumatoria de su tipo e individual para las gráficas
                 if h.holding.type == 'ETF':
@@ -231,7 +241,7 @@ def dashboard(request):
 
         last_holdings_buy = {k: v for k, v in sorted(last_holdings_buy.items(), key=lambda item: item[1])}
 
-        total_gain = total_unrealized_gain + total_realized_gain
+        total_gain = total_unrealized_gain + total_realized_gain + total_dividends
 
     #todo: calculo del TWR
 
@@ -272,7 +282,7 @@ def dashboard(request):
 
             for trade in subperiod_trades:
 
-                if trade.type == 'B':
+                if trade.type in ['B', 'D']:
                     subperiod_wallet_balance -= trade.total
                 else:
                     subperiod_wallet_balance += trade.total
@@ -338,6 +348,7 @@ def dashboard(request):
         'total_current_invested': total_current_invested,
         'total_unrealized_gain_percent': total_unrealized_gain_percent,
         'total_realized_gain': total_realized_gain,
+        'total_dividends': total_dividends,
         'total_gain': total_gain,
         'holdings': user_holdings,
         'last_holdings_buy': last_holdings_buy,
@@ -420,7 +431,8 @@ def delete_holding(request):
     with transaction.atomic():
 
         for trade in trades:
-            wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
+            if trade.type != 'D':
+                wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
 
         wallet.save()
         user_holding.delete()
@@ -735,7 +747,7 @@ def holding(request, symbol):
         'logo_url': f"https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40",
         'user_holding': user_holding,
         'form': form,
-        'title': 'Registrar trade',
+        'title': 'Registrar orden / reinversión',
         'button': 'Registrar',
         'editing_trade_id': None,
         'dividend_form': dividend_form,
@@ -755,7 +767,6 @@ def holding(request, symbol):
         for t in trade:
             if t.type == 'S':
                 t.realized_gain = h_metrics['gain_per_sell'][t.id]
-                print(h_metrics['gain_per_sell'][t.id])
             else:
                 t.realized_gain = None
 
@@ -802,15 +813,28 @@ def holding(request, symbol):
 
             wallet = get_object_or_404(Wallet, user=user)
 
-            if old_trade:
-                # 1) Deshacer el efecto del trade viejo en la wallet
-                wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
+            if trade.type != 'D':
 
-            # 2) Aplicar el efecto del trade nuevo (igual que antes)
-            wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
+                if old_trade:
+                    # 1) Deshacer el efecto del trade viejo en la wallet
+                    wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
 
-            trade.save()
-            wallet.save()
+                # 2) Aplicar el efecto del trade nuevo (igual que antes)
+                wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
+
+                wallet.save()
+                trade.save()
+            else:
+                if old_trade:
+                    dividend = get_object_or_404(Dividend, reinvested=trade)
+                    dividend.net_amount = trade.net_amount
+                    dividend.commission = trade.commission
+                    dividend.date = trade.date
+                    dividend.save()
+                    trade.save()
+                else:
+                    trade.save()
+                    Dividend.objects.create(user_holding=user_holding, net_amount=trade.net_amount, commission=trade.commission, reinvested=trade, date=trade.date)
 
             messages.success(request, 'Trade actualizado.' if old_trade else 'Trade agregado.')
             return redirect('holding', user_holding.holding.symbol)
@@ -929,8 +953,10 @@ def delete_trade(request):
 
     with transaction.atomic():
 
-        wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
-        wallet.save()
+        if trade.type != 'D':
+            wallet.balance = wallet.balance + trade.total if trade.type == 'B' else wallet.balance - trade.total
+            wallet.save()
+
         trade.delete()
         messages.success(request, 'Trade eliminado.')
         return redirect('holding', holding.symbol)
@@ -1063,7 +1089,7 @@ def holding_metrics(trades, dividends, current_price):
         'lots': [],
         'current_invested': 0,
         'total_shares': 0,
-        'realized_gain': total_dividends,
+        'realized_gain': 0,
         'total_dividends': total_dividends,
         'current_invested_value': 0,
         'unrealized_gain': 0,
@@ -1078,14 +1104,18 @@ def holding_metrics(trades, dividends, current_price):
 
         shares = t.shares
 
-        if t.type == 'B': # compras
+        if t.type in ['B', 'D']: # compras
             h_metrics['total_shares'] += shares
             # calcular el precio por acción considerando comisiones (incluidas en el total)
-            price_per_share = t.total / shares
+            if t.type == 'B':
+                price_per_share = t.total / shares
+            else:
+                price_per_share = t.net_amount / shares
             # registrar la fecha, acciones y precio con comissiones por acción para los lotes (compras) 
             h_metrics['lots'].append({'date': t.date,
-                                     'shares': shares,
-                                        'price_per_share': price_per_share})
+                                    'shares': shares,
+                                    'price_per_share': price_per_share,
+                                    'type': t.type})
         else: # ventas
             h_metrics['total_shares'] -= shares
 
@@ -1142,6 +1172,6 @@ def holding_metrics(trades, dividends, current_price):
         h_metrics['unrealized_gain'] = Decimal(h_metrics['current_invested_value'] - h_metrics['current_invested'])
         h_metrics['unrealized_gain_percent'] = (h_metrics['unrealized_gain'] / h_metrics['current_invested']) * 100
     
-    h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain']
+    h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain'] + h_metrics['total_dividends']
 
     return h_metrics

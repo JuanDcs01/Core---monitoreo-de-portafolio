@@ -88,6 +88,7 @@ class Trade(models.Model):
 
         BUY = 'B', 'Compra'
         SELL = 'S', 'Venta'
+        DIVIDEND = 'D', 'Reinversión de dividendo'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)
@@ -103,14 +104,14 @@ class Trade(models.Model):
 
     @property
     def total(self):
-        return self.net_amount + self.commission if self.type == 'B' else self.net_amount - self.commission
+        return self.net_amount + self.commission if self.type in ['B', 'D'] else self.net_amount - self.commission
 
 class Dividend(models.Model):
 
     user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)
     net_amount = models.DecimalField()
     commission = models.DecimalField()
-    # reinvested = models.BooleanField(default=False)
+    reinvested = models.OneToOneField(Trade, on_delete=models.CASCADE, null=True, blank=True)
     date = models.DateField()
 
     @property

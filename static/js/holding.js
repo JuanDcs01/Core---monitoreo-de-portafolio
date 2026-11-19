@@ -290,7 +290,7 @@ Cálculo de total del trade
             const commission = parseFloat(inputCommission.value) || 0;
 
             let total = 0;
-            if (type === "B") {
+            if (type === "B" || type === "D") {
                 total = (price * shares) + commission;
             } else if (type === "S") {
                 total = (price * shares) - commission;
@@ -415,7 +415,6 @@ Dividendos: total, editar
         date: form.querySelector('[name="date"]'),
         net_amount: field("net_amount", "amount", "monto"),
         commission: field("commission", "comision"),
-        reinvested: form.querySelector('[name="reinvested"]'),
     };
     const spanTotal = document.getElementById("dividend-total");
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -491,7 +490,6 @@ Dividendos: total, editar
             setValue(inputs.date, d.date);
             setValue(inputs.net_amount, trimZeros(d.netAmount));
             setValue(inputs.commission, trimZeros(d.commission));
-            setValue(inputs.reinvested, d.reinvested === "true");
 
             enterEditMode(d.dividendId);
             calculateTotal();

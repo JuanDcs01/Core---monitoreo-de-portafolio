@@ -95,6 +95,10 @@ def identify_transaction(value):
         return format_html('''<div style="background-color: red; color: white; border: 1px solid red; border-radius: 5px;
         padding: 0px 6px; display: inline-block">{}</div>''', value)
 
+    if value == 'Reinversión de dividendo':
+        return format_html('''<div style="background-color: yellow; color: black; border: 1px solid yellow; border-radius: 5px;
+        padding: 0px 6px; display: inline-block">{}</div>''', 'Reinversión')
+    
     return value
 
 @register.filter
@@ -337,7 +341,7 @@ def number_format_es(valor: float | int, decimales: int = 2) -> str:
         return f"{signo}{n:.{decimales}f}"
 
 @register.filter
-def profit_loss(value):
+def signed_number(value):
 
     if not value:
         return '--'
@@ -349,3 +353,10 @@ def profit_loss(value):
     
     return format_html('''<div class="delta">{}</div>''', round(value, 2))
 
+@register.filter
+def check(value):
+
+    if value:
+        return mark_safe('''<i class="bi bi-check-lg up"></i>''')
+    else:
+        return mark_safe('''<i class="bi bi-x-lg down"></i>''')

@@ -58,7 +58,7 @@
         <div class="stat"><span>Valor actual</span><strong>{{ h_metrics.current_invested_value | round_number }}</strong></div>
         <div class="stat"><span>Gan. no realizada</span><strong class="{% if h_metrics.unrealized_gain > 0 %}up{% elif h_metrics.unrealized_gain < 0 %}down{% endif %}">{{ h_metrics.unrealized_gain | round_number }}</strong></div>
         <div class="stat"><span>Gan. realizada</span><strong class="{% if h_metrics.realized_gain > 0 %}up{% elif h_metrics.realized_gain < 0 %}down{% endif %}">{{ h_metrics.realized_gain | round_number }}</strong></div>
-        <div class="stat"><span>Dividendos</span><strong class="{% if h_metrics.total_dividends > 0 %}up{% endif %}">{{ h_metrics.total_dividends | no_trailing_zeros }}</strong></div>
+        <div class="stat"><span>Dividendos</span><strong class="{% if h_metrics.total_dividends > 0 %}up{% endif %}">{{ h_metrics.total_dividends | round_number }}</strong></div>
         <div class="stat"><span>Gan. total</span><strong class="{% if h_metrics.total_gain > 0 %}up{% elif h_metrics.total_gain < 0 %}down{% endif %}">{{ h_metrics.total_gain | round_number }}</strong></div>
     </div>
     {% else %}
@@ -160,8 +160,8 @@
  {% if user_holding %}
  <section class="split split--stack">
    <div class="view-controls">
-       <button id="btn-trades" class="btn-tab {% if active_view != 'dividends' %}active{% endif %}" data-view="trades-view">Trades</button>
-       <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividendos</button>
+       <button id="btn-trades" class="btn-tab {% if active_view != 'dividends' %}active{% endif %}" data-view="trades-view">Ódenes y reinversión</button>
+       <button id="btn-dividends" class="btn-tab {% if active_view == 'dividends' %}active{% endif %}" data-view="dividend-view">Dividendos recibidos</button>
    </div>
 </section>
 <section id="trades-view" class="split split--stack view-panel{% if active_view == 'dividends' %} is-hidden{% endif %}">
@@ -173,7 +173,7 @@
         {% if trade %}
             <div class="panel">
                 <div class="panel-head">
-                    <h2 class="panel-title">Trades</h2>
+                    <h2 class="panel-title">Órdenes y reinversión de dividendos</h2>
                 </div>
                 <div class="table-wrap">
                     <table class="table table-hover data-table table-stack stack-trades">
@@ -186,7 +186,7 @@
                                 <th class="num">Monto</th>
                                 <th class="num">Comisión</th>
                                 <th class="num">Total</th>
-                                <th class="num">P&L</th>
+                                <th class="num">Ganancia</th>
                                 <th class="col-actions"></th>
                             </tr>
                         </thead>
@@ -200,7 +200,7 @@
                                     <td class="num c-net c-hide-m">{{ t.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ t.commission | round_number }}</td>
                                     <td class="num c-total">{{ t.total | round_number }}</td>
-                                    <td class="num c-p&l">{{ t.realized_gain | profit_loss }}</td>
+                                    <td class="num c-gain">{{ t.realized_gain | signed_number }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}
@@ -230,7 +230,7 @@
             </div>
         {% else %}
             <div class="panel">
-                <div class="panel-head"><h2 class="panel-title">Trades</h2></div>
+                <div class="panel-head"><h2 class="panel-title">Órdenes y reinversión de dividendos</h2></div>
                 <div class="empty">
                     <i class="bi bi-inbox"></i>
                     <p>No hay datos</p>
@@ -262,7 +262,6 @@
                     <input type="hidden" name="is_dividend" value="True">
                     {% for f in dividend_form %}
                         <div class="form-field">
-                            {% comment %} {% if f.name == 'reinvested' %} <strong>Reinvertir dividendo</strong>{% endif %} {% endcomment %}
                             <div>
                                 {{ f }}
                             </div>
@@ -291,14 +290,15 @@
         {% if dividend %}
             <div class="panel">
                 <div class="panel-head">
-                    <h2 class="panel-title">Dividendos</h2>
+                    <h2 class="panel-title">Dividendos recibidos</h2><div class="kpi-sub"><i class="bi bi-question-circle"></i> 
+                        Los dividendos reinvertidos (DRIP) deben registrarse como una orden.</div>
                 </div>
                 <div class="table-wrap">
                     <table class="table table-hover data-table table-stack stack-dividends">
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                {% comment %} <th>Reinvertido</th> {% endcomment %}
+                                <th>DRIP</th>
                                 <th class="num">Monto</th>
                                 <th class="num">Comisión</th>
                                 <th class="num">Total</th>
@@ -309,7 +309,7 @@
                             {% for d in dividend %}
                                 <tr>
                                     <td class="c-date">{{ d.date }}</td>
-                                    {% comment %} <td class="c-reinv" data-label="Reinvertido">{{ d.reinvested | is_reinvested }}</td> {% endcomment %}
+                                    <td class="c-reinvested">{{ d.reinvested | check }}</td>
                                     <td class="num c-net" data-label="Monto">{{ d.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ d.commission | round_number }}</td>
                                     <td class="num c-total">{{ d.total | round_number }}</td>
@@ -320,15 +320,15 @@
                                                     data-dividend-id="{{ d.id }}"
                                                     data-date="{{ d.date|date:'Y-m-d' }}"
                                                     data-net-amount="{{ d.net_amount }}"
-                                                    data-commission="{{ d.commission }}">
-                                                    {% comment %} data-reinvested="{{ d.reinvested|yesno:'true,false' }}"> {% endcomment %}
+                                                    data-commission="{{ d.commission }}"
+                                                    {% if d.reinvested %}disabled{% endif %}>
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         {% endlocalize %}
                                         <form action="{% url 'delete_dividend' %}" method="POST">
                                             {% csrf_token %}
                                             <input type="hidden" name="dividend_id" value="{{ d.id }}">
-                                            <button class="btn btn-danger btn-icon" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                            <button class="btn btn-danger btn-icon" title="Eliminar" {% if d.reinvested %}disabled{% endif %}><i class="bi bi-trash"></i></button>
                                         </form>
                                         </div>
                                     </td>
@@ -340,7 +340,10 @@
             </div>
         {% else %}
             <div class="panel">
-                <div class="panel-head"><h2 class="panel-title">Dividendos</h2></div>
+                <div class="panel-head">
+                    <h2 class="panel-title">Dividendos recibidos</h2><div class="kpi-sub"><i class="bi bi-question-circle"></i> 
+                    Los dividendos reinvertidos (DRIP) deben registrarse como una orden.</div>
+                </div>
                 <div class="empty">
                     <i class="bi bi-inbox"></i>
                     <p>No hay datos</p>
