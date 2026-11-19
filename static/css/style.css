@@ -1597,9 +1597,12 @@ input[type="checkbox"] {
     border-bottom: 1px solid var(--line);
   }
   body.app .table-stack tbody tr:last-child { border-bottom: 0; }
-  body.app .stack-trades    tbody tr { grid-template-areas: "type date date total" "price shares comm actions"; }
+  body.app .stack-trades    tbody tr {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+    grid-template-areas: "type date date total actions" "price shares comm gain actions";
+  }
   body.app .stack-wallet    tbody tr { grid-template-areas: "type date date total" "net comm . actions"; }
-  body.app .stack-dividends tbody tr { grid-template-areas: "date date reinv total" "net comm . actions"; }
+  body.app .stack-dividends tbody tr { grid-template-areas: "date date date total" "reinv net comm actions"; }
 
   body.app .table-stack.data-table tbody td {
     display: block;
@@ -1627,6 +1630,7 @@ input[type="checkbox"] {
   body.app .table-stack .c-shares  { grid-area: shares; }
   body.app .table-stack .c-net     { grid-area: net; }
   body.app .table-stack .c-comm    { grid-area: comm; }
+  body.app .table-stack .c-gain    { grid-area: gain; text-align: right; }
   body.app .table-stack.data-table tbody td.c-total {
     grid-area: total;
     text-align: right;

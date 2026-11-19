@@ -200,7 +200,7 @@
                                     <td class="num c-net c-hide-m">{{ t.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ t.commission | round_number }}</td>
                                     <td class="num c-total">{{ t.total | round_number }}</td>
-                                    <td class="num c-gain">{{ t.realized_gain | signed_number }}</td>
+                                    <td class="num c-gain" data-label="Ganancia">{{ t.realized_gain | signed_number }}</td>
                                     <td class="col-actions">
                                         <div class="row-actions">
                                         {% localize off %}
@@ -309,7 +309,7 @@
                             {% for d in dividend %}
                                 <tr>
                                     <td class="c-date">{{ d.date }}</td>
-                                    <td class="c-reinvested">{{ d.reinvested | check }}</td>
+                                    <td class="num c-reinv" data-label="DRIP">{{ d.reinvested | check }}</td>
                                     <td class="num c-net" data-label="Monto">{{ d.net_amount | round_number }}</td>
                                     <td class="num c-comm" data-label="Comisión">{{ d.commission | round_number }}</td>
                                     <td class="num c-total">{{ d.total | round_number }}</td>
