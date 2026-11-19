@@ -113,7 +113,10 @@ def dashboard(request):
     for h in user_holdings:
 
         # obtener precio del dia anterior y el más actual
-        last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
+        try:
+            last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
+        except IndexError:
+            last_day_price = Decimal(yf.Ticker(h.holding.symbol).info.get('previousClose'))
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
         # cambio del dia del activo
