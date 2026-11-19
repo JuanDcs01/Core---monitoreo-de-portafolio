@@ -1306,7 +1306,7 @@ input[type="checkbox"] {
   body.app .shell-body { flex: 1 1 auto; min-height: 0; }
 
   /* Pantallas centradas (perfil, formularios, avisos): fondo blanco y centrado vertical */
-  body.app .content:has(> .center-container, > .status-card) { background: var(--surface); }
+  body.app .content:has(> .center-container, > .status-card, > .nf) { background: var(--surface); }
   body.app .content > .center-container { flex: 1 1 auto; padding: 24px 20px; }
 
   /* Pantallas sin sesión: sin tarjeta, logo + formulario centrados en vertical */
@@ -1445,6 +1445,15 @@ input[type="checkbox"] {
     box-shadow: none;
   }
   body.app .center-container .form-title { text-align: center; }
+  .content > .nf { padding: 0; }
+  .nf .nf-card {
+    max-width: 420px;
+    padding: 24px 20px;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
   body.app .status-card {
     margin: auto;
     padding: 24px 20px;
