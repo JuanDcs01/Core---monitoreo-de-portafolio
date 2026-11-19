@@ -65,12 +65,12 @@ class Wallet(models.Model):
     balance = models.DecimalField(default=0)
     commission_paid = models. DecimalField(default=0)
 
+class TransactionType(models.TextChoices):
+
+    DEPOSIT = 'D', 'Depósito'
+    WITHDRAW = 'W', 'Retiro'
+
 class WalletTransaction(models.Model):
-
-    class TransactionType(models.TextChoices):
-
-        DEPOSIT = 'D', 'Depósito'
-        WITHDRAW = 'W', 'Retiro'
 
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
     type = models.CharField(max_length=1, choices=TransactionType.choices)
@@ -82,13 +82,13 @@ class WalletTransaction(models.Model):
     def total(self):
         return round(self.net_amount + self.commission, 2)
 
+class TradeType(models.TextChoices):
+
+    BUY = 'B', 'Compra'
+    SELL = 'S', 'Venta'
+    DIVIDEND = 'D', 'Reinversión de dividendo'
+
 class Trade(models.Model):
-
-    class TradeType(models.TextChoices):
-
-        BUY = 'B', 'Compra'
-        SELL = 'S', 'Venta'
-        DIVIDEND = 'D', 'Reinversión de dividendo'
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     user_holding = models.ForeignKey(UserHolding, on_delete=models.CASCADE)

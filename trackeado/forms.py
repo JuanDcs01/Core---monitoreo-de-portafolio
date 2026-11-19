@@ -1,4 +1,4 @@
-from .models import WatchList, WalletTransaction, Trade, Dividend
+from .models import WatchList, WalletTransaction, TransactionType, Trade, TradeType, Dividend
 from django import forms
 
 class WatchListForm(forms.ModelForm):
@@ -48,10 +48,15 @@ class WalletTransactionForm(forms.ModelForm):
             ),
             'type': forms.Select(
                 attrs={
-                    'class': 'form-select'
+                    'class': 'form-control form-select'
                 }
             )             
             }
+
+    def __init__(self, *args, **kargs):
+        super().__init__(*args, **kargs)
+        options = [("", "Selecciona el tipo de tranferencia")] + list(TransactionType.choices)
+        self.fields['type'].choices = options
 
 class TradeForm(forms.ModelForm):
 
@@ -64,7 +69,7 @@ class TradeForm(forms.ModelForm):
         widgets = {
             'type': forms.Select(
                 attrs={
-                    'class': 'form-control'
+                    'class': 'form-control form-select'
                 }
             ),
             'shares': forms.NumberInput(
@@ -93,6 +98,11 @@ class TradeForm(forms.ModelForm):
                 },
             )
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        options = [("", "Selecciona el tipo de operación")] + list(TradeType.choices)
+        self.fields["type"].choices = options
 
 class DividendForm(forms.ModelForm):
 
