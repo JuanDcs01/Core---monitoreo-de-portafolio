@@ -1395,6 +1395,8 @@ input[type="checkbox"] {
 
   /* ---- Contenido a todo el ancho, bloques planos separados por una franja ---- */
   body.app .content { padding: 0 0 24px; gap: 8px; }
+  /* Deja libre el espacio del botón flotante para que no tape el último registro */
+  body.app .content:has(.fab) { padding-bottom: 84px; }
   body.app .content > .page-head { padding: 14px 16px 4px; }
   body.app .page-title { font-size: 1.35rem; }
   body.app .page-sub { display: none; }
