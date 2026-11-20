@@ -180,7 +180,6 @@ STORAGES = {
     'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
 }
 
-
 # Cache
 # https://docs.djangoproject.com/en/6.1/topics/cache/
 #
@@ -197,6 +196,8 @@ CACHES = {
     }
 }
 
+# cacheo 30 días = 2592000 segundos en el navegador
+WHITENOISE_MAX_AGE = 2592000
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
