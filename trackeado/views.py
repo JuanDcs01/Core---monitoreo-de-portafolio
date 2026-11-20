@@ -811,7 +811,7 @@ def holding(request, symbol):
 
         for t in trade:
             if t.type == 'S':
-                t.realized_gain = h_metrics['gain_per_sell'][t.id]
+                t.realized_gain = h_metrics['gain_per_sell'].get(t.id)
             else:
                 t.realized_gain = None
 
