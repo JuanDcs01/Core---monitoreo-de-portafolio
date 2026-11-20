@@ -43,21 +43,32 @@ def dashboard(request):
 
     # obtener estado actual del mercado
     market_state = yf.Ticker('VOO').info.get('marketState')
+
+    # obtener cambio
+    dop_currency = cache.get('dop_price')
     
     if not user_holdings:
         return render(request, 'dashboard.html', {
             'total_balance': wallet.balance,
+            'total_balance_dop': to_dop(wallet.balance, dop_currency),
             'available_balance': wallet.balance,
             'total_current_invested': total_current_invested,
+            'total_current_invested_dop': 0,
             'total_current_invested_value': total_current_invested_value,
+            'total_current_invested_value_dop': 0,
             'total_unrealized_gain': total_unrealized_gain,
+            'total_unrealized_gain_dop': 0,
             'total_unrealized_gain_percent': total_unrealized_gain_percent,
             'total_realized_gain': total_realized_gain,
+            'total_realized_gain_dop': 0,
             'total_dividends': total_dividends,
+            'total_dividends_dop': 0,
             'total_gain': total_gain,
+            'total_gain_dop': 0,
             'market_state': market_state,
             'twr': 0,
             'net_annual_dividends': 0,
+            'net_annual_dividends_dop': 0,
             'net_annual_dividends_percent': 0
         })
 
@@ -341,18 +352,24 @@ def dashboard(request):
 
     if wallet.balance < 0:
         messages.warning(request, 'Tu balance disponible no debería ser negativo. Verifica la integridad histórica de tus registros.')
-    
     context = {
         'market_state': market_state,
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
+        'total_current_invested_value_dop': to_dop(total_current_invested_value, dop_currency),
         'total_balance': total_balance,
+        'total_balance_dop': to_dop(total_balance, dop_currency),
         'total_unrealized_gain': total_unrealized_gain,
+        'total_unrealized_gain_dop': to_dop(total_unrealized_gain, dop_currency),
         'total_current_invested': total_current_invested,
+        'total_current_invested_dop': to_dop(total_current_invested, dop_currency),
         'total_unrealized_gain_percent': total_unrealized_gain_percent,
         'total_realized_gain': total_realized_gain,
+        'total_realized_gain_dop': to_dop(total_realized_gain, dop_currency),
         'total_dividends': total_dividends,
+        'total_dividends_dop': to_dop(total_dividends, dop_currency),
         'total_gain': total_gain,
+        'total_gain_dop': to_dop(total_gain, dop_currency),
         'holdings': user_holdings,
         'last_holdings_buy': last_holdings_buy,
         'type_distribution': type_distribution,
@@ -360,6 +377,7 @@ def dashboard(request):
         'risk_distribution': risk_distribution,
         'twr': twr,
         'net_annual_dividends': net_annual_dividends,
+        'net_annual_dividends_dop': to_dop(net_annual_dividends, dop_currency),
         'net_annual_dividends_percent': net_annual_dividends_percent
     }
 
@@ -1202,3 +1220,18 @@ def holding_metrics(trades, dividends, current_price):
     h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain'] + h_metrics['total_dividends']
 
     return h_metrics
+
+# calcular conversión de usd a dop
+def to_dop(value, dop_currency):
+    '''Convierte de usd a dop utilizando el valor de cambio
+    almacenado en caché o consultándolo en yfinance'''
+    
+    if not dop_currency:
+        try:
+            ticker = yf.Ticker("USDDOP=X")
+            dop_currency = ticker.fast_info["last_price"]
+            cache.set('dop_price', dop_currency, 3600)
+        except Exception:
+            dop_currency = 60
+
+    return value * Decimal(dop_currency)

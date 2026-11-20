@@ -109,21 +109,6 @@ def is_reinvested(value):
         return mark_safe('<i class="bi bi-x-lg text-danger"></i>')
 
 @register.filter
-def to_dop(value):
-
-    dop_currency = cache.get('dop_price')
-    
-    if not dop_currency:
-        try:
-            ticker = yf.Ticker("USDDOP=X")
-            dop_currency = ticker.fast_info["last_price"]
-            cache.set('dop_price', dop_currency, 3600)
-        except Exception:
-            dop_currency = 60
-
-    return value * Decimal(dop_currency)
-
-@register.filter
 def sector_es(value):
     # Mapeo completo de Sectores e Industrias de Yahoo Finance / yfinance a Español
 
