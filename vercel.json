@@ -4,6 +4,17 @@
       "includeFiles": "{staticfiles,static,templates,trackeado,users,config}/**"
     }
   },
+  "headers": [
+    {
+      "source": "/static/(.*)\\.png",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index" }
   ]
