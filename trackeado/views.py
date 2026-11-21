@@ -497,7 +497,7 @@ def watch_list_details(request, watch_list):
 
     user = request.user
 
-    watch_list = get_object_or_404(WatchList, name=watch_list)
+    watch_list = get_object_or_404(WatchList, name=watch_list, user=user)
 
     holding = yf.Ticker('VOO')
 
