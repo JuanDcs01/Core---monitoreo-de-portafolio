@@ -16,7 +16,7 @@
         <div class="kpi-label">Balance total</div>
         <div class="d-flex">
             <div class="kpi-value">{{ total_balance | round_number }}</div>
-            <div style="display: flex; align-items: end; margin-left: 5px;">RD${{ total_balance_dop | round_number }}</div>
+            <div style="display: flex; align-items: end; margin-left: 5px;">{{ currency }} {{ total_balance_dop | round_number }}</div>
         </div>
         <div class="kpi-foot">
             <span>Disponible</span>
@@ -26,33 +26,33 @@
     <div class="kpi">
         <div class="kpi-label">Invertido</div>
         <div class="kpi-value">{{ total_current_invested | round_number }}</div>
-        <div class="kpi-sub">Conversión: RD${{ total_current_invested_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_current_invested_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Valor actual</div>
         <div class="kpi-value">{{ total_current_invested_value | round_number }}</div>
-        <div class="kpi-sub">Conversión: RD${{ total_current_invested_value_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_current_invested_value_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia no realizada</div>
         <div class="kpi-value {% if total_unrealized_gain > 0 %}up{% elif total_unrealized_gain < 0 %}down{% endif %}">
             {{ total_unrealized_gain | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
-        <div class="kpi-sub">Conversión: RD${{ total_unrealized_gain_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_unrealized_gain_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia realizada</div>
         <div class="kpi-value {% if total_realized_gain > 0 %}up{% elif total_realized_gain < 0 %}down{% endif %}">
             {{ total_realized_gain | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: RD${{ total_realized_gain_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_realized_gain_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia total</div>
         <div class="kpi-value {% if total_gain > 0 %}up{% elif total_gain < 0 %}down{% endif %}">
             {{ total_gain | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: RD${{ total_gain_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_gain_dop | round_number }}</div>
     </div>
 </section>
 
@@ -208,14 +208,14 @@
                 <div class="kpi-value {% if net_annual_dividends_percent > 0 %}up{% endif %}">
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 
         </div>
-        <div class="kpi-sub">Conversión: RD${{ net_annual_dividends_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ net_annual_dividends_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Dividendos recibidos</div>
         <div class="kpi-value {% if total_dividends > 0 %}up{% endif %}">
             {{ total_dividends | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: RD${{ total_dividends_dop | round_number }}</div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_dividends_dop | round_number }}</div>
     </div>
 </section>
 

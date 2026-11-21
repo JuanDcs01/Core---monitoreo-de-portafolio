@@ -5,7 +5,8 @@ from .forms import (CustomRegisterForm,
                     CustomLoginForm, 
                     CustomPasswordChangeForm, 
                     CustomPasswordResetConfirmForm, 
-                    CustomPasswordResetForm)
+                    CustomPasswordResetForm,
+                    CurrencyUpdateForm)
 from django.shortcuts import redirect
 from django.contrib.auth.views import (
     PasswordChangeView,
@@ -16,6 +17,11 @@ from django.contrib.auth.views import (
 )
 from django.contrib.auth.mixins import LoginRequiredMixin
 from trackeado.models import Wallet
+from django.views.generic import UpdateView
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+
+User = get_user_model()
 
 class RedirectAuthenticatedUserMixin:
     """Si el usuario ya está logueado, lo saca de esta vista."""
@@ -56,10 +62,25 @@ class CustomRegisterView(RedirectAuthenticatedUserMixin, CreateView):
 
         return response
 
-class CustomProfileView(LoginRequiredMixin, TemplateView):
+class CustomProfileView(LoginRequiredMixin, UpdateView):
 
+    model = User
+    form_class = CurrencyUpdateForm
     template_name = 'profile.html'
     login_url = reverse_lazy('login')
+    success_url = reverse_lazy('profile')
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Moneda actualizada correctamente.")
+        return response
+
+    def form_invalid(self, form):
+        messages.error(self.request, "No se pudo actualizar la moneda. Revisa la selección.")
+        return super().form_invalid(form)
 
 class CustomPasswordChangeView(PasswordChangeView):
 

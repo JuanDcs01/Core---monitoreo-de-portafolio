@@ -45,12 +45,16 @@ def dashboard(request):
     market_state = yf.Ticker('VOO').info.get('marketState')
 
     # obtener cambio
-    dop_currency = cache.get('dop_price')
+    currency = user.get_currency_display() 
+
+    currency_code = f"USD{user.currency}=X"
+
+    currency_rate = cache.get(currency_code)
     
     if not user_holdings:
         return render(request, 'dashboard.html', {
             'total_balance': wallet.balance,
-            'total_balance_dop': to_dop(wallet.balance, dop_currency),
+            'total_balance_dop': convert_currency(wallet.balance, currency_rate, currency_code),
             'available_balance': wallet.balance,
             'total_current_invested': total_current_invested,
             'total_current_invested_dop': 0,
@@ -69,7 +73,8 @@ def dashboard(request):
             'twr': 0,
             'net_annual_dividends': 0,
             'net_annual_dividends_dop': 0,
-            'net_annual_dividends_percent': 0
+            'net_annual_dividends_percent': 0,
+            'currency': currency
         })
 
     #todo: obtener datos de yfinance
@@ -360,20 +365,20 @@ def dashboard(request):
         'market_state': market_state,
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
-        'total_current_invested_value_dop': to_dop(total_current_invested_value, dop_currency),
+        'total_current_invested_value_dop': convert_currency(total_current_invested_value, currency_rate,currency_code),
         'total_balance': total_balance,
-        'total_balance_dop': to_dop(total_balance, dop_currency),
+        'total_balance_dop': convert_currency(total_balance, currency_rate,currency_code),
         'total_unrealized_gain': total_unrealized_gain,
-        'total_unrealized_gain_dop': to_dop(total_unrealized_gain, dop_currency),
+        'total_unrealized_gain_dop': convert_currency(total_unrealized_gain, currency_rate,currency_code),
         'total_current_invested': total_current_invested,
-        'total_current_invested_dop': to_dop(total_current_invested, dop_currency),
+        'total_current_invested_dop': convert_currency(total_current_invested, currency_rate,currency_code),
         'total_unrealized_gain_percent': total_unrealized_gain_percent,
         'total_realized_gain': total_realized_gain,
-        'total_realized_gain_dop': to_dop(total_realized_gain, dop_currency),
+        'total_realized_gain_dop': convert_currency(total_realized_gain, currency_rate,currency_code),
         'total_dividends': total_dividends,
-        'total_dividends_dop': to_dop(total_dividends, dop_currency),
+        'total_dividends_dop': convert_currency(total_dividends, currency_rate,currency_code),
         'total_gain': total_gain,
-        'total_gain_dop': to_dop(total_gain, dop_currency),
+        'total_gain_dop': convert_currency(total_gain, currency_rate,currency_code),
         'holdings': user_holdings,
         'last_holdings_buy': last_holdings_buy,
         'type_distribution': type_distribution,
@@ -381,8 +386,9 @@ def dashboard(request):
         'risk_distribution': risk_distribution,
         'twr': twr,
         'net_annual_dividends': net_annual_dividends,
-        'net_annual_dividends_dop': to_dop(net_annual_dividends, dop_currency),
-        'net_annual_dividends_percent': net_annual_dividends_percent
+        'net_annual_dividends_dop': convert_currency(net_annual_dividends, currency_rate,currency_code),
+        'net_annual_dividends_percent': net_annual_dividends_percent,
+        'currency': currency
     }
 
     return render(request, 'dashboard.html', {**context})
@@ -1238,16 +1244,17 @@ def holding_metrics(trades, dividends, current_price):
     return h_metrics
 
 # calcular conversión de usd a dop
-def to_dop(value, dop_currency):
-    '''Convierte de usd a dop utilizando el valor de cambio
+def convert_currency(value, currency_rate, currency_code):
+    '''Convierte de usd a otra moneda utilizando el valor de cambio
     almacenado en caché o consultándolo en yfinance'''
     
-    if not dop_currency:
+    if not currency_rate:
         try:
-            ticker = yf.Ticker("USDDOP=X")
-            dop_currency = ticker.fast_info["last_price"]
-            cache.set('dop_price', dop_currency, 3600)
-        except Exception:
-            dop_currency = 60
-
-    return value * Decimal(dop_currency)
+            print(currency_code)
+            currency_rate = yf.Ticker(currency_code).fast_info["last_price"]
+            cache.set(currency_code, currency_rate, 3600)
+        except Exception as e:
+            currency_rate = 1
+            print(e)
+            
+    return value * Decimal(currency_rate)

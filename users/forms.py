@@ -1,8 +1,11 @@
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm, SetPasswordForm
-from .models import User
+from django.contrib.auth import get_user_model
 from django import forms
+from users.models import Currency
+
+User = get_user_model()
 
 class CustomRegisterForm(UserCreationForm):
 
@@ -94,3 +97,16 @@ class CustomPasswordResetConfirmForm(SetPasswordForm):
             "placeholder": "Repite la contraseña",
             "class": "form-control",
         })
+
+class CurrencyUpdateForm(forms.ModelForm):
+    currency = forms.ChoiceField(
+        choices=[(choice.value, choice.value) for choice in Currency],
+        widget=forms.Select(attrs={
+            "class": "form-select pe-5",
+            "onchange": "this.form.submit()",
+        })
+    )
+
+    class Meta:
+        model = User
+        fields = ["currency"]

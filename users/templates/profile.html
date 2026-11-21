@@ -12,6 +12,12 @@
         <div class="profile-meta">
             <div class="kv"><span><i class="bi bi-envelope"></i> Email</span><strong>{{ user.email }}</strong></div>
             <div class="kv"><span><i class="bi bi-calendar3"></i> Te uniste</span><strong>{{ user.date_joined }}</strong></div>
+            <div class="kv"><span><i class="bi bi-coin"></i> Moneda</span>
+            <form action="" method="POST">
+                {% csrf_token %}
+                {{ form.currency }}
+                {{ form.currency.errors }}
+            </form></div>
         </div>
 
         <div class="profile-actions">
