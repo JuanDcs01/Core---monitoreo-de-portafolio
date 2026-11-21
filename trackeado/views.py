@@ -648,8 +648,15 @@ def holding(request, symbol):
         earnings_data['date'] = [d.strftime('%Y') for d in rev.keys()]
         earnings_data['total_revenues'] = [v for v in rev.values]
         earnings_data['net_incomes'] = [v for v in net.values]
-        earnings_data['net_margins'] = [round((earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x]) * 100) 
-                                       for x in range(0, len(earnings_data['date']))]
+        earnings_data['net_margins'] = []
+
+        for x in range(0, len(earnings_data['date'])):
+            if earnings_data['total_revenues'][x] != 0:
+                net_margins = earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x] * 100
+
+                earnings_data['net_margins'].append(net_margins)
+            else:
+                earnings_data['net_margins'].append(None)
 
         q_rev = q_earnings_df.loc['Total Revenue']
         q_net = q_earnings_df.loc['Net Income']
