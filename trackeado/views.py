@@ -132,7 +132,7 @@ def dashboard(request):
 
         # cambio del dia del activo
         h.day_change = h.price - last_day_price
-        h.day_change_percent = h.day_change / h.price * 100
+        h.day_change_percent = h.day_change / last_day_price * 100
 
         # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
