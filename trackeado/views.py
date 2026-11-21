@@ -578,21 +578,26 @@ def add_holding_list(request):
 
     return render(request, 'watch_list_details.html', {})
 
-
 @login_required
 def delete_holding_list(request):
+
+    user = request.user
 
     if request.method == 'POST':
 
         holding_list_id = request.POST.get('holding_list_id')
-        watch_list = request.POST.get('watch_list')
 
         holding_list = get_object_or_404(HoldingList, id=holding_list_id)
-        holding_list.delete()
 
-        messages.success(request, 'Eliminado de la lista.')
-        return redirect('watch_list_details', watch_list)
+        watch_list = holding_list.watch_list
 
+        if user == watch_list.user:
+            holding_list.delete()
+            messages.success(request, 'Eliminado de la lista.')
+            return redirect('watch_list_details', watch_list.name)
+        else:
+            messages.success(request, 'Acción no autorizada.')
+            return redirect('watch_list_details', watch_list.name)
 
 @login_required
 def delete_watch_lists(request):

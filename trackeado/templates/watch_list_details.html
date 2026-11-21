@@ -26,6 +26,7 @@
                         <th>Tipo</th>
                         <th class="num">Precio</th>
                         <th class="num">Cambio</th>
+                        <th class="num"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,6 +48,13 @@
                                     <span>{% if h.holding.day_change > 0 %}+{% endif %}{{ h.holding.day_change | round_number }}</span>
                                     <small>({{ h.holding.day_change_percent | round_number }}%)</small>
                                 </div>
+                            </td>
+                            <td class="num c-del" onclick="event.stopPropagation()">
+                                <form action="{% url 'delete_holding_list' %}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="holding_list_id" value="{{ h.id }}">
+                                    <button class="btn btn-danger btn-icon" type="submit"><i class="bi bi-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                     {% endfor %}

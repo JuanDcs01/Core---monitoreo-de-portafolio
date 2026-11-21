@@ -1563,6 +1563,17 @@ input[type="checkbox"] {
   body.app .table-list .c-price { grid-area: price; text-align: right; font-size: 1rem; font-weight: 700; }
   body.app .table-list .c-day { grid-area: day; justify-self: end; font-size: .85rem; }
 
+  /* Watch list: botón eliminar a la derecha, centrado verticalmente con precio y cambio */
+  body.app .watch-table tbody tr {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "asset price del"
+      "asset day   del";
+  }
+  body.app .watch-table .c-del { grid-area: del; align-self: center; justify-self: end; }
+  body.app .watch-table .c-del form { margin: 0; display: flex; }
+  body.app .watch-table .c-del .btn-icon { width: 32px; height: 32px; }
+
   body.app .table-list .asset { min-width: 0; gap: 12px; }
   body.app .table-list .asset > div { min-width: 0; }
   body.app .table-list .asset img {
