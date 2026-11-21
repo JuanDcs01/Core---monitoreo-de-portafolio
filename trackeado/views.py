@@ -86,7 +86,11 @@ def dashboard(request):
     if trades:
         # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
         #! puede fallar si la bolsa permanece cerrada más de lo normal
-        first_trade_date = trades[0].date - timedelta(days=10) 
+        first_trade_date = trades[0].date - timedelta(days=10)
+
+        # limitar fechas válidas para descargar datos
+        if first_trade_date < date(1950, 1, 1) or first_trade_date > date.today():
+            first_trade_date = date(1950, 1, 1)
 
         if history_data is None:
             # descargar datos historicos
