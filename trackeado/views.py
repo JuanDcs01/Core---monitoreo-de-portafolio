@@ -351,6 +351,8 @@ def dashboard(request):
                 if subperiod[i].get('end_date'):
                     end_date = subperiod[i]['end_date']
 
+                    limit = 10
+
                     while True:
                         try:
                             price = history_data.loc[end_date.strftime('%Y-%m-%d'), (h.holding.symbol, 'Close')]
@@ -359,6 +361,12 @@ def dashboard(request):
                         except KeyError:
                             pass
                         end_date -= timedelta(days=1)
+
+                        limit -= 1
+
+                        if limit == 0:
+                            logger.exception(f'No se ha encontrado precio en {h.holding.symbol}')
+                            return render(request, '500.html', {}, status=500)
 
                     price = Decimal(str(price))
                 else:
