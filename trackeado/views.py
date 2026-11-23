@@ -468,13 +468,9 @@ def add_holding(request):
                 # obtener view para mostrar en caso de errores
                 view_name = request.resolver_match.view_name
 
-                ticker = get_holding(symbol, view_name)
+                ticker = get_holding(request, symbol, view_name)
 
-                if not ticker:
-                    messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
-                    return redirect('dashboard')
-
-                info = ticker.info
+                info = ticker['info']
 
                 if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
                     messages.success(request, 'Símbolo no encontrado.')
@@ -484,9 +480,9 @@ def add_holding(request):
                     messages.error(request, 'Solo se admite activos en USD')
                     return redirect('dashboard')
 
-                name = ticker.info.get('longName')
-                type = ticker.info.get('quoteType')
-                sector = ticker.info.get('sector')
+                name = info.get('longName')
+                type = info.get('quoteType')
+                sector = info.get('sector')
 
                 holding = Holding.objects.create(symbol=symbol, name=name, sector=sector, type=type)
                 UserHolding.objects.create(user=user, holding=holding)
@@ -619,21 +615,16 @@ def add_holding_list(request):
                 # obtener view para mostrar en caso de errores
                 view_name = request.resolver_match.view_name
 
-                ticker = get_holding(symbol, view_name)
+                ticker = get_holding(request, symbol, view_name)  
 
-                #! corregir redireccion en ambas
-                if not ticker:
-                    messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
-                    return redirect('dashboard')   
-
-                info = ticker.info
+                info = ticker['info']
 
                 if not info or ("regularMarketPrice" not in info and "longName" not in info and "shortName" not in info):
                     messages.success(request, 'Símbolo no encontrado.')
                     return redirect('dashboard')
 
-                name = ticker.info.get('longName')
-                type = ticker.info.get('quoteType')
+                name = info.get('longName')
+                type = info.get('quoteType')
 
                 holding = Holding.objects.create(symbol=symbol, name=name, type=type)
                 HoldingList.objects.create(watch_list=watch_list, holding=holding)
@@ -689,13 +680,9 @@ def holding(request, symbol):
     # obtener view para mostrar en caso de errores
     view_name = request.resolver_match.view_name
 
-    ticker = get_holding(symbol, view_name)
+    ticker = get_holding(request, symbol, view_name)
 
-    if not ticker:
-        messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
-        return redirect('dashboard')  
-
-    info = ticker.info
+    info = ticker['info']
 
     if not info.get('symbol'):
         messages.error(request, 'Símbolo no encontrado')
@@ -703,9 +690,9 @@ def holding(request, symbol):
 
     user_holding = UserHolding.objects.select_related('holding').filter(user=user, holding__symbol=symbol).first()
 
-    earnings_df = ticker.financials
+    earnings_df = ticker['financials']
     
-    q_earnings_df = ticker.quarterly_income_stmt
+    q_earnings_df = ticker['quarterly_income_stmt']
 
     if not q_earnings_df.empty:
 
@@ -770,9 +757,9 @@ def holding(request, symbol):
         q_earnings_data = None
 
     try:
-        df = ticker.history(period="max")
-        df_5d = ticker.history(period="5d", interval="15m", prepost=True)
-        df_1d = ticker.history(period="1d", interval="5m", prepost=True)
+        df = ticker['history_max']
+        df_5d = ticker['history_5_days']
+        df_1d = ticker['history_1_day']
     except Exception:
         logger.exception(f'No fue posible obtener el historial de {symbol}')
         return render(request, '500.html', {}, status=500)
@@ -1351,11 +1338,30 @@ def get_market_status(request, view_name):
     return market_state
 
 # obtener activo
-def get_holding(symbol, view_name):
+def get_holding(request, symbol, view_name):
     '''Consultar símbolo en yfinance'''
-    try:
-        ticker = yf.Ticker(symbol)
-        return ticker
-    except Exception:
-        logger.exception(f'No fue obtener a {symbol} en {view_name}')
-        return None
+    cache_key = f'{symbol}_info'
+
+    data = cache.get(cache_key)
+
+    if not data:
+        try:
+            ticker = yf.Ticker(symbol)
+
+            data = {
+                'info': ticker.info,
+                'financials': ticker.financials,
+                'quarterly_income_stmt': ticker.quarterly_income_stmt,
+                'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False),
+                'history_5_days': yf.download(tickers=symbol, period="5d", interval="15m", prepost=True, progress=False, multi_level_index=False)
+            }
+
+            cache.set(cache_key, data, 3600)
+        except Exception:
+            logger.exception(f'No fue obtener la info de {symbol} en {view_name}')
+            messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
+            return redirect(view_name)
+
+    data['history_1_day'] = yf.download(tickers=symbol, period="1d", interval="5m", prepost=True, progress=False, multi_level_index=False)
+
+    return data
