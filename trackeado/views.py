@@ -371,7 +371,7 @@ def dashboard(request):
                             pass
                         end_date -= timedelta(days=1)
 
-                        if subperiod[i]['start_date'] < end_date:
+                        if subperiod[i]['start_date'] > end_date:
                             logger.exception(f'No se ha encontrado precio en {h.holding.symbol}')
                             return render(request, '500.html', {}, status=500)
 
