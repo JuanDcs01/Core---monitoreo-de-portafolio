@@ -700,59 +700,65 @@ def holding(request, symbol):
     
     q_earnings_df = ticker.quarterly_income_stmt
 
-    earnings_data = {
-        'date': [],
-        'total_revenues': [],
-        'net_incomes': [],
-        'net_margins': []
-    }
+    if not q_earnings_df.empty:
 
-    q_earnings_data = {
-        'date': [],
-        'total_revenues': [],
-        'net_incomes': [],
-        'net_margins': []
-    }
+        earnings_data = {
+            'date': [],
+            'total_revenues': [],
+            'net_incomes': [],
+            'net_margins': []
+        }
 
-    # Extraer y ordenar directamente con tu variable
-    if info.get('quoteType') == 'EQUITY':
-        rev = earnings_df.loc['Total Revenue'].dropna().iloc[::-1]
-        net = earnings_df.loc['Net Income'].dropna().iloc[::-1]
+        q_earnings_data = {
+            'date': [],
+            'total_revenues': [],
+            'net_incomes': [],
+            'net_margins': []
+        }
 
-        earnings_data['date'] = [d.strftime('%Y') for d in rev.keys()]
-        earnings_data['total_revenues'] = [v for v in rev.values]
-        earnings_data['net_incomes'] = [v for v in net.values]
-        earnings_data['net_margins'] = []
+        # Extraer y ordenar directamente con tu variable
+        if info.get('quoteType') == 'EQUITY':
+            rev = earnings_df.loc['Total Revenue'].dropna().iloc[::-1]
+            net = earnings_df.loc['Net Income'].dropna().iloc[::-1]
 
-        for x in range(0, len(earnings_data['date'])):
-            if earnings_data['total_revenues'][x] != 0:
-                net_margins = earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x] * 100
+            earnings_data['date'] = [d.strftime('%Y') for d in rev.keys()]
+            earnings_data['total_revenues'] = [v for v in rev.values]
+            earnings_data['net_incomes'] = [v for v in net.values]
+            earnings_data['net_margins'] = []
 
-                earnings_data['net_margins'].append(net_margins)
-            else:
-                earnings_data['net_margins'].append(None)
+            for x in range(0, len(earnings_data['date'])):
+                if earnings_data['total_revenues'][x] != 0:
+                    net_margins = earnings_data['net_incomes'][x] / earnings_data['total_revenues'][x] * 100
 
-        q_rev = q_earnings_df.loc['Total Revenue']
-        q_net = q_earnings_df.loc['Net Income']
+                    earnings_data['net_margins'].append(net_margins)
+                else:
+                    earnings_data['net_margins'].append(None)
 
-        valid = q_rev.notna() & q_net.notna()
+            q_rev = q_earnings_df.loc['Total Revenue']
+            q_net = q_earnings_df.loc['Net Income']
 
-        q_rev = q_rev[valid].iloc[::-1]
-        q_net = q_net[valid].iloc[::-1]
+            valid = q_rev.notna() & q_net.notna()
 
-        q_earnings_data['date'] = [str(d.to_period('Q')) for d in q_rev.index]
+            q_rev = q_rev[valid].iloc[::-1]
+            q_net = q_net[valid].iloc[::-1]
 
-        q_earnings_data['total_revenues'] = q_rev.tolist()
-        q_earnings_data['net_incomes'] = q_net.tolist()
+            q_earnings_data['date'] = [str(d.to_period('Q')) for d in q_rev.index]
 
-        q_earnings_data['net_margins'] = [
-            round((net / rev) * 100)
-            for rev, net in zip(
-                q_earnings_data['total_revenues'],
-                q_earnings_data['net_incomes']
-            )
-            if rev != 0
-        ]
+            q_earnings_data['total_revenues'] = q_rev.tolist()
+            q_earnings_data['net_incomes'] = q_net.tolist()
+
+            q_earnings_data['net_margins'] = [
+                round((net / rev) * 100)
+                for rev, net in zip(
+                    q_earnings_data['total_revenues'],
+                    q_earnings_data['net_incomes']
+                )
+                if rev != 0
+            ]
+    else:
+        earnings_data = None
+        q_earnings_data = None
+        messages.error(request, 'No fue posible obtener los estados de ingresos de este activo.')
 
     try:
         df = ticker.history(period="max")
