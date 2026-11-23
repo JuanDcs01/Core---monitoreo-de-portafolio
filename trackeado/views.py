@@ -767,9 +767,11 @@ def holding(request, symbol):
                 if rev != 0
             ]
     else:
+        if info.get('quoteType') == 'EQUITY':
+            messages.error(request, 'No fue posible obtener los estados de ingresos de este activo.')
+
         earnings_data = None
         q_earnings_data = None
-        messages.error(request, 'No fue posible obtener los estados de ingresos de este activo.')
 
     try:
         df = ticker.history(period="max")
