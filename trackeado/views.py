@@ -220,22 +220,32 @@ def dashboard(request):
                 elif h.risk == 'VH':
                     risk_distribution['Muy alto'] += h.current_invested_value
 
-            if h.shares > 0:
+            if h.shares > 0 and h.holding.type != 'CRYPTOCURRENCY':
                 symbols_active.append(h.holding.symbol)
+
 
     #todo: calcular estimación de dividendos netos anuales
     
     def get_estimated_annual_dividends(symbol):
 
         #! cubrir el escenario en el que faltan muchos o todos
-        try:
-            raw_yield = yf.Ticker(symbol).info.get('dividendYield')
-        except Exception:
-            logger.exception(f'No fue posible consultar consultar el dividendo anual de {symbol}.')
-            messages.error(request, f'No fue posible consultar consultar el dividendo anual de {symbol}. Los cálculos podrían verse afectados.')
 
-        if not raw_yield:
-            raw_yield = 0.0
+        cache_key = (f'{symbol}_anual_dividend')
+
+        raw_yield = cache.get(cache_key)
+
+        if raw_yield != 0.0 and not raw_yield:
+
+            try:
+                raw_yield = yf.Ticker(symbol).info.get('dividendYield')
+
+                if not raw_yield:
+                    raw_yield = 0.0
+
+                cache.set(cache_key, raw_yield, 86400)
+            except Exception:
+                logger.exception(f'No fue posible consultar consultar el dividendo anual de {symbol}.')
+                messages.error(request, f'No fue posible consultar consultar el dividendo anual de {symbol}. Los cálculos podrían verse afectados.')
 
         for h in user_holdings:
             if h.holding.symbol == symbol:
