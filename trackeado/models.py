@@ -80,7 +80,7 @@ class WalletTransaction(models.Model):
 
     @property
     def total(self):
-        return round(self.net_amount + self.commission, 2)
+        return self.net_amount + self.commission
 
 class TradeType(models.TextChoices):
 

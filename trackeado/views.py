@@ -296,31 +296,33 @@ def dashboard(request):
 
     #! falta validar cuando hay dos transacciones el mismo dia
 
+    twr = 0
+
     if wallet_transactions and trades:
         
-        subperiod = [{'start_date': wallet_transactions[0].date, 'start_value': wallet_transactions[0].net_amount}]
+        subperiod = []
 
-        for i in range(1, len(wallet_transactions)):
+        for i in range(0, len(wallet_transactions)):
 
             subperiod.append({'start_date': wallet_transactions[i].date})
 
-            subperiod[i-1]['end_date'] = wallet_transactions[i].date
+            if i == 0:
+                subperiod[i]['start_value'] = wallet_transactions[i].net_amount
+            else:
+                subperiod[i-1]['end_date'] = wallet_transactions[i].date
+
+        subperiod_wallet_balance = 0
 
         for i in range(0, len(subperiod)):
 
-            subperiod_wallet_balance = 0
+            subperiod_trade_balance = 0
+            subperiod_dividend_balance = 0
             subperiod_balance = 0
 
-            for wt in wallet_transactions:
-
-                if (subperiod[i].get('end_date') and wt.date < subperiod[i]['end_date']) or not subperiod[i].get('end_date'):
-                    if wt.type == 'D':
-                        subperiod_wallet_balance += wt.net_amount
-                    else:
-                        subperiod_wallet_balance -= wt.total
-                else:
-                    next_subperiod_wt_value = wt.net_amount if wt.type == 'D' else wt.total
-                    break
+            if wallet_transactions[i].type == 'D':
+                subperiod_wallet_balance += wallet_transactions[i].net_amount
+            else:
+                subperiod_wallet_balance -= wallet_transactions[i].total
 
             if subperiod[i].get('end_date'):
                 subperiod_trades = [t for t in trades if t.date < subperiod[i]['end_date']]
@@ -332,11 +334,11 @@ def dashboard(request):
             for trade in subperiod_trades:
 
                 if trade.type in ['B', 'D']:
-                    subperiod_wallet_balance -= trade.total
+                    subperiod_trade_balance -= trade.total
                 else:
-                    subperiod_wallet_balance += trade.total
+                    subperiod_trade_balance += trade.total
 
-            subperiod_wallet_balance += sum([d.net_amount for d in subperiod_dividends])
+            subperiod_dividend_balance += sum([d.net_amount for d in subperiod_dividends])
 
             for h in user_holdings:
 
@@ -366,12 +368,15 @@ def dashboard(request):
 
                 subperiod_balance += h_metrics['current_invested_value']
 
-            subperiod_balance += subperiod_wallet_balance 
+            subperiod_balance += subperiod_wallet_balance + subperiod_dividend_balance + subperiod_trade_balance
 
             subperiod[i]['end_value'] = subperiod_balance
 
             if i + 1 < len(subperiod):
-                subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + next_subperiod_wt_value
+                if wallet_transactions[i + 1].type == 'D':
+                    subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + wallet_transactions[i + 1].net_amount
+                else:
+                    subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] - wallet_transactions[i + 1].total
 
             if subperiod[i]['start_value'] == 0:
                 subperiod[i]['period_return'] = Decimal(0)
