@@ -17,6 +17,9 @@ from django.core.cache import cache
 import pandas as pd
 import math
 from concurrent.futures import ThreadPoolExecutor
+import logging
+
+logger = logging.getLogger(__name__)
 
 ###############################
 # Inicio 
@@ -41,8 +44,8 @@ def dashboard(request):
     total_dividends = Decimal(0)
     total_gain = Decimal(0)
 
-    # obtener estado actual del mercado
-    market_state = yf.Ticker('VOO').info.get('marketState')
+    # obtener view para mostrar en caso de errores
+    view_name = request.resolver_match.view_name
 
     # obtener cambio
     currency = user.get_currency_display() 
@@ -69,7 +72,7 @@ def dashboard(request):
             'total_dividends_dop': 0,
             'total_gain': total_gain,
             'total_gain_dop': 0,
-            'market_state': market_state,
+            'market_state': get_market_status(request, view_name),
             'twr': 0,
             'net_annual_dividends': 0,
             'net_annual_dividends_dop': 0,
@@ -99,16 +102,27 @@ def dashboard(request):
 
         if history_data is None:
             # descargar datos historicos
-            history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
-            cache.set(cache_key, history_data, timeout=3600)
-
+            try:
+                history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+                cache.set(cache_key, history_data, timeout=3600)
+            except Exception:
+                logger.exception('Error descargando datos históricos')
+                return render(request, '500.html', {}, status=500)
     else:
         if history_data is None:
-            history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
-            cache.set(cache_key, history_data, timeout=3600)
+            try:
+                history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+                cache.set(cache_key, history_data, timeout=3600)
+            except Exception:
+                logger.exception('Error descargando datos históricos')
+                return render(request, '500.html', {}, status=500)
 
     # conseguir el último precio
-    day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
+    try:
+        day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
+    except Exception:
+        logger.exception('Error descargando datos del día')
+        return render(request, '500.html', {}, status=500)
 
     #todo: última compra por activo y datos para la gráfica de distruciones
 
@@ -133,10 +147,17 @@ def dashboard(request):
     for h in user_holdings:
 
         # obtener precio del dia anterior y el más actual
+        #! cubrir de otra manera el escenario en el que faltan muchos o todos
         try:
             last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
         except IndexError:
-            last_day_price = Decimal(yf.Ticker(h.holding.symbol).info.get('previousClose'))
+            try:
+                last_day_price = Decimal(yf.Ticker(h.holding.symbol).info.get('previousClose'))
+            except Exception:
+                last_day_price = 1
+                logger.exception(f'No fue posible consultar el precio del cierre anterior de {h.holding.symbol}.')
+                messages.error(request, f'No fue posible consultar el precio del cierre anterior de {h.holding.symbol}. Los cálculos podrían verse afectados.')
+
         h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
 
         # cambio del dia del activo
@@ -206,7 +227,12 @@ def dashboard(request):
     
     def get_estimated_annual_dividends(symbol):
 
-        raw_yield = yf.Ticker(symbol).info.get('dividendYield')
+        #! cubrir el escenario en el que faltan muchos o todos
+        try:
+            raw_yield = yf.Ticker(symbol).info.get('dividendYield')
+        except Exception:
+            logger.exception(f'No fue posible consultar consultar el dividendo anual de {symbol}.')
+            messages.error(request, f'No fue posible consultar consultar el dividendo anual de {symbol}. Los cálculos podrían verse afectados.')
 
         if not raw_yield:
             raw_yield = 0.0
@@ -362,7 +388,7 @@ def dashboard(request):
     if wallet.balance < 0:
         messages.warning(request, 'Tu balance disponible no debería ser negativo. Verifica la integridad histórica de tus registros.')
     context = {
-        'market_state': market_state,
+        'market_state': get_market_status(request, view_name),
         'available_balance': wallet.balance,
         'total_current_invested_value': total_current_invested_value,
         'total_current_invested_value_dop': convert_currency(total_current_invested_value, currency_rate,currency_code),
@@ -420,7 +446,14 @@ def add_holding(request):
 
             else: 
 
-                ticker = yf.Ticker(symbol)     
+                # obtener view para mostrar en caso de errores
+                view_name = request.resolver_match.view_name
+
+                ticker = get_holding(symbol, view_name)
+
+                if not ticker:
+                    messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
+                    return redirect('dashboard')
 
                 info = ticker.info
 
@@ -468,7 +501,7 @@ def delete_holding(request):
         wallet.save()
         user_holding.delete()
         
-    messages.success(request, 'Símbolo Eliminado de la cartera.')
+        messages.success(request, 'Símbolo Eliminado de la cartera.')
 
     return redirect('holding', symbol=holding_symbol)
 
@@ -509,12 +542,6 @@ def watch_list_details(request, watch_list):
 
     watch_list = get_object_or_404(WatchList, name=watch_list, user=user)
 
-    holding = yf.Ticker('VOO')
-
-    info = holding.info
-
-    market_state = info.get('marketState')
-
     if user.id == watch_list.user.id:
 
         holdings_list = HoldingList.objects.select_related('holding').filter(watch_list=watch_list)
@@ -523,8 +550,12 @@ def watch_list_details(request, watch_list):
 
             symbols = [h.holding.symbol for h in holdings_list]
 
-            data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
-            data2 = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+            try:
+                data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+                data2 = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+            except Exception:
+                logger.exception('Error obteniendo datos históricos de la lista')
+                return render(request, '500.html', {}, status=500)
 
             for h in holdings_list:
                 last_day_price = data.get(h.holding.symbol).get('Close').dropna().iloc[-2]
@@ -537,7 +568,7 @@ def watch_list_details(request, watch_list):
                 logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
                 h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
         
-        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list, 'market_state': market_state })
+        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list, 'market_state': get_market_status(request) })
 
     else:
         return redirect('watch_lists')  
@@ -565,7 +596,15 @@ def add_holding_list(request):
 
             else: 
 
-                ticker = yf.Ticker(symbol)     
+                # obtener view para mostrar en caso de errores
+                view_name = request.resolver_match.view_name
+
+                ticker = get_holding(symbol, view_name)
+
+                #! corregir redireccion en ambas
+                if not ticker:
+                    messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
+                    return redirect('dashboard')   
 
                 info = ticker.info
 
@@ -627,9 +666,16 @@ def holding(request, symbol):
 
     user = request.user
 
-    holding = yf.Ticker(symbol)
+    # obtener view para mostrar en caso de errores
+    view_name = request.resolver_match.view_name
 
-    info = holding.info
+    ticker = get_holding(symbol, view_name)
+
+    if not ticker:
+        messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
+        return redirect('dashboard')  
+
+    info = ticker.info
 
     if not info.get('symbol'):
         messages.error(request, 'Símbolo no encontrado')
@@ -637,9 +683,9 @@ def holding(request, symbol):
 
     user_holding = UserHolding.objects.select_related('holding').filter(user=user, holding__symbol=symbol).first()
 
-    earnings_df = holding.financials
+    earnings_df = ticker.financials
     
-    q_earnings_df = holding.quarterly_income_stmt
+    q_earnings_df = ticker.quarterly_income_stmt
 
     earnings_data = {
         'date': [],
@@ -695,9 +741,13 @@ def holding(request, symbol):
             if rev != 0
         ]
 
-    df = holding.history(period="max")
-    df_5d = holding.history(period="5d", interval="15m", prepost=True)
-    df_1d = holding.history(period="1d", interval="5m", prepost=True)
+    try:
+        df = ticker.history(period="max")
+        df_5d = ticker.history(period="5d", interval="15m", prepost=True)
+        df_1d = ticker.history(period="1d", interval="5m", prepost=True)
+    except Exception:
+        logger.exception(f'No fue posible obtener el historial de {symbol}')
+        return render(request, '500.html', {}, status=500)
 
     # 1. Asegurar la zona horaria correcta (Nueva York) antes de extraer la hora
     for d in [df_5d, df_1d]:
@@ -1250,11 +1300,34 @@ def convert_currency(value, currency_rate, currency_code):
     
     if not currency_rate:
         try:
-            print(currency_code)
             currency_rate = yf.Ticker(currency_code).fast_info["last_price"]
             cache.set(currency_code, currency_rate, 3600)
         except Exception as e:
             currency_rate = 1
-            print(e)
+            logger.exception(f'Error obteniendo el cambio de monede desde yfinance')
             
     return value * Decimal(currency_rate)
+
+# obtener estado actual del mercado
+def get_market_status(request, view_name):
+    '''Consula un símbolo de yfinance para obtener el estado
+    actual del mercado'''
+
+    try:
+        market_state = yf.Ticker('VOO').info.get('marketState')
+    except Exception:
+        market_state = 'CLOSED'
+        logger.exception(f'Error obteniendo marketState para desde yfinance en {view_name}')
+        messages.error(request, 'Error obteniendo el estado del mercado.')
+
+    return market_state
+
+# obtener activo
+def get_holding(symbol, view_name):
+    '''Consultar símbolo en yfinance'''
+    try:
+        ticker = yf.Ticker(symbol)
+        return ticker
+    except Exception:
+        logger.exception(f'No fue obtener a {symbol} en {view_name}')
+        return None

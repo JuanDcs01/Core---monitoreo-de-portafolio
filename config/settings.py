@@ -199,6 +199,59 @@ CACHES = {
 # cacheo 30 días = 2592000 segundos en el navegador
 WHITENOISE_MAX_AGE = 2592000
 
+# Logging
+# En local se guarda en <BASE_DIR>/logs/django_errors.log.
+# En Vercel (serverless) el sistema de archivos es efímero, así que mandamos a consola (stdout/stderr).
+if ON_VERCEL:
+    error_handler = {
+        'level': 'ERROR',
+        'class': 'logging.StreamHandler',
+        'formatter': 'verbose',
+    }
+else:
+    LOG_DIR = BASE_DIR / 'logs'
+    LOG_DIR.mkdir(exist_ok=True)
+    error_handler = {
+        'level': 'ERROR',
+        'class': 'logging.handlers.RotatingFileHandler',
+        'filename': LOG_DIR / 'django_errors.log',
+        'maxBytes': 1024 * 1024 * 5,  # 5 MB
+        'backupCount': 5,
+        'formatter': 'verbose',
+        'encoding': 'utf-8',
+    }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} ({module}:{lineno}) - {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'error_file': error_handler,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'trackeado': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'users': {
+            'handlers': ['error_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
