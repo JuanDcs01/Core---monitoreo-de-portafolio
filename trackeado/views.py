@@ -404,6 +404,7 @@ def dashboard(request):
 
     if wallet.balance < 0:
         messages.warning(request, 'Tu balance disponible no debería ser negativo. Verifica la integridad histórica de tus registros.')
+
     context = {
         'market_state': get_market_status(request, view_name),
         'available_balance': wallet.balance,
@@ -937,33 +938,57 @@ def holding(request, symbol):
             messages.error(request, 'No fue posible realizar la acción.')
             return render(request, 'holding.html', context)
 
+        trade = form.instance
+        trade.user = user
+        trade.user_holding = user_holding
+
+        wallet = get_object_or_404(Wallet, user=user)
+
         with transaction.atomic():
 
-            trade = form.instance
-            trade.user = user
-            trade.user_holding = user_holding
+            dividend = Dividend.objects.filter(reinvested=trade).first()
 
-            wallet = get_object_or_404(Wallet, user=user)
+            def replace_trade_effect():
+                # Deshacer el efecto del trade viejo en la wallet
+                wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
 
-            if trade.type != 'D':
-
-                if old_trade:
-                    # 1) Deshacer el efecto del trade viejo en la wallet
-                    wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
-
-                # 2) Aplicar el efecto del trade nuevo (igual que antes)
+                # Aplicar el efecto del trade nuevo (igual que antes)
                 wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
-
                 wallet.save()
                 trade.save()
+
+            def apply_trade_effect():
+                # Aplicar el efecto del trade nuevo (igual que antes)
+                wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
+                wallet.save()
+                trade.save()
+
+            if old_trade:
+                if old_type == trade.type:
+                    if trade.type != 'D':
+                        replace_trade_effect()
+                    else:
+                        dividend.net_amount = trade.net_amount
+                        dividend.commission = trade.commission
+                        dividend.date = trade.date
+                        dividend.save()
+                        trade.save()
+                else:
+                    if old_type == 'D':
+                        dividend.delete()
+                        apply_trade_effect()
+
+                    elif trade.type == 'D':
+                        wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
+                        wallet.save()
+                        trade.save()
+                        Dividend.objects.create(user_holding=user_holding, net_amount=trade.net_amount, commission=trade.commission, reinvested=trade, date=trade.date)
+                    else:
+                        replace_trade_effect()
             else:
-                if old_trade:
-                    dividend = get_object_or_404(Dividend, reinvested=trade)
-                    dividend.net_amount = trade.net_amount
-                    dividend.commission = trade.commission
-                    dividend.date = trade.date
-                    dividend.save()
-                    trade.save()
+
+                if trade.type != 'D':
+                    apply_trade_effect()
                 else:
                     trade.save()
                     Dividend.objects.create(user_holding=user_holding, net_amount=trade.net_amount, commission=trade.commission, reinvested=trade, date=trade.date)
