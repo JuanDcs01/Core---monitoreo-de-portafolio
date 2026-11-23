@@ -403,9 +403,6 @@ def dashboard(request):
 
         twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
 
-    else:
-        twr = 0
-
     #todo: validar consistencia de datos
 
     if wallet.balance < 0:
