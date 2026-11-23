@@ -972,7 +972,7 @@ def holding(request, symbol):
                     trade.save()
                     Dividend.objects.create(user_holding=user_holding, net_amount=trade.net_amount, commission=trade.commission, reinvested=trade, date=trade.date)
 
-            messages.success(request, 'Trade actualizado.' if old_trade else 'Trade agregado.')
+            messages.success(request, 'Orden actualizada.' if old_trade else 'Orden agregada.')
             return redirect('holding', user_holding.holding.symbol)
     
     return render(request, 'holding.html', context)
