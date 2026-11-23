@@ -86,10 +86,11 @@ def dashboard(request):
 
     # Crear una llave única para el usuario y sus símbolos actuales
     # Ordenar los símbolos para que ['VOO', 'GOOGL'] genere la misma llave que ['GOOGL', 'VOO']
-    symbols_key = "_".join(sorted(symbols))
-    cache_key = f"history_data_{user.id}_{symbols_key}"
+    cache_key = f"history_data_user_{user.id}"
 
     history_data = cache.get(cache_key)
+
+    update_history_data = request.session.pop("update_holding_data", None)
 
     if trades:
         # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
@@ -100,7 +101,7 @@ def dashboard(request):
         if first_trade_date < date(1950, 1, 1) or first_trade_date > date.today():
             first_trade_date = date(1950, 1, 1)
 
-        if history_data is None:
+        if history_data is None or update_history_data:
             # descargar datos historicos
             try:
                 history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
@@ -109,7 +110,7 @@ def dashboard(request):
                 logger.exception('Error descargando datos históricos')
                 return render(request, '500.html', {}, status=500)
     else:
-        if history_data is None:
+        if history_data is None or update_history_data:
             try:
                 history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
                 cache.set(cache_key, history_data, timeout=3600)
@@ -447,6 +448,7 @@ def add_holding(request):
 
     if request.method == 'POST':
 
+        #! el mensaje anterior positivo deja su color en este mensaje
         if not request.POST.get('symbol').upper():
             messages.error(request, 'Símbolo no encontrado')
             return redirect('dashboard')
@@ -463,6 +465,7 @@ def add_holding(request):
 
                 UserHolding.objects.create(user=user, holding=holding)
                 messages.success(request, 'Símbolo agregado.')
+                request.session["update_holding_data"] = True
 
             else: 
 
@@ -492,6 +495,7 @@ def add_holding(request):
                 holding = Holding.objects.create(symbol=symbol, name=name, sector=sector, type=type)
                 UserHolding.objects.create(user=user, holding=holding)
                 messages.success(request, 'Símbolo agregado.')
+                request.session["update_holding_data"] = True
             
         except IntegrityError:
             messages.error(request, 'El símbolo ya existe.')    
