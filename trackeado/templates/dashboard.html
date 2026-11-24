@@ -11,7 +11,7 @@
 </div>
 
 <!-- ===== Indicadores ===== -->
-<section class="kpi-grid">
+<section class="kpi-grid kpi-grid--mixed">
     <div class="kpi kpi--hero">
         <div class="kpi-label">Balance total</div>
         <div class="d-flex">
@@ -46,6 +46,13 @@
             {{ total_realized_gain | round_number }}
         </div>
         <div class="kpi-sub">Conversión: {{ currency }} {{ total_realized_gain_dop | round_number }}</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label">Dividendos recibidos</div>
+        <div class="kpi-value {% if total_dividends > 0 %}up{% endif %}">
+            {{ total_dividends | round_number }}
+        </div>
+        <div class="kpi-sub">Conversión: {{ currency }} {{ total_dividends_dop | round_number }}</div>
     </div>
     <div class="kpi">
         <div class="kpi-label">Ganancia total</div>
@@ -195,7 +202,7 @@
     {% endif %}
 </section>
 
-<section class="kpi-grid">
+<section class="kpi-grid kpi-grid--tri">
     <div class="kpi">
         <div class="kpi-label">TWR</div>
                 <div class="kpi-value {% if twr > 0 %}up{% elif twr < 0 %}down{% endif %}">
@@ -216,13 +223,6 @@
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 
         </div>
         <div class="kpi-sub">Conversión: {{ currency }} {{ net_annual_dividends_dop | round_number }}</div>
-    </div>
-    <div class="kpi">
-        <div class="kpi-label">Dividendos recibidos</div>
-        <div class="kpi-value {% if total_dividends > 0 %}up{% endif %}">
-            {{ total_dividends | round_number }}
-        </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_dividends_dop | round_number }}</div>
     </div>
 </section>
 
