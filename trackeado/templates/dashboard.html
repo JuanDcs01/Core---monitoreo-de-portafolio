@@ -205,7 +205,7 @@
     </div>
     <div class="kpi">
         <div class="kpi-label">XIRR</div>
-                <div class="kpi-value {% if xirr > 0 %}up{% elif twr < 0 %}down{% endif %}">
+                <div class="kpi-value {% if xirr > 0 %}up{% elif xirr < 0 %}down{% endif %}">
             {{ xirr | round_number }}%
         </div>
         <div class="kpi-sub">Tasa Interna de Retorno Extendida</div>
