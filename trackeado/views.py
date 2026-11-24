@@ -1373,7 +1373,6 @@ def get_holding(request, symbol, view_name):
                 'financials': ticker.financials,
                 'quarterly_income_stmt': ticker.quarterly_income_stmt,
                 'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False),
-                'history_5_days': yf.download(tickers=symbol, period="5d", interval="15m", prepost=True, progress=False, multi_level_index=False)
             }
 
             cache.set(cache_key, data, 3600)
@@ -1382,6 +1381,7 @@ def get_holding(request, symbol, view_name):
             messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
             return redirect(view_name)
 
+    data['history_5_days'] = yf.download(tickers=symbol, period="5d", interval="15m", prepost=True, progress=False, multi_level_index=False)
     data['history_1_day'] = yf.download(tickers=symbol, period="1d", interval="5m", prepost=True, progress=False, multi_level_index=False)
 
     return data
