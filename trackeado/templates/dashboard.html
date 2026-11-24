@@ -204,6 +204,13 @@
         <div class="kpi-sub">Retorno ponderado en el tiempo</div>
     </div>
     <div class="kpi">
+        <div class="kpi-label">XIRR</div>
+                <div class="kpi-value {% if xirr > 0 %}up{% elif twr < 0 %}down{% endif %}">
+            {{ xirr | round_number }}%
+        </div>
+        <div class="kpi-sub">Tasa Interna de Retorno Extendida</div>
+    </div>
+    <div class="kpi">
         <div class="kpi-label">Dividendos anuales estimado</div>
                 <div class="kpi-value {% if net_annual_dividends_percent > 0 %}up{% endif %}">
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 

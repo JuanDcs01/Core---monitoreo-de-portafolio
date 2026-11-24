@@ -19,6 +19,7 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 import logging
 from zoneinfo import ZoneInfo
+from pyxirr import xirr
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ def dashboard(request):
             'total_gain_dop': 0,
             'market_state': get_market_status(request, view_name),
             'twr': 0,
+            'xirr': 0,
             'net_annual_dividends': 0,
             'net_annual_dividends_dop': 0,
             'net_annual_dividends_percent': 0,
@@ -310,11 +312,13 @@ def dashboard(request):
 
     #! falta validar cuando hay dos transacciones el mismo dia
 
-    twr = 0
+    twr_value = 0
+    xirr_value = 0
 
     if wallet_transactions and trades:
         
         subperiod = []
+        xirr_subperiod = []
 
         for i in range(0, len(wallet_transactions)):
 
@@ -324,6 +328,8 @@ def dashboard(request):
                 subperiod[i]['start_value'] = wallet_transactions[i].net_amount
             else:
                 subperiod[i-1]['end_date'] = wallet_transactions[i].date
+
+            xirr_subperiod.append({'date': wallet_transactions[i].date, 'value': -(wallet_transactions[i].net_amount)})
 
         subperiod_wallet_balance = 0
 
@@ -395,13 +401,21 @@ def dashboard(request):
                     subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] + wallet_transactions[i + 1].net_amount
                 else:
                     subperiod[i + 1]['start_value'] = subperiod[i]['end_value'] - wallet_transactions[i + 1].total
+            else:
+                today = datetime.date.today()
+                xirr_subperiod.append({'date': today, 'value': subperiod[i]['end_value']})
 
             if subperiod[i]['start_value'] == 0:
                 subperiod[i]['period_return'] = Decimal(0)
             else:
                 subperiod[i]['period_return'] = (subperiod[i]['end_value'] - subperiod[i]['start_value']) / subperiod[i]['start_value']
 
-        twr = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
+        twr_value = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
+
+    dates = [item["date"] for item in xirr_subperiod]
+    amounts = [Decimal(item["value"]) for item in xirr_subperiod]
+
+    xirr_value = xirr(dates, amounts) * 100
 
     #todo: validar consistencia de datos
 
@@ -431,7 +445,8 @@ def dashboard(request):
         'type_distribution': type_distribution,
         'holding_distribution': holding_distribution,
         'risk_distribution': risk_distribution,
-        'twr': twr,
+        'twr': twr_value,
+        'xirr': xirr_value,
         'net_annual_dividends': net_annual_dividends,
         'net_annual_dividends_dop': convert_currency(net_annual_dividends, currency_rate,currency_code),
         'net_annual_dividends_percent': net_annual_dividends_percent,
@@ -1340,7 +1355,7 @@ def convert_currency(value, currency_rate, currency_code):
         try:
             currency_rate = yf.Ticker(currency_code).fast_info["last_price"]
             cache.set(currency_code, currency_rate, timeout=3600)
-        except Exception as e:
+        except Exception:
             currency_rate = 1
             logger.exception(f'Error obteniendo el cambio de monede desde yfinance')
             
