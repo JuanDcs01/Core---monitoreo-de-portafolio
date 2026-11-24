@@ -99,15 +99,18 @@ def dashboard(request):
         # conseguir primer trade para obtener la fecha desde la que se van a descargar datos
         #! puede fallar si la bolsa permanece cerrada más de lo normal
         first_trade_date = trades[0].date - timedelta(days=10)
+        first_dividend_date = dividends[0].date - timedelta(days=10)
+
+        start_data = first_trade_date if first_trade_date <= first_dividend_date else first_dividend_date
 
         # limitar fechas válidas para descargar datos
-        if first_trade_date < date(1950, 1, 1) or first_trade_date > date.today():
-            first_trade_date = date(1950, 1, 1)
+        if start_data < date(1950, 1, 1) or start_data > date.today():
+            start_data = date(1950, 1, 1)
 
         if history_data is None or update_history_data:
             # descargar datos historicos
             try:
-                history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
+                history_data = yf.download(tickers=symbols, start=start_data, interval="1d", prepost=True, group_by='ticker', threads=True, auto_adjust=False)
                 seconds = seconds_before_four()
                 cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
