@@ -577,6 +577,9 @@ def watch_list_details(request, watch_list):
 
     watch_list = get_object_or_404(WatchList, name=watch_list, user=user)
 
+    # obtener view para mostrar en caso de errores
+    view_name = request.resolver_match.view_name
+
     if user.id == watch_list.user.id:
 
         holdings_list = HoldingList.objects.select_related('holding').filter(watch_list=watch_list)
@@ -603,7 +606,7 @@ def watch_list_details(request, watch_list):
                 logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
                 h.logo_url = f'https://img.logo.dev/ticker/{logo_symbol}?token={settings.LOGODEV_TOKEN}&size=40'
         
-        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list, 'market_state': get_market_status(request) })
+        return render(request, 'watch_list_details.html', {'holdings_list': holdings_list, 'watch_list': watch_list, 'market_state': get_market_status(request, view_name) })
 
     else:
         return redirect('watch_lists')  
