@@ -948,17 +948,8 @@ def holding(request, symbol):
 
             dividend = Dividend.objects.filter(reinvested=trade).first()
 
-            def replace_trade_effect():
-                # Deshacer el efecto del trade viejo en la wallet
-                wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
-
-                # Aplicar el efecto del trade nuevo (igual que antes)
-                wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
-                wallet.save()
-                trade.save()
-
             def apply_trade_effect():
-                # Aplicar el efecto del trade nuevo (igual que antes)
+                # Aplicar el efecto del trade nuevo
                 wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
                 wallet.save()
                 trade.save()
@@ -966,7 +957,9 @@ def holding(request, symbol):
             if old_trade:
                 if old_type == trade.type:
                     if trade.type != 'D':
-                        replace_trade_effect()
+                        # Deshacer el efecto del trade viejo en la wallet
+                        wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
+                        apply_trade_effect()
                     else:
                         dividend.net_amount = trade.net_amount
                         dividend.commission = trade.commission
@@ -984,7 +977,9 @@ def holding(request, symbol):
                         trade.save()
                         Dividend.objects.create(user_holding=user_holding, net_amount=trade.net_amount, commission=trade.commission, reinvested=trade, date=trade.date)
                     else:
-                        replace_trade_effect()
+                        # Deshacer el efecto del trade viejo en la wallet
+                        wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
+                        apply_trade_effect()
             else:
 
                 if trade.type != 'D':
