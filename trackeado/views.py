@@ -18,6 +18,7 @@ import pandas as pd
 import math
 from concurrent.futures import ThreadPoolExecutor
 import logging
+from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,8 @@ def dashboard(request):
             # descargar datos historicos
             try:
                 history_data = yf.download(tickers=symbols, start=first_trade_date, interval="1d", prepost=True, group_by='ticker', threads=True)
-                cache.set(cache_key, history_data, timeout=3600)
+                seconds = seconds_before_four()
+                cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
                 logger.exception('Error descargando datos históricos')
                 return render(request, '500.html', {}, status=500)
@@ -113,7 +115,8 @@ def dashboard(request):
         if history_data is None or update_history_data:
             try:
                 history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
-                cache.set(cache_key, history_data, timeout=3600)
+                seconds = seconds_before_four()
+                cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
                 logger.exception('Error descargando datos históricos')
                 return render(request, '500.html', {}, status=500)
@@ -243,7 +246,7 @@ def dashboard(request):
                 if not raw_yield:
                     raw_yield = 0.0
 
-                cache.set(cache_key, raw_yield, 86400)
+                cache.set(cache_key, raw_yield, timeout=86400)
             except Exception:
                 logger.exception(f'No fue posible consultar consultar el dividendo anual de {symbol}.')
                 messages.error(request, f'No fue posible consultar consultar el dividendo anual de {symbol}. Los cálculos podrían verse afectados.')
@@ -1336,7 +1339,7 @@ def convert_currency(value, currency_rate, currency_code):
     if not currency_rate:
         try:
             currency_rate = yf.Ticker(currency_code).fast_info["last_price"]
-            cache.set(currency_code, currency_rate, 3600)
+            cache.set(currency_code, currency_rate, timeout=3600)
         except Exception as e:
             currency_rate = 1
             logger.exception(f'Error obteniendo el cambio de monede desde yfinance')
@@ -1374,8 +1377,8 @@ def get_holding(request, symbol, view_name):
                 'quarterly_income_stmt': ticker.quarterly_income_stmt,
                 'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False),
             }
-
-            cache.set(cache_key, data, 3600)
+            seconds = seconds_before_four()
+            cache.set(cache_key, data, timeout=seconds)
         except Exception:
             logger.exception(f'No fue obtener la info de {symbol} en {view_name}')
             messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
@@ -1385,3 +1388,20 @@ def get_holding(request, symbol, view_name):
     data['history_1_day'] = yf.download(tickers=symbol, period="1d", interval="5m", prepost=True, progress=False, multi_level_index=False)
 
     return data
+
+# obtener segundos restantes para definir tiempo de caché
+def seconds_before_four():
+    '''Calcular los segundos restantes para las 04:01:00 del día
+    siguiente'''
+
+    NY = ZoneInfo('America/New_York')
+
+    datetime_ny = datetime.datetime.now((NY))
+
+    tomorrow_at_4 = (datetime_ny + timedelta(days=1)).replace(
+        hour=4, minute=1, second=0, microsecond=0
+    )
+
+    seconds = int((tomorrow_at_4 - datetime_ny).total_seconds())
+
+    return seconds
