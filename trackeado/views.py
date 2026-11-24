@@ -967,8 +967,6 @@ def holding(request, symbol):
 
         with transaction.atomic():
 
-            dividend = Dividend.objects.filter(reinvested=trade).first()
-
             def apply_trade_effect():
                 # Aplicar el efecto del trade nuevo
                 wallet.balance = wallet.balance - trade.total if trade.type == 'B' else wallet.balance + trade.total
@@ -982,6 +980,8 @@ def holding(request, symbol):
                         wallet.balance = wallet.balance + old_total if old_type == 'B' else wallet.balance - old_total
                         apply_trade_effect()
                     else:
+                        dividend = Dividend.objects.filter(reinvested=trade).first()
+
                         dividend.net_amount = trade.net_amount
                         dividend.commission = trade.commission
                         dividend.date = trade.date
@@ -989,6 +989,8 @@ def holding(request, symbol):
                         trade.save()
                 else:
                     if old_type == 'D':
+                        dividend = Dividend.objects.filter(reinvested=trade).first()
+
                         dividend.delete()
                         apply_trade_effect()
 
