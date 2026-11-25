@@ -311,7 +311,7 @@ def dashboard(request):
 
         total_gain = total_unrealized_gain + total_realized_gain + total_dividends
 
-    #todo: calculo del TWR
+    #todo: calculo del TWR y XIRR
 
     #! falta validar cuando hay dos transacciones el mismo dia
 
@@ -415,10 +415,10 @@ def dashboard(request):
 
         twr_value = (math.prod([subperiod[i]['period_return'] + 1 for i in range(0, len(subperiod))]) - 1) * 100
 
-    dates = [item["date"] for item in xirr_subperiod]
-    amounts = [Decimal(item["value"]) for item in xirr_subperiod]
+        dates = [item["date"] for item in xirr_subperiod]
+        amounts = [Decimal(item["value"]) for item in xirr_subperiod]
 
-    xirr_value = xirr(dates, amounts) * 100
+        xirr_value = xirr(dates, amounts) * 100
 
     #todo: validar consistencia de datos
 
