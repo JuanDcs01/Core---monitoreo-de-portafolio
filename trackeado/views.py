@@ -181,7 +181,8 @@ def dashboard(request):
                 i -= 1
         except IndexError:
             logger.exception(f'No fue posible consultar el precio los precios de {h.holding.symbol}.')
-            return render(request, '500.html', {}, status=500)
+            # return render(request, '500.html', {}, status=500)
+            price_before = h.price
 
         # cambio del dia del activo
         h.day_change = h.price - price_before
