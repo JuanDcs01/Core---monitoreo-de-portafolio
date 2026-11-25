@@ -158,23 +158,34 @@ def dashboard(request):
 
     for h in user_holdings:
 
-        # obtener precio del dia anterior y el más actual
+        # obtener los dos últimos precios de los activos
         #! cubrir de otra manera el escenario en el que faltan muchos o todos
         try:
-            last_day_price = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[-2])
-        except IndexError:
-            try:
-                last_day_price = Decimal(yf.Ticker(h.holding.symbol).info.get('previousClose'))
-            except Exception:
-                last_day_price = 1
-                logger.exception(f'No fue posible consultar el precio del cierre anterior de {h.holding.symbol}.')
-                messages.error(request, f'No fue posible consultar el precio del cierre anterior de {h.holding.symbol}. Los cálculos podrían verse afectados.')
 
-        h.price = Decimal(day_data.get(h.holding.symbol).get('Close').dropna().iloc[-1])
+            last_day = day_data.get(h.holding.symbol).get('Close').dropna()
+
+            h.price = Decimal(last_day.iloc[-1])
+            last_day_date = last_day.index[-1].date()
+
+            i = -1
+
+            while True:
+                day_before = history_data.get(h.holding.symbol).get('Close').dropna()
+                date_before = day_before.index[i].date()
+
+                if last_day_date > date_before:
+                    price_before = Decimal(history_data.get(h.holding.symbol).get('Close').dropna().iloc[i])
+
+                    break
+
+                i -= 1
+        except IndexError:
+            logger.exception(f'No fue posible consultar el precio los precios de {h.holding.symbol}.')
+            return render(request, '500.html', {}, status=500)
 
         # cambio del dia del activo
-        h.day_change = h.price - last_day_price
-        h.day_change_percent = h.day_change / last_day_price * 100
+        h.day_change = h.price - price_before
+        h.day_change_percent = h.day_change / price_before * 100
 
         # obtener símbolo del activo (quitar "-USD" de las criptomonedas)
         logo_symbol = h.holding.symbol.split('-')[0] if '-' in h.holding.symbol else h.holding.symbol
