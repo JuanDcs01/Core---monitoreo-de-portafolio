@@ -114,7 +114,7 @@ def dashboard(request):
             # descargar datos historicos
             try:
                 history_data = yf.download(tickers=symbols, start=start_data, interval="1d", prepost=True, group_by='ticker', threads=True, auto_adjust=False)
-                seconds = seconds_before_four()
+                seconds = seconds_before_next_open()
                 cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
                 logger.exception('Error descargando datos históricos')
@@ -123,7 +123,7 @@ def dashboard(request):
         if history_data is None or update_history_data:
             try:
                 history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
-                seconds = seconds_before_four()
+                seconds = seconds_before_next_open()
                 cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
                 logger.exception('Error descargando datos históricos')
@@ -1403,7 +1403,7 @@ def get_holding(request, symbol, view_name):
                 'quarterly_income_stmt': ticker.quarterly_income_stmt,
                 'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False),
             }
-            seconds = seconds_before_four()
+            seconds = seconds_before_next_open()
             cache.set(cache_key, data, timeout=seconds)
         except Exception:
             logger.exception(f'No fue obtener la info de {symbol} en {view_name}')
@@ -1416,7 +1416,7 @@ def get_holding(request, symbol, view_name):
     return data
 
 # obtener segundos restantes para definir tiempo de caché
-def seconds_before_four():
+def seconds_before_next_open():
     '''Calcular los segundos restantes para las 04:01:00 del día
     siguiente'''
 
@@ -1425,7 +1425,7 @@ def seconds_before_four():
     datetime_ny = datetime.datetime.now((NY))
 
     tomorrow_at_4 = (datetime_ny + timedelta(days=1)).replace(
-        hour=4, minute=1, second=0, microsecond=0
+        hour=9, minute=31, second=0, microsecond=0
     )
 
     seconds = int((tomorrow_at_4 - datetime_ny).total_seconds())
