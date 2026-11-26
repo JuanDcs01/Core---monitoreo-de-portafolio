@@ -350,7 +350,7 @@ def dashboard(request):
             else:
                 subperiod[i-1]['end_date'] = wallet_transactions[i].date
 
-            xirr_subperiod.append({'date': wallet_transactions[i].date, 'value': -(wallet_transactions[i].net_amount)})
+            xirr_subperiod.append({'date': wallet_transactions[i].date, 'value': -(wallet_transactions[i].total)})
 
         subperiod_wallet_balance = 0
 
