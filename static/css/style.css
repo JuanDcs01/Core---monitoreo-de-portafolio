@@ -350,9 +350,9 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
 
 /* Panel principal: fila 1 con 3 cards, fila 2 con 4 (grid de 12 columnas) */
 @media (min-width: 992px) {
-  .kpi-grid--mixed { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-  .kpi-grid--mixed > .kpi { grid-column: span 4; }
-  .kpi-grid--mixed > .kpi:nth-child(n+4) { grid-column: span 3; }
+  .kpi-grid--mixed { grid-template-columns: repeat(15, minmax(0, 1fr)); }
+  .kpi-grid--mixed > .kpi { grid-column: span 5; }                      /* fila 1: 3 cards */
+  .kpi-grid--mixed > .kpi:nth-child(n+4) { grid-column: span 3; }       /* fila 2: 5 cards */
 }
 
 .kpi {
@@ -372,6 +372,8 @@ body.auth .site-footer { margin-top: auto; align-self: stretch; }
   letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--muted);
+  display: flex;
+  justify-content: space-between;
 }
 .kpi-value {
   display: flex;
@@ -1810,3 +1812,98 @@ input[type="checkbox"] {
 .nf-title { font-size: 1.35rem; margin: 0 0 8px; }
 .nf-text { color: var(--muted); margin: 0 auto 28px; max-width: 40ch; }
 .nf-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* tooltip*/
+.card-header-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.tooltip-trigger:hover,
+.tooltip-trigger:focus-visible {
+  opacity: 1;
+}
+
+.tooltip-trigger .bi {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.tooltip-box {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(calc(-50% + var(--tt-shift, 0px))) translateY(2px);
+  width: max-content;
+  max-width: min(240px, calc(100vw - 24px));
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+  text-align: left;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 30;
+}
+
+.tooltip-box::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: calc(50% - var(--tt-shift, 0px));
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #0f172a;
+}
+
+.tooltip-trigger:focus-visible .tooltip-box,
+.tooltip-trigger.is-open .tooltip-box {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(calc(-50% + var(--tt-shift, 0px))) translateY(0);
+}
+
+@media (hover: hover) {
+  .tooltip-trigger:hover .tooltip-box {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(calc(-50% + var(--tt-shift, 0px))) translateY(0);
+  }
+}
+
+/* Sin espacio arriba (p. ej. bajo la barra superior): se abre hacia abajo */
+.tooltip-trigger.is-below .tooltip-box {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
+.tooltip-trigger.is-below .tooltip-box::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #0f172a;
+}

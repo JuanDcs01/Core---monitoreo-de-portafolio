@@ -74,6 +74,8 @@ def dashboard(request):
             'total_dividends_dop': 0,
             'total_gain': total_gain,
             'total_gain_dop': 0,
+            'net_gain': 0,
+            'net_gain_dop': 0,
             'market_state': get_market_status(request, view_name),
             'twr': 0,
             'xirr': 0,
@@ -325,6 +327,8 @@ def dashboard(request):
 
         total_gain = total_unrealized_gain + total_realized_gain + total_dividends
 
+        net_gain = total_gain - wallet.commission_paid
+        
     #todo: calculo del TWR y XIRR
 
     #! falta validar cuando hay dos transacciones el mismo dia
@@ -467,7 +471,9 @@ def dashboard(request):
         'net_annual_dividends': net_annual_dividends,
         'net_annual_dividends_dop': convert_currency(net_annual_dividends, currency_rate,currency_code),
         'net_annual_dividends_percent': net_annual_dividends_percent,
-        'currency': currency
+        'currency': currency,
+        'net_gain': net_gain,
+        'net_gain_dop': convert_currency(net_gain, currency_rate,currency_code),
     }
 
     return render(request, 'dashboard.html', {**context})

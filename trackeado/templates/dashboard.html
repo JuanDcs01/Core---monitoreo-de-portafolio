@@ -13,7 +13,14 @@
 <!-- ===== Indicadores ===== -->
 <section class="kpi-grid kpi-grid--mixed">
     <div class="kpi kpi--hero">
-        <div class="kpi-label">Balance total</div>
+        <div class="kpi-label"><span>Balance total</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Suma del valor de mercado de tus posiciones abiertas más el efectivo disponible.
+                </span>
+            </button>
+        </div>
         <div class="d-flex">
             <div class="kpi-value">{{ total_balance | round_number }}</div>
             <div style="display: flex; align-items: end; margin-left: 5px;">{{ currency }} {{ total_balance_dop | round_number }}</div>
@@ -24,42 +31,98 @@
         </div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Invertido</div>
+        <div class="kpi-label"><span>Inversión Activa</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Costo base de las posiciones que mantienes abiertas actualmente, incluyendo comisiones de compra.
+                </span>
+            </button>
+        </div>
         <div class="kpi-value">{{ total_current_invested | round_number }}</div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_current_invested_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_current_invested_dop | round_number }}</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Valor actual</div>
+        <div class="kpi-label"><span>Valor de Mercado</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Valor actual de tus posiciones abiertas según el precio de mercado vigente.
+                </span>
+            </button>
+        </div>
         <div class="kpi-value">{{ total_current_invested_value | round_number }}</div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_current_invested_value_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_current_invested_value_dop | round_number }}</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Ganancia no realizada</div>
+        <div class="kpi-label"><span>Ganancia no realizada</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Diferencia entre el valor de mercado actual de tus acciones y su costo de adquisición.
+                </span>
+            </button>
+        </div>
         <div class="kpi-value {% if total_unrealized_gain > 0 %}up{% elif total_unrealized_gain < 0 %}down{% endif %}">
             {{ total_unrealized_gain | round_number }} <small>({{ total_unrealized_gain_percent | round_number }}%)</small> 
         </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_unrealized_gain_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_unrealized_gain_dop | round_number }}</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Ganancia realizada</div>
+        <div class="kpi-label"><span>Ganancia realizada</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Ganancia o pérdida de las ventas ejecutadas, descontando la comisión de cada venta.
+                </span>
+            </button>
+        </div>
         <div class="kpi-value {% if total_realized_gain > 0 %}up{% elif total_realized_gain < 0 %}down{% endif %}">
             {{ total_realized_gain | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_realized_gain_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_realized_gain_dop | round_number }}</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Dividendos recibidos</div>
+        <div class="kpi-label"><span>Dividendos recibidos</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Total acumulado de dividendos, incluyendo tanto los pagados a efectivo como los reinvertidos (DRIP).
+                </span>
+            </button>
+        </div>
         <div class="kpi-value {% if total_dividends > 0 %}up{% endif %}">
             {{ total_dividends | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_dividends_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_dividends_dop | round_number }}</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Ganancia total</div>
+        <div class="kpi-label"><span>Ganancia total</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Suma de la ganancia no realizada, la ganancia realizada y los dividendos acumulados.
+                </span>
+            </button>
+        </div>
         <div class="kpi-value {% if total_gain > 0 %}up{% elif total_gain < 0 %}down{% endif %}">
             {{ total_gain | round_number }}
         </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ total_gain_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ total_gain_dop | round_number }}</div>
+    </div>
+    <div class="kpi">
+        <div class="kpi-label"><span>Ganancia neta</span>  
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Resultado final tras restar las comisiones de transferencia.
+                </span>
+            </button>
+        </div>
+        <div class="kpi-value {% if net_gain > 0 %}up{% elif net_gain < 0 %}down{% endif %}">
+            {{ net_gain | round_number }}
+        </div>
+        <div class="kpi-sub">{{ currency }} {{ net_gain_dop | round_number }}</div>
     </div>
 </section>
 
@@ -204,25 +267,52 @@
 
 <section class="kpi-grid kpi-grid--tri">
     <div class="kpi">
-        <div class="kpi-label">TWR</div>
+        <div class="kpi-label">TWR
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                - Mide el rendimiento de la cartera a lo largo del tiempo eliminando el efecto de tus depósitos y retiros.
+                <br>
+                <br>
+                - Responde: ¿Qué tan bien rindió la estrategia o activos sin que influya cuándo metí o saqué dinero?
+                </span>
+            </button>
+        </div>
                 <div class="kpi-value {% if twr > 0 %}up{% elif twr < 0 %}down{% endif %}">
             {{ twr | round_number }}%
         </div>
         <div class="kpi-sub">Retorno Ponderado en el Tiempo</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">XIRR</div>
+        <div class="kpi-label">XIRR
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                - Calcula el rendimiento anualizado real tomando en cuenta las fechas y montos exactos de cada flujo de entrada y salida.
+                <br>
+                <br>
+                - Responde: ¿Qué rendimiento anual real obtuve considerando el momento exacto en que puse y saqué dinero?
+                </span>
+            </button>
+        </div>
                 <div class="kpi-value {% if xirr > 0 %}up{% elif xirr < 0 %}down{% endif %}">
             {{ xirr | round_number }}%
         </div>
         <div class="kpi-sub">Tasa Interna de Retorno Extendida</div>
     </div>
     <div class="kpi">
-        <div class="kpi-label">Dividendos anuales estimado</div>
+        <div class="kpi-label">Dividendos anuales estimado
+            <button type="button" class="tooltip-trigger" aria-label="Más información sobre Dividendos Totales">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span class="tooltip-box" role="tooltip">
+                Proyección anual de dividendos según tus posiciones actuales, ya descontando el 30% de retención fiscal.
+                </span>
+            </button>
+        </div>
                 <div class="kpi-value {% if net_annual_dividends_percent > 0 %}up{% endif %}">
             {{ net_annual_dividends | round_number }}<small>({{ net_annual_dividends_percent | round_number }}%)</small> 
         </div>
-        <div class="kpi-sub">Conversión: {{ currency }} {{ net_annual_dividends_dop | round_number }}</div>
+        <div class="kpi-sub">{{ currency }} {{ net_annual_dividends_dop | round_number }}</div>
     </div>
 </section>
 
@@ -290,6 +380,7 @@
 {{ holding_distribution|json_script:"holding-distribution-data" }}
 {{ risk_distribution|json_script:"risk-distribution-data" }}
 <script src="{% static 'js/dashboard.js' %}"></script>
+<script src="{% static 'js/tooltip.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
 {% endblock content %}

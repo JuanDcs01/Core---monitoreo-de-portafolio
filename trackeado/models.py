@@ -80,7 +80,7 @@ class WalletTransaction(models.Model):
 
     @property
     def total(self):
-        return self.net_amount + self.commission
+        return self.net_amount + self.commission if self.type == 'D' else self.net_amount
 
 class TradeType(models.TextChoices):
 
