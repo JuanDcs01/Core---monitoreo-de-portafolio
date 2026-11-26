@@ -122,7 +122,7 @@ def dashboard(request):
     else:
         if history_data is None or update_history_data:
             try:
-                history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
+                history_data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True, auto_adjust=False)
                 seconds = seconds_before_next_open()
                 cache.set(cache_key, history_data, timeout=seconds)
             except Exception:
@@ -131,7 +131,7 @@ def dashboard(request):
 
     # conseguir el último precio
     try:
-        day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker')
+        day_data = yf.download(tickers=symbols, period='1d', interval='1m', prepost=True, group_by='ticker', auto_adjust=False)
     except Exception:
         logger.exception('Error descargando datos del día')
         return render(request, '500.html', {}, status=500)
@@ -607,8 +607,8 @@ def watch_list_details(request, watch_list):
             symbols = [h.holding.symbol for h in holdings_list]
 
             try:
-                data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True)
-                data2 = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True)
+                data = yf.download(tickers=symbols, period="5d", interval="1d", prepost=True, group_by='ticker', threads=True, auto_adjust=False)
+                data2 = yf.download(tickers=symbols, period="1d", interval="1m", prepost=True, group_by='ticker', threads=True, auto_adjust=False)
             except Exception:
                 logger.exception('Error obteniendo datos históricos de la lista')
                 return render(request, '500.html', {}, status=500)
@@ -1413,7 +1413,7 @@ def get_holding(request, symbol, view_name):
                 'info': ticker.info,
                 'financials': ticker.financials,
                 'quarterly_income_stmt': ticker.quarterly_income_stmt,
-                'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False),
+                'history_max': yf.download(tickers=symbol, period="max", interval="1d", progress=False, multi_level_index=False, auto_adjust=False),
             }
             seconds = seconds_before_next_open()
             cache.set(cache_key, data, timeout=seconds)
@@ -1422,8 +1422,8 @@ def get_holding(request, symbol, view_name):
             messages.error(request, f'No fue posible obtener a {symbol} en este momento. Inténtalo más tarde.')
             return redirect(view_name)
 
-    data['history_5_days'] = yf.download(tickers=symbol, period="5d", interval="15m", prepost=True, progress=False, multi_level_index=False)
-    data['history_1_day'] = yf.download(tickers=symbol, period="1d", interval="5m", prepost=True, progress=False, multi_level_index=False)
+    data['history_5_days'] = yf.download(tickers=symbol, period="5d", interval="15m", prepost=True, progress=False, multi_level_index=False, auto_adjust=False)
+    data['history_1_day'] = yf.download(tickers=symbol, period="1d", interval="5m", prepost=True, progress=False, multi_level_index=False, auto_adjust=False)
 
     return data
 
