@@ -1157,17 +1157,9 @@ def delete_trade(request):
     messages.error(request, 'Algo salió mal.')
     return redirect('holding', holding.symbol)
 
-def _dividend_wallet_effect(dividend):
-    """Cuánto suma un dividendo a la wallet. Los reinvertidos no tocan el efectivo.
-    Si el efectivo debe recibir el total (neto de comisión) en vez de net_amount, cámbialo aquí."""
-    # return Decimal(0) if dividend.reinvested else dividend.net_amount
-    return dividend.net_amount
-
-
 def _dividend_redirect(holding_object):
     """Vuelve al holding abriendo directamente la vista de dividendos."""
     return redirect(f"{reverse('holding', args=[holding_object.symbol])}?view=dividends")
-
 
 def _save_dividend(request, user_holding, context):
     """Registra o edita un dividendo y ajusta la wallet."""
@@ -1186,7 +1178,7 @@ def _save_dividend(request, user_holding, context):
         old_dividend = get_object_or_404(Dividend, id=dividend_id, user_holding=user_holding)
 
         # Guardar lo viejo ANTES de crear el form: is_valid() sobrescribe la instancia
-        old_effect = _dividend_wallet_effect(old_dividend)
+        old_effect = old_dividend.net_amount
 
         form = DividendForm(request.POST, instance=old_dividend, auto_id='div_%s')
         context['editing_dividend_id'] = old_dividend.id
@@ -1213,7 +1205,7 @@ def _save_dividend(request, user_holding, context):
         dividend.save()
 
         # 2) Aplicar el efecto del nuevo
-        wallet.balance += _dividend_wallet_effect(dividend)
+        wallet.balance += dividend.net_amount
         wallet.save()
 
     messages.success(request, 'Dividendo actualizado.' if old_dividend else 'Dividendo registrado.')
@@ -1239,7 +1231,7 @@ def delete_dividend(request):
     wallet = get_object_or_404(Wallet, user=user)
 
     with transaction.atomic():
-        wallet.balance -= _dividend_wallet_effect(dividend)
+        wallet.balance -= dividend.net_amount
         wallet.save()
         dividend.delete()
 
@@ -1364,7 +1356,7 @@ def holding_metrics(trades, dividends, current_price):
         h_metrics['current_invested_value'] = current_price * h_metrics['total_shares']
         h_metrics['unrealized_gain'] = Decimal(h_metrics['current_invested_value'] - h_metrics['current_invested'])
         h_metrics['unrealized_gain_percent'] = (h_metrics['unrealized_gain'] / h_metrics['current_invested']) * 100
-    
+
     h_metrics['total_gain'] = h_metrics['unrealized_gain'] + h_metrics['realized_gain'] + h_metrics['total_dividends']
 
     return h_metrics
