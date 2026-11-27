@@ -914,7 +914,7 @@ def holding(request, symbol):
         'fullTimeEmployees': info.get('fullTimeEmployees'),
         'sharesOutstanding': info.get('sharesOutstanding'),
         'averageVolume10days': info.get('averageVolume10days'),
-        'marketState': info.get('marketState'),
+        'marketState': get_market_status(request, view_name),
         'fiftyTwoWeekHigh': info.get('fiftyTwoWeekHigh'),
         'fiftyTwoWeekLow': info.get('fiftyTwoWeekLow'),
         'recommendationKey': info.get('recommendationKey'),
